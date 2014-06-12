@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include rohit_common *.css
+recursive-include rohit_common *.csv
+recursive-include rohit_common *.html
+recursive-include rohit_common *.ico
+recursive-include rohit_common *.js
+recursive-include rohit_common *.json
+recursive-include rohit_common *.md
+recursive-include rohit_common *.png
+recursive-include rohit_common *.py
+recursive-include rohit_common *.svg
+recursive-include rohit_common *.txt
+recursive-exclude rohit_common *.pyc
