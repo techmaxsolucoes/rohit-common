@@ -28,7 +28,7 @@ def execute(filters=None):
 		#delivery_note = list(set(invoice_so_dn_map.get(inv.name, {}).get("delivery_note", [])))
 
 		row = [inv.name, inv.posting_date, inv.customer, customer_info.get(inv.customer),
-			inv.tin_no,inv.charge, inv.lr_no]
+			inv.tin_no,inv.taxes_and_charges, inv.lr_no]
 
 		# map income values
 		net_total = 0
@@ -101,7 +101,7 @@ def get_conditions(filters):
 
 def get_invoices(filters):
 	conditions = get_conditions(filters)
-	return frappe.db.sql("""select name, posting_date, customer, charge, lr_no,
+	return frappe.db.sql("""select name, posting_date, customer, taxes_and_charges, lr_no,
 		tin_no ,net_total, other_charges_total, grand_total, rounded_total,
 		outstanding_amount from `tabSales Invoice`
 		where docstatus = 1 %s order by posting_date desc, name desc""" %
