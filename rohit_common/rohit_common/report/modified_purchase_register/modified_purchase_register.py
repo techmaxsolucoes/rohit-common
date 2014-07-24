@@ -29,7 +29,7 @@ def execute(filters=None):
 
 		row = [inv.name, inv.posting_date, inv.supplier,
 			inv.bill_no, inv.bill_date, supplier_info.get(inv.supplier),
-			inv.purchase_other_charges
+			inv.taxes_and_charges
 		]
 		# map expense values
 		net_total = 0
@@ -104,7 +104,7 @@ def get_conditions(filters):
 def get_invoices(filters):
 	conditions = get_conditions(filters)
 	return frappe.db.sql("""select name, posting_date, supplier,
-		bill_no, bill_date, purchase_other_charges, net_total,
+		bill_no, bill_date, taxes_and_charges, net_total,
 		total_tax, grand_total, outstanding_amount
 		from `tabPurchase Invoice` where docstatus = 1 %s
 		order by posting_date desc, name desc""" % conditions, filters, as_dict=1)
