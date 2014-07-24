@@ -160,9 +160,9 @@ def get_invoice_po_pr_map(invoice_list):
 def get_supplier_info(invoice_list):
 	supplier_info = {}
 	supplier = list(set([inv.supplier for inv in invoice_list]))
-	for sup in frappe.db.sql ("""select name, tin_number from `tabSupplier`
+	for sup in frappe.db.sql ("""select name, tin_no from `tabSupplier`
 		where name in (%s)""" % ", ".join(["%s"]*len(supplier)), tuple(supplier), as_dict=1):
-			supplier_info [sup.name] = sup.tin_number
+			supplier_info [sup.name] = sup.tin_no
 	return supplier_info
 
 def get_account_details(invoice_list):
