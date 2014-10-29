@@ -7,7 +7,7 @@ app_color = "#007AFF"
 app_email = "aditya@rigpl.com"
 app_url = "https://github.com/adityaduggal/rohit_common"
 app_version = "0.0.1"
-
+fixtures = ["Custom Field"]
 # Includes in <head>
 # ------------------
 
@@ -58,13 +58,16 @@ app_version = "0.0.1"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
+doc_events = {
+	"Address": {
+		"validate": "rohit_common.rohit_common.validations.address.validate"
+		},
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
 # 		"on_trash": "method"
 #	}
-# }
+}
 
 # Scheduled Tasks
 # ---------------
