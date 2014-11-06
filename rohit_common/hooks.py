@@ -62,6 +62,9 @@ doc_events = {
 	"Address": {
 		"validate": "rohit_common.rohit_common.validations.address.validate"
 		},
+	"Sales Invoice": {
+		"validate": "rohit_common.rohit_common.validations.sales_invoice.validate"
+		},
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
