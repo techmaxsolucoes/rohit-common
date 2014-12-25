@@ -34,6 +34,12 @@ frappe.query_reports["ST Return Sales"] = {
 			}
 		},
 		{
+			"fieldname":"letter_head",
+			"label": "Letter Head",
+			"fieldtype": "Link",
+			"options": "Letter Head"
+		},
+		{
 			"fieldname":"company",
 			"label": "Company",
 			"fieldtype": "Link",
