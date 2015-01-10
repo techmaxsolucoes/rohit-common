@@ -27,6 +27,22 @@ frappe.query_reports["ST Return Purchase"] = {
 			"label": "Letter Head",
 			"fieldtype": "Link",
 			"options": "Letter Head"
+		},
+		{
+			"fieldname":"tax_type",
+			"label": "Tax Type",
+			"fieldtype": "Select",
+			"options": "Excise\nSales Tax\nService Tax"
+		},
+		{
+			"fieldname":"invoice_wise",
+			"label": "Invoice Wise",
+			"fieldtype": "Check"
+		},
+		{
+			"fieldname":"tax_wise",
+			"label": "Tax Wise",
+			"fieldtype": "Check"
 		}
 	]
 }
