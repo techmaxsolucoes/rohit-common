@@ -2,6 +2,9 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import msgprint
+from frappe.utils.fixtures import sync_fixtures
+
+sync_fixtures()
 
 def execute():
 	#correct the address table
