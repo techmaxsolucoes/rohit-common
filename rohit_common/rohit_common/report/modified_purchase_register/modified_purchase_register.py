@@ -97,7 +97,7 @@ def get_conditions(filters):
 	conditions = ""
 	
 	if filters.get("company"): conditions += " and company=%(company)s"
-	if filters.get("account"): conditions += " and credit_to = %(account)s"
+	if filters.get("supplier"): conditions += " and supplier = %(supplier)s"
 
 	if filters.get("from_date"): conditions += " and posting_date>=%(from_date)s"
 	if filters.get("to_date"): conditions += " and posting_date<=%(to_date)s"
