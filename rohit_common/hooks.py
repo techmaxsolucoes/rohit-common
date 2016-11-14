@@ -8,6 +8,7 @@ app_email = "aditya@rigpl.com"
 app_url = "https://github.com/adityaduggal/rohit_common"
 app_version = "0.0.1"
 fixtures = ["Custom Field"]
+hide_in_installer = True
 # Includes in <head>
 # ------------------
 
