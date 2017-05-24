@@ -9,9 +9,36 @@ def validate(self):
 
 
 def validate(doc,method):
-	
+	#Validate State is entered for Country India
+	if doc.country == 'India':
+		if doc.state_rigpl:
+			pass
+		else:
+			frappe.throw ("State is Mandatory for country India")
+			
+	valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
 	valid_chars_excise = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
 	valid_chars_tin = "0123456789"
+	
+	if doc.gstin != "NA" and doc.gstin:
+		if len(doc.gstin)!= 15:
+			frappe.msgprint("GSTIN should be exactly as 15 digits or NA",raise_exception=1)
+		else:
+			for n, char in enumerate(reversed(doc.excise_no)):
+				if not valid_chars_gstin.count(char):
+					frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in GSTIN or NA", raise_exception=1)
+			if doc.state_rigpl:
+				state = frappe.get_doc("State", doc.state_rigpl)
+			else:
+				frappe.throw(("Selected State is NOT Valid for {0}").format(doc.state_rigpl))
+				
+			if doc.gstin[:2] <> state.state_code_numeric:
+				frappe.throw(("State Selected {0} for Address {1}, GSTIN number should begin \
+					with {2}").format(doc.state_rigpl, doc.name, state.state_code_numeric)) 
+	if doc.gstin != "NA" and doc.gstin:
+		doc.pan = doc.gstin[2:12]
+	else:
+		doc.pan = ""
 	
 	if doc.excise_no != "NA":
 		if len(doc.excise_no)!= 15:
