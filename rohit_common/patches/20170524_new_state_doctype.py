@@ -4,6 +4,8 @@ import frappe
 from frappe import msgprint
 from frappe.utils.fixtures import sync_fixtures
 
+sync_fixtures()
+
 def execute():
 	#Transfer the address state field from data to link field
 	address_list = frappe.db.sql("""SELECT name FROM `tabAddress` 
