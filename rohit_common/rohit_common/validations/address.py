@@ -16,15 +16,15 @@ def validate(doc,method):
 		else:
 			frappe.throw ("State is Mandatory for country India")
 			
-	valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
-	valid_chars_excise = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
+	valid_chars_gstin = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	valid_chars_excise = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	valid_chars_tin = "0123456789"
 	
 	if doc.gstin != "NA" and doc.gstin:
 		if len(doc.gstin)!= 15:
 			frappe.msgprint("GSTIN should be exactly as 15 digits or NA",raise_exception=1)
 		else:
-			for n, char in enumerate(reversed(doc.excise_no)):
+			for n, char in enumerate(reversed(doc.gstin)):
 				if not valid_chars_gstin.count(char):
 					frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in GSTIN or NA", raise_exception=1)
 			if doc.state_rigpl:
