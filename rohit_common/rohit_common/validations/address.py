@@ -9,22 +9,13 @@ def validate(self):
 
 
 def validate(doc,method):
-	#Validate State is entered for Country India
-	if doc.country == 'India':
-		if doc.state_rigpl:
-			pass
-		else:
-			frappe.throw ("State is Mandatory for country India")
-			
-	valid_chars_gstin = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	valid_chars_excise = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	valid_chars_tin = "0123456789"
+	valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
 	
-	if doc.gstin != "NA" and doc.gstin:
+	if doc.gstin != "NA":
 		if len(doc.gstin)!= 15:
 			frappe.msgprint("GSTIN should be exactly as 15 digits or NA",raise_exception=1)
 		else:
-			for n, char in enumerate(reversed(doc.gstin)):
+			for n, char in enumerate(reversed(doc.excise_no)):
 				if not valid_chars_gstin.count(char):
 					frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in GSTIN or NA", raise_exception=1)
 			if doc.state_rigpl:
@@ -35,34 +26,13 @@ def validate(doc,method):
 			if doc.gstin[:2] <> state.state_code_numeric:
 				frappe.throw(("State Selected {0} for Address {1}, GSTIN number should begin \
 					with {2}").format(doc.state_rigpl, doc.name, state.state_code_numeric)) 
-	if doc.gstin != "NA" and doc.gstin:
+	if doc.gstin != "NA":
 		doc.pan = doc.gstin[2:12]
 	else:
 		doc.pan = ""
-	
-	if doc.excise_no != "NA":
-		if len(doc.excise_no)!= 15:
-			frappe.msgprint("Excise Number should be exactly as 15 digits or NA",raise_exception=1)
-		else:
-			for n, char in enumerate(reversed(doc.excise_no)):
-				if not valid_chars_excise.count(char):
-					frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in Excise Number or NA", raise_exception=1)
-
-	if doc.service_tax_no != "NA":
-		if len(doc.service_tax_no)!= 15:
-			frappe.msgprint("Service Tax Number should be exactly as 15 digits or NA",raise_exception=1)
-		else:
-			for n, char in enumerate(reversed(doc.service_tax_no)):
-				if not valid_chars_excise.count(char):
-					frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in Service Tax Number or NA", raise_exception=1)
-
-	if doc.tin_no != "NA":
-		if len(doc.tin_no)!=11:
-			frappe.msgprint("TIN Number should be exactly as 11 digits or NA",raise_exception=1)
-		else:
-			for n, char in enumerate(reversed(doc.tin_no)):
-				if not valid_chars_tin.count(char):
-					frappe.msgprint("Only Numbers are allowed in TIN Number or NA", raise_exception=1)
+		
+	#Todo: Add the GST check digit checksum for the last digit so that all GST numbers are
+	#checked and entered properly.
 	
 	def validate_primary_address(self):
 		"""Validate that there can only be one primary address for particular customer, supplier"""
