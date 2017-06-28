@@ -24,8 +24,16 @@ def validate(doc,method):
 				frappe.throw(("Selected State is NOT Valid for {0}").format(doc.state_rigpl))
 				
 			if doc.gstin[:2] <> state.state_code_numeric:
-				frappe.throw(("State Selected {0} for Address {1}, GSTIN number should begin \
-					with {2}").format(doc.state_rigpl, doc.name, state.state_code_numeric)) 
+				#fetch and update the state automatically else throw error
+				state_from_gst = frappe.db.sql("""SELECT name FROM `tabState` \
+					WHERE state_code_numeric = '%s'"""%(doc.gstin[:2]), as_list=1)
+				if state_from_gst:
+					doc.state_rigpl = state_from_gst[0][0]
+					doc.gst_state = state_from_gst[0][0]
+				else:
+					frappe.throw(("State Selected {0} for Address {1}, GSTIN number should begin \
+						with {2}").format(doc.state_rigpl, doc.name, state.state_code_numeric)) 
+
 	if doc.gstin != "NA":
 		doc.pan = doc.gstin[2:12]
 	else:
