@@ -11,33 +11,33 @@ def validate(self):
 def validate(doc,method):
 	valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
 	
-	if doc.gstin != "NA":
-		if len(doc.gstin)!= 15:
-			frappe.msgprint("GSTIN should be exactly as 15 digits or NA",raise_exception=1)
-		else:
-			for n, char in enumerate(reversed(doc.gstin)):
-				if not valid_chars_gstin.count(char):
-					frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in GSTIN or NA", raise_exception=1)
-			if doc.state_rigpl:
-				state = frappe.get_doc("State", doc.state_rigpl)
+	if doc.gstin:
+		if doc.gstin != "NA":
+			if len(doc.gstin)!= 15:
+				frappe.msgprint("GSTIN should be exactly as 15 digits or NA",raise_exception=1)
 			else:
-				frappe.throw(("Selected State is NOT Valid for {0}").format(doc.state_rigpl))
-				
-			if doc.gstin[:2] <> state.state_code_numeric:
-				#fetch and update the state automatically else throw error
-				state_from_gst = frappe.db.sql("""SELECT name FROM `tabState` \
-					WHERE state_code_numeric = '%s'"""%(doc.gstin[:2]), as_list=1)
-				if state_from_gst:
-					doc.state_rigpl = state_from_gst[0][0]
-					doc.gst_state = state_from_gst[0][0]
+				for n, char in enumerate(reversed(doc.gstin)):
+					if not valid_chars_gstin.count(char):
+						frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in GSTIN or NA", raise_exception=1)
+				if doc.state_rigpl:
+					state = frappe.get_doc("State", doc.state_rigpl)
 				else:
-					frappe.throw(("State Selected {0} for Address {1}, GSTIN number should begin \
-						with {2}").format(doc.state_rigpl, doc.name, state.state_code_numeric)) 
-
-	if doc.gstin != "NA":
-		doc.pan = doc.gstin[2:12]
-	else:
-		doc.pan = ""
+					frappe.throw(("Selected State is NOT Valid for {0}").format(doc.state_rigpl))
+					
+				if doc.gstin[:2] <> state.state_code_numeric:
+					#fetch and update the state automatically else throw error
+					state_from_gst = frappe.db.sql("""SELECT name FROM `tabState` \
+						WHERE state_code_numeric = '%s'"""%(doc.gstin[:2]), as_list=1)
+					if state_from_gst:
+						doc.state_rigpl = state_from_gst[0][0]
+						doc.gst_state = state_from_gst[0][0]
+					else:
+						frappe.throw(("State Selected {0} for Address {1}, GSTIN number should begin \
+							with {2}").format(doc.state_rigpl, doc.name, state.state_code_numeric))
+			if doc.gstin != "NA":
+				doc.pan = doc.gstin[2:12]
+			else:
+				doc.pan = ""
 		
 	#Todo: Add the GST check digit checksum for the last digit so that all GST numbers are
 	#checked and entered properly.
