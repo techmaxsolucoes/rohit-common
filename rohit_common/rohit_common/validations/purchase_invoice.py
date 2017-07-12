@@ -5,7 +5,6 @@ from frappe import msgprint
 	
 def validate(doc,method):
 	update_fields(doc,method)
-	check_subcontracting(doc,method)
 	check_gst_rules(doc,method)
 	check_taxes_integrity(doc,method)
 
