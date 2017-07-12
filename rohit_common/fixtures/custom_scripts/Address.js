@@ -1,0 +1,1 @@
+cur_frm.add_fetch('state_rigpl','state_code_numeric','gst_state_number');
