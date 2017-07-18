@@ -28,7 +28,7 @@ def validate(doc,method):
 	
 	#Check if Shipping State is Same as Template State then check if the tax template is LOCAL
 	#Else if the States are different then the template should NOT BE LOCAL
-	if ship_state == template_doc.state:
+	if ship_state == template_doc.state and template_doc.state is not None:
 		if template_doc.is_local_sales != 1:
 			frappe.throw(("Selected Tax {0} is NOT LOCAL Tax but Shipping Address is \
 				in Same State {1}, hence either change Shipping Address or Change the \
@@ -39,7 +39,7 @@ def validate(doc,method):
 				in Different State {1}, hence either change Shipping Address or Change the \
 				Selected Tax").format(doc.taxes_and_charges, ship_state))
 	elif ship_country != 'India': #Case of EXPORTS
-		if template_doc.state is not None and template_doc.is_exports != 1:
+		if template_doc.state is not None and template_doc.is_export != 1:
 			frappe.throw(("Selected Tax {0} is for Indian Sales but Shipping Address is \
 				in Different Country {1}, hence either change Shipping Address or Change the \
 				Selected Tax").format(doc.taxes_and_charges, ship_country))
