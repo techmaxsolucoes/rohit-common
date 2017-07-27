@@ -62,6 +62,13 @@ doc_events = {
 	"Address": {
 		"validate": "rohit_common.rohit_common.validations.address.validate"
 		},
+	"Asset": {
+		"validate": "rohit_common.rohit_common.validations.asset.validate",
+		"autoname": "rohit_common.rohit_common.validations.asset.autoname"
+	},
+	"Asset Category": {
+		"validate": "rohit_common.rohit_common.validations.asset_category.validate"
+	},
 	"Sales Invoice": {
 		"validate": "rohit_common.rohit_common.validations.sales_invoice.validate"
 		},
