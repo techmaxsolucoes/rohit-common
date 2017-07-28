@@ -9,14 +9,14 @@ from dateutil import relativedelta
 
 def validate(doc, method):
 	ass_cat = frappe.get_doc("Asset Category", doc.asset_category)
-	doc.expected_value_after_useful_life = round((ass_cat.residual_value_percent * \
-	doc.gross_purchase_amount)/100,0)
 	doc.total_number_of_depreciations = ass_cat.total_number_of_depreciations
 	doc.frequency_of_depreciation = ass_cat.frequency_of_depreciation
 	if doc.depreciation_method != 'Manual':
 		doc.depreciation_method = ass_cat.depreciation_method
-	get_next_dep_date(doc,method)
-	make_dep_schedule(doc, method)
+		doc.expected_value_after_useful_life = round((ass_cat.residual_value_percent * \
+			doc.gross_purchase_amount)/100,0)
+	base_dep_date = get_next_dep_date(doc,method)
+	make_dep_schedule(doc, method, base_dep_date)
 	
 def autoname(doc, method):
 	if doc.autoname == 1:
@@ -54,9 +54,14 @@ def get_next_dep_date(doc,method):
 	dep_in_fy = cint(fy_months)/flt(doc.frequency_of_depreciation)
 	booked_deps_months = (cint(doc.number_of_depreciations_booked)*cint(doc.frequency_of_depreciation))
 	last_day = add_months(get_last_day(doc.purchase_date), booked_deps_months)
+	base_last_day = get_last_day(doc.purchase_date)
+	base_dep_date = None
 	if dep_in_fy >= 1 and dep_in_fy % 1  == 0:
 		for i in range(0, cint(doc.total_number_of_depreciations)):
 			dep_date = get_last_day(add_months(fy_doc.year_start_date, (i*doc.frequency_of_depreciation -1)))
+			if base_last_day <= dep_date and base_dep_date is None:
+				base_dep_date = dep_date
+
 			if last_day <= dep_date:
 				doc.next_depreciation_date = dep_date
 				break
@@ -67,10 +72,11 @@ def get_next_dep_date(doc,method):
 			please change the frequency of depreciation')
 	else:
 		frappe.throw('Months between depreciation cannot be less than 1')
+	return base_dep_date
 
-def make_dep_schedule(doc,method):
+def make_dep_schedule(doc,method, base_dep_date):
 	fy_doc = get_fy_doc(doc,method)
-	diff_pd_npd = relativedelta.relativedelta(add_days(doc.next_depreciation_date,1), getdate(doc.purchase_date))
+	diff_pd_npd = relativedelta.relativedelta(add_days(base_dep_date,1), getdate(doc.purchase_date))
 	diff_months = diff_pd_npd.years*12 + diff_pd_npd.months
 	diff_days = date_diff(add_days(doc.next_depreciation_date,1), doc.purchase_date)
 	fy_days = date_diff(fy_doc.year_end_date, fy_doc.year_start_date)
