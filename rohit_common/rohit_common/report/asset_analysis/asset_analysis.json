@@ -7,12 +7,20 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2016-08-11 23:22:39.556973", 
+ "modified": "2017-07-28 12:21:48.471882", 
  "modified_by": "Administrator", 
- "module": "RIGPL ERPNext", 
+ "module": "rohit_common", 
  "name": "Asset Analysis", 
  "owner": "Administrator", 
  "ref_doctype": "Asset Category", 
  "report_name": "Asset Analysis", 
- "report_type": "Script Report"
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Accounts User"
+  }, 
+  {
+   "role": "Accounts Manager"
+  }
+ ]
 }
