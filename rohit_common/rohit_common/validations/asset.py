@@ -13,7 +13,8 @@ def validate(doc, method):
 	doc.gross_purchase_amount)/100,0)
 	doc.total_number_of_depreciations = ass_cat.total_number_of_depreciations
 	doc.frequency_of_depreciation = ass_cat.frequency_of_depreciation
-	doc.depreciation_method = ass_cat.depreciation_method
+	if doc.depreciation_method != 'Manual':
+		doc.depreciation_method = ass_cat.depreciation_method
 	get_next_dep_date(doc,method)
 	make_dep_schedule(doc, method)
 	
@@ -116,6 +117,7 @@ def make_dep_schedule(doc,method):
 		d.depreciation_amount = depreciation_amount
 		accumulated_depreciation += d.depreciation_amount
 		d.accumulated_depreciation_amount = flt(accumulated_depreciation, d.precision("accumulated_depreciation_amount"))
+
 
 def get_depreciation_amount(doc, depreciable_value, middle_purchase_factor):
 	if doc.depreciation_method in ("Straight Line", "Manual"):
