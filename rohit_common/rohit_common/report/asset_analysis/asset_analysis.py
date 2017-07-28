@@ -47,7 +47,7 @@ def get_assets(conditions):
 		ass.opening_accumulated_depreciation, ass.expected_value_after_useful_life AS salvage, 
 		ass.total_number_of_depreciations, as_cat_acc.fixed_asset_account
 		FROM `tabAsset` ass, `tabAsset Category` as_cat, `tabAsset Category Account` as_cat_acc
-		WHERE ass.docstatus = 1 AND ass.asset_category = as_cat.name AND 
+		WHERE ass.docstatus != 2 AND ass.asset_category = as_cat.name AND 
 			as_cat_acc.parent = as_cat.name %s
 		ORDER BY ass.purchase_date DESC, ass.asset_category""" %(conditions)
 	

@@ -10,7 +10,7 @@ from dateutil import relativedelta
 def validate(doc, method):
 	ass_cat = frappe.get_doc("Asset Category", doc.asset_category)
 	doc.expected_value_after_useful_life = round((ass_cat.residual_value_percent * \
-	doc.gross_purchase_amount)/100,2)
+	doc.gross_purchase_amount)/100,0)
 	doc.total_number_of_depreciations = ass_cat.total_number_of_depreciations
 	doc.frequency_of_depreciation = ass_cat.frequency_of_depreciation
 	doc.depreciation_method = ass_cat.depreciation_method
@@ -51,11 +51,14 @@ def get_next_dep_date(doc,method):
 	r = relativedelta.relativedelta(add_days(fy_doc.year_end_date,1), fy_doc.year_start_date)
 	fy_months = r.years*12 + r.months
 	dep_in_fy = cint(fy_months)/flt(doc.frequency_of_depreciation)
-	last_day = get_last_day(doc.purchase_date)
-
+	booked_deps_months = (cint(doc.number_of_depreciations_booked)*cint(doc.frequency_of_depreciation))
+	last_day = add_months(get_last_day(doc.purchase_date), booked_deps_months)
+	frappe.msgprint(str(last_day))
+	#frappe.msgprint(str(booked_deps_months))
 	if dep_in_fy >= 1 and dep_in_fy % 1  == 0:
-		for i in range(cint(dep_in_fy), 0, -1):
-			dep_date = get_last_day(add_months(fy_doc.year_end_date, -i*doc.frequency_of_depreciation))
+		for i in range(0, cint(doc.total_number_of_depreciations)):
+			dep_date = get_last_day(add_months(fy_doc.year_start_date, (i*doc.frequency_of_depreciation -1)))
+			frappe.msgprint(str(dep_date))
 			if last_day <= dep_date:
 				doc.next_depreciation_date = dep_date
 				break
@@ -87,13 +90,14 @@ def make_dep_schedule(doc,method):
 		else:
 			number_of_pending_depreciations = cint(doc.total_number_of_depreciations) - \
 					cint(doc.number_of_depreciations_booked)
-
+		#frappe.msgprint(str(doc.number_of_depreciations_booked))
+		#frappe.msgprint(str(number_of_pending_depreciations))
 		if number_of_pending_depreciations:
 			for n in xrange(number_of_pending_depreciations):
 				schedule_date = get_last_day(add_months(doc.next_depreciation_date, 
 					n * cint(doc.frequency_of_depreciation)))
 
-				if diff_months < doc.frequency_of_depreciation and n==0:
+				if diff_months < doc.frequency_of_depreciation and n==0 and cint(doc.number_of_depreciations_booked) == 0:
 					depreciation_amount = get_depreciation_amount(doc,value_after_depreciation, middle_purchase_factor)
 				else:
 					depreciation_amount = get_depreciation_amount(doc, value_after_depreciation, 1)
@@ -120,9 +124,9 @@ def make_dep_schedule(doc,method):
 
 def get_depreciation_amount(doc, depreciable_value, middle_purchase_factor):
 	if doc.depreciation_method in ("Straight Line", "Manual"):
-		depreciation_amount = (flt(doc.value_after_depreciation) -
+		depreciation_amount = round((flt(doc.value_after_depreciation) -
 			flt(doc.expected_value_after_useful_life))* middle_purchase_factor / (cint(doc.total_number_of_depreciations) -
-			cint(doc.number_of_depreciations_booked))
+			cint(doc.number_of_depreciations_booked)),0)
 	else:
 		factor = 200.0 /  doc.total_number_of_depreciations
 		depreciation_amount = flt(depreciable_value * factor / 100, 0)
