@@ -53,12 +53,9 @@ def get_next_dep_date(doc,method):
 	dep_in_fy = cint(fy_months)/flt(doc.frequency_of_depreciation)
 	booked_deps_months = (cint(doc.number_of_depreciations_booked)*cint(doc.frequency_of_depreciation))
 	last_day = add_months(get_last_day(doc.purchase_date), booked_deps_months)
-	frappe.msgprint(str(last_day))
-	#frappe.msgprint(str(booked_deps_months))
 	if dep_in_fy >= 1 and dep_in_fy % 1  == 0:
 		for i in range(0, cint(doc.total_number_of_depreciations)):
 			dep_date = get_last_day(add_months(fy_doc.year_start_date, (i*doc.frequency_of_depreciation -1)))
-			frappe.msgprint(str(dep_date))
 			if last_day <= dep_date:
 				doc.next_depreciation_date = dep_date
 				break
@@ -90,8 +87,6 @@ def make_dep_schedule(doc,method):
 		else:
 			number_of_pending_depreciations = cint(doc.total_number_of_depreciations) - \
 					cint(doc.number_of_depreciations_booked)
-		#frappe.msgprint(str(doc.number_of_depreciations_booked))
-		#frappe.msgprint(str(number_of_pending_depreciations))
 		if number_of_pending_depreciations:
 			for n in xrange(number_of_pending_depreciations):
 				schedule_date = get_last_day(add_months(doc.next_depreciation_date, 
