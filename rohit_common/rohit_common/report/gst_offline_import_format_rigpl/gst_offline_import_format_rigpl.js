@@ -32,5 +32,15 @@ frappe.query_reports["GST Offline Import Format RIGPL"] = {
 			"fieldtype": "Link",
 			"options": "Sales Taxes and Charges Template",
 		},
+		{
+			"fieldname":"export",
+			"label": __("Export"),
+			"fieldtype": "Check",
+		},
+		{
+			"fieldname":"hsn",
+			"label": __("HSN Wise"),
+			"fieldtype": "Check",
+		},
 	]
 }
