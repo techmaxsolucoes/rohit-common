@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import frappe
+import frappe, re
 from frappe import msgprint
 
 def validate(self):
@@ -9,8 +9,8 @@ def validate(self):
 
 
 def validate(doc,method):
+	doc.pincode = re.sub('[^A-Za-z0-9]+', '', str(doc.pincode))
 	valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
-	
 	if doc.gstin:
 		if doc.gstin != "NA":
 			if len(doc.gstin)!= 15:

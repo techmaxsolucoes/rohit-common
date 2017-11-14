@@ -4,12 +4,16 @@ import frappe
 from frappe import msgprint
 	
 def validate(doc,method):
+	ship_pincode = frappe.db.get_value("Address", doc.shipping_address_name ,"pincode")
 	ship_gstin = frappe.db.get_value("Address", doc.shipping_address_name ,"gstin")
 	bill_gstin = frappe.db.get_value("Address", doc.customer_address ,"gstin")
 	ship_state = frappe.db.get_value("Address", doc.shipping_address_name, "state_rigpl")
 	ship_country = frappe.db.get_value("Address", doc.shipping_address_name, "country")
 	template_doc = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
 
+	if ship_pincode is None:
+		frappe.throw(("Shipping Pincode is Mandatory or NA, please correct it in Shipping Address {0}").\
+			format(frappe.get_desk_link('Address', doc.shipping_address_name)))
 	doc.shipping_address_gstin = ship_gstin
 	doc.billing_address_gstin = bill_gstin
 	
