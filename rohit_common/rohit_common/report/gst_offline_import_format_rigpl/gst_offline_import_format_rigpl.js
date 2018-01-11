@@ -5,6 +5,13 @@
 frappe.query_reports["GST Offline Import Format RIGPL"] = {
 	"filters": [
 		{
+			"fieldname":"customer",
+			"label": __("Customer"),
+			"fieldtype": "Link",
+			"reqd": 0,
+			"options": "Customer",
+		},
+		{
 			"fieldname":"from_date",
 			"label": __("From Date"),
 			"fieldtype": "Date",
@@ -33,8 +40,8 @@ frappe.query_reports["GST Offline Import Format RIGPL"] = {
 			"options": "Sales Taxes and Charges Template",
 		},
 		{
-			"fieldname":"export",
-			"label": __("Export"),
+			"fieldname":"item_wise",
+			"label": __("Item Wise"),
 			"fieldtype": "Check",
 		},
 		{
