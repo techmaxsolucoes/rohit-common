@@ -75,7 +75,7 @@ def get_data(filters):
 			si.customer_address, ad.address_title, ad.city, ad.pincode, ad.state_rigpl, 
 			ad.gstin,
 			si.shipping_address_name, ad2.address_title, ad2.city, ad2.pincode, ad2.state_rigpl,
-			ad2.gstin
+			ad2.gstin, 0, 0, 0, 0, 0, 0
 			FROM `tabSales Invoice` si, `tabAddress` ad, `tabAddress` ad2,
 				`tabSales Taxes and Charges Template` tax_template, 
 				`tabSales Taxes and Charges` tax
