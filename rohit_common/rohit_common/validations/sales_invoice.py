@@ -5,15 +5,21 @@ from frappe import msgprint
 	
 def validate(doc,method):
 	ship_pincode = frappe.db.get_value("Address", doc.shipping_address_name ,"pincode")
+	bill_pincode = frappe.db.get_value("Address", doc.customer_address ,"pincode")
 	ship_gstin = frappe.db.get_value("Address", doc.shipping_address_name ,"gstin")
 	bill_gstin = frappe.db.get_value("Address", doc.customer_address ,"gstin")
-	ship_state = frappe.db.get_value("Address", doc.shipping_address_name, "state_rigpl")
+	bill_state = frappe.db.get_value("Address", doc.customer_address, "state_rigpl")
 	ship_country = frappe.db.get_value("Address", doc.shipping_address_name, "country")
 	template_doc = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
 
 	if ship_pincode is None:
 		frappe.throw(("Shipping Pincode is Mandatory or NA, please correct it in Shipping Address {0}").\
 			format(frappe.get_desk_link('Address', doc.shipping_address_name)))
+
+	if bill_pincode is None:
+		frappe.throw(("Billing Pincode is Mandatory or NA, please correct it in Billing Address {0}").\
+			format(frappe.get_desk_link('Address', doc.shipping_address_name)))
+
 	doc.shipping_address_gstin = ship_gstin
 	doc.billing_address_gstin = bill_gstin
 	
@@ -32,20 +38,20 @@ def validate(doc,method):
 	
 	#Check if Shipping State is Same as Template State then check if the tax template is LOCAL
 	#Else if the States are different then the template should NOT BE LOCAL
-	if ship_state == template_doc.state and template_doc.is_export == 0:
+	if bill_state == template_doc.state and template_doc.is_export == 0:
 		if template_doc.is_local_sales != 1:
-			frappe.throw(("Selected Tax {0} is NOT LOCAL Tax but Shipping Address is \
-				in Same State {1}, hence either change Shipping Address or Change the \
-				Selected Tax").format(doc.taxes_and_charges, ship_state))
-	elif ship_country == 'India' and ship_state != template_doc.state:
+			frappe.throw(("Selected Tax {0} is NOT LOCAL Tax but Billing Address is \
+				in Same State {1}, hence either change Billing Address or Change the \
+				Selected Tax").format(doc.taxes_and_charges, bill_state))
+	elif ship_country == 'India' and bill_state != template_doc.state:
 		if template_doc.is_local_sales == 1:
-			frappe.throw(("Selected Tax {0} is LOCAL Tax but Shipping Address is \
-				in Different State {1}, hence either change Shipping Address or Change the \
-				Selected Tax").format(doc.taxes_and_charges, ship_state))
+			frappe.throw(("Selected Tax {0} is LOCAL Tax but Billing Address is \
+				in Different State {1}, hence either change Billing Address or Change the \
+				Selected Tax").format(doc.taxes_and_charges, bill_state))
 	elif ship_country != 'India': #Case of EXPORTS
 		if template_doc.is_export != 1:
-			frappe.throw(("Selected Tax {0} is for Indian Sales but Shipping Address is \
-				in Different Country {1}, hence either change Shipping Address or Change the \
+			frappe.throw(("Selected Tax {0} is for Indian Sales but Billing Address is \
+				in Different Country {1}, hence either change Billing Address or Change the \
 				Selected Tax").format(doc.taxes_and_charges, ship_country))
 	#lastly check the child taxes table are in sync with the template
 	check_taxes_integrity(doc, method, template_doc)
