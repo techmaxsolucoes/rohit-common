@@ -55,6 +55,14 @@ def validate(doc,method):
 				Selected Tax").format(doc.taxes_and_charges, ship_country))
 	#lastly check the child taxes table are in sync with the template
 	check_taxes_integrity(doc, method, template_doc)
+	make_custom_tariff_hsn_same(doc,method)
+
+def make_custom_tariff_hsn_same(doc,method):
+	for it in doc.items:
+		if it.cetsh_number:
+			it.gst_hsn_code = it.cetsh_number
+		else:
+			frappe.throw(("Cetsh Number is Mandatory for Item in Row Number {0}").format(it.idx))
 
 def check_taxes_integrity(doc,method, template):
 	for tax in doc.taxes:
