@@ -75,14 +75,12 @@ def get_data(filters):
 			si.customer_address, ad.address_title, ad.city, ad.pincode, ad.state_rigpl, 
 			ad.gstin,
 			si.shipping_address_name, ad2.address_title, ad2.city, ad2.pincode, ad2.state_rigpl,
-			ad2.gstin, 0, 0, 0, 0, 0, 0
+			ad2.gstin, 9, 0, 9, 0, 18, 0
 			FROM `tabSales Invoice` si, `tabAddress` ad, `tabAddress` ad2,
-				`tabSales Taxes and Charges Template` tax_template, 
-				`tabSales Taxes and Charges` tax
+				`tabSales Taxes and Charges Template` tax_template
 			WHERE ad.name = si.customer_address 
 				AND ad2.name = si.shipping_address_name
 				AND si.taxes_and_charges = tax_template.name
-				AND tax.parent = si.name
 				AND si.docstatus != 2 %s""" %(si_cond), as_list=1)
 	return data
 
