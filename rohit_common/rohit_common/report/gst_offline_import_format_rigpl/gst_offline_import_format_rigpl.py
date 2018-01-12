@@ -34,7 +34,7 @@ def get_columns(filters):
 			_("Net Total") + ":Currency:100", _("Grand Total") + ":Currency:100",
 			_("Customer Link") + ":Link/Customer:100", 
 			_("Tax Link") + ":Link/Sales Taxes and Charges Template:100",
-			_("Is Export") + ":Int:30", _("GST Paid on Export") + ":Int:30",
+			_("Is Export") + "::30", _("GST Paid on Export") + "::30",
 			_("Export Shipping Bill Number") + "::80", _("Export Shipping Bill Date") + ":Date:80",
 			_("Export Shipping Bill Port Code") + "::80", _("Export Destination Country Code") + "::80",
 			_("Billing Address Link") + ":Link/Address:80", _("Billing Name") + "::80",
@@ -70,12 +70,19 @@ def get_data(filters):
 	else:
 		data = frappe.db.sql("""SELECT si.posting_date, si.name, si.base_net_total,
 			si.base_grand_total, si.customer, si.taxes_and_charges, 
-			tax_template.is_export, 0, 'EXP_SHIP_BILL', 'SHIP_DATE', 
-			'SHIP_PORT_CODE', 'COUNTRY CODE', 
+			if(tax_template.is_export = 1, 'Y',''), 
+			if(tax_template.is_export =1, 'Export with Payment of GST or Export without \
+			Payment of GST or SEZ or Deemed Export', ''), 
+			if(tax_template.is_export =1, 'EXP_SHIP_BILL', ''), 
+			if(tax_template.is_export =1, '2099-12-31', ''),
+			if(tax_template.is_export =1, 'SHIP_PORT_CODE', ''),
+			if(tax_template.is_export =1, 'COUNTRY_CODE', ''),
 			si.customer_address, ad.address_title, ad.city, ad.pincode, ad.state_rigpl, 
 			ad.gstin,
 			si.shipping_address_name, ad2.address_title, ad2.city, ad2.pincode, ad2.state_rigpl,
-			ad2.gstin, 9, 0, 9, 0, 18, 0
+			ad2.gstin, if(tax_template.is_local_sales = 1,9, ''), 0,
+			if(tax_template.is_local_sales = 1,9, ''), 0, 
+			if(tax_template.is_local_sales <> 1,18, ''), 0
 			FROM `tabSales Invoice` si, `tabAddress` ad, `tabAddress` ad2,
 				`tabSales Taxes and Charges Template` tax_template
 			WHERE ad.name = si.customer_address 
