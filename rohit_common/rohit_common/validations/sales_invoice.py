@@ -65,19 +65,22 @@ def make_custom_tariff_hsn_same(doc,method):
 			frappe.throw(("Cetsh Number is Mandatory for Item in Row Number {0}").format(it.idx))
 
 def check_taxes_integrity(doc,method, template):
-	for tax in doc.taxes:
-		check = 0
-		for temp in template.taxes:
-			if tax.idx == temp.idx and check == 0:
-				check = 1
-				if tax.charge_type != temp.charge_type or tax.row_id != temp.row_id or \
-					tax.account_head != temp.account_head or tax.included_in_print_rate \
-					!= temp.included_in_print_rate or tax.rate != temp.rate:
-						frappe.throw(("Selected Tax {0}'s table does not match with tax table \
-							of Invoice# {1}. Check Row # {2} or reload Taxes").\
-							format(doc.taxes_and_charges, doc.name, tax.idx))
-		if check == 0:
-			frappe.throw(("Selected Tax {0}'s table does not match with tax table \
-				of Invoice# {1}. Check Row # {2} or reload Taxes").\
-				format(doc.taxes_and_charges, doc.name, tax.idx))
+	if doc.taxes:
+		for tax in doc.taxes:
+			check = 0
+			for temp in template.taxes:
+				if tax.idx == temp.idx and check == 0:
+					check = 1
+					if tax.charge_type != temp.charge_type or tax.row_id != temp.row_id or \
+						tax.account_head != temp.account_head or tax.included_in_print_rate \
+						!= temp.included_in_print_rate or tax.rate != temp.rate:
+							frappe.throw(("Selected Tax {0}'s table does not match with tax table \
+								of Invoice# {1}. Check Row # {2} or reload Taxes").\
+								format(doc.taxes_and_charges, doc.name, tax.idx))
+			if check == 0:
+				frappe.throw(("Selected Tax {0}'s table does not match with tax table \
+					of Invoice# {1}. Check Row # {2} or reload Taxes").\
+					format(doc.taxes_and_charges, doc.name, tax.idx))
+	else:
+		frappe.throw(("Empty Tax Table is not Allowed for Sales Invoice {0}").format(doc.name))
 
