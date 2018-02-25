@@ -1,3 +1,4 @@
 rohit_common.patches.20141106_address_correction
 rohit_common.patches.20170524_new_state_doctype
 rohit_common.patches.20170701_add_cetsh_missing_si
+rohit_common.patches.20180217_update_state_field_address
