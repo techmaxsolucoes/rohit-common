@@ -13,5 +13,5 @@ def execute():
 	for add in address_list:
 		add_doc = frappe.get_doc("Address", add[0])
 		frappe.db.set_value("Address", add_doc.name, "state_rigpl", add_doc.state)
-		print "Update Address: " + add_doc.name + " State value to " + str(add_doc.state)
+		print ("Update Address: " + add_doc.name + " State value to " + str(add_doc.state))
 		
