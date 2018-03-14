@@ -24,6 +24,8 @@ def validate(doc,method):
 				if not p.match(doc.pincode):
 					frappe.throw(_("Invalid Pincode only digits in Pincode for India allowed"))
 		else:
+			if doc.pincode is None:
+				frappe.throw("If Pincode is not Known then Enter NA")
 			if doc.state is None:
 				frappe.throw("State field is Mandatory")
 
