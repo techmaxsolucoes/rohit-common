@@ -82,7 +82,7 @@ def get_data(filters):
 			si.shipping_address_name, ad2.address_title, ad2.city, ad2.pincode, ad2.state_rigpl,
 			ad2.gstin, if(tax_template.is_local_sales = 1,9, ''), 0,
 			if(tax_template.is_local_sales = 1,9, ''), 0, 
-			if(tax_template.is_local_sales <> 1,18, ''), 0
+			if(tax_template.is_local_sales != 1,18, ''), 0
 			FROM `tabSales Invoice` si, `tabAddress` ad, `tabAddress` ad2,
 				`tabSales Taxes and Charges Template` tax_template
 			WHERE ad.name = si.customer_address 
