@@ -5,6 +5,14 @@ from frappe import msgprint
 from erpnext.regional.india import states
 
 def validate(doc,method):
+	new_name, entered_name = check_id(doc,method)
+	if doc.get('__islocal'):
+		if new_name != doc.name:
+			doc.name = new_name
+	else:
+		if new_name != doc.name:
+			frappe.throw(("Special Characters not allowed in Customer ID.\
+				Current Customer ID: {0}-->Allowed Customer ID: {1}").format(doc.name, new_name))
 	validate_primary_address(doc, method)
 	validate_shipping_address(doc, method)
 	doc.pincode = re.sub('[^A-Za-z0-9]+', '', str(doc.pincode))
@@ -102,3 +110,9 @@ def check_set(doc, method, is_address_type):
 		for add in other_add:
 			chk = chk + frappe.db.get_value(doc.doctype, add[0], is_address_type)
 	return chk
+
+def check_id(doc, method):
+	#Disallow Special Characters in Customer ID
+	new_name = re.sub('[^A-Za-z0-9\\-]+', '', doc.name)
+	entered_name = doc.name
+	return new_name, entered_name
