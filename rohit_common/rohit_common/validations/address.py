@@ -68,6 +68,9 @@ def validate(doc,method):
 				doc.pan = doc.gstin[2:12]
 			else:
 				doc.pan = ""
+	else:
+		if doc.country == 'India':
+			frappe.throw('GSTIN Mandatory for Indian Addresses or Enter NA for NO GSTIN')
 		
 	#Todo: Add the GST check digit checksum for the last digit so that all GST numbers are
 	#checked and entered properly.
