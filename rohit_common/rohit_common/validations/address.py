@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import frappe, re
 from frappe import msgprint
 from erpnext.regional.india import states
+from frappe.utils import flt
 
 def validate(doc,method):
 	new_name, entered_name = check_id(doc,method)
@@ -108,11 +109,11 @@ def check_set(doc, method, is_address_type):
 			%(d.link_doctype, d.link_name, doc.name, doc.doctype), as_list=1)
 		chk = 0
 		for add in other_add:
-			chk = chk + frappe.db.get_value(doc.doctype, add[0], is_address_type)
+			chk = chk + flt(frappe.db.get_value(doc.doctype, add[0], is_address_type))
 	return chk
 
 def check_id(doc, method):
 	#Disallow Special Characters in Customer ID
-	new_name = re.sub('[^A-Za-z0-9\\-]+', '', doc.name)
+	new_name = re.sub('[^A-Za-z0-9\\-]+', ' ', doc.name)
 	entered_name = doc.name
 	return new_name, entered_name
