@@ -24,12 +24,33 @@ def validate(doc,method):
 				p = re.compile("[0-9]{6}")
 				if not p.match(doc.pincode):
 					frappe.throw(_("Invalid Pincode only digits in Pincode for India allowed"))
+		elif doc.country == 'United States':
+			if doc.state_rigpl is None:
+				frappe.throw('State RIGPL for Country US is Mandatory')
+			else:
+				doc.state = doc.state_rigpl
+				doc.gst_state = ""
+			if len(doc.pincode) == 5:
+				p = re.compile("[0-9]{5}")
+				if not p.match(doc.pincode):
+					frappe.throw(_("Invalid Pincode only digits in Pincode for US allowed"))
+			elif len(doc.pincode) == 9:
+				p = re.compile("[0-9]{9}")
+				if not p.match(doc.pincode):
+					frappe.throw(_("Invalid Pincode only digits in Pincode for US allowed"))
+			else:
+				frappe.throw('US Pincode should always be 5 or 9 Digits')
 		else:
 			if doc.pincode is None:
 				frappe.throw("If Pincode is not Known then Enter NA")
-			if doc.state is None:
-				frappe.throw("State field is Mandatory")
-
+		if doc.state is None:
+			frappe.throw("State field is Mandatory")
+		else:
+			state_doc = frappe.get_doc("State", doc.state_rigpl)
+			if state_doc.country != doc.country:
+				frappe.throw(("State {} belongs to Country {} hence choose correct \
+					State or Change Country to {}").format(state_doc.name, \
+					state_doc.country, state_doc.country))
 	else:
 		frappe.throw('Country is Mandatory')
 	if doc.gstin:
