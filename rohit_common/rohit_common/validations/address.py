@@ -41,6 +41,7 @@ def validate(doc,method):
 			else:
 				frappe.throw('US Pincode should always be 5 or 9 Digits')
 		else:
+			doc.gst_state = ""
 			if doc.pincode is None:
 				frappe.throw("If Pincode is not Known then Enter NA")
 		if doc.state is None:
