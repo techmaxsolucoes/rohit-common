@@ -44,12 +44,13 @@ def validate(doc,method):
 			doc.gst_state = ""
 			if doc.pincode is None:
 				frappe.throw("If Pincode is not Known then Enter NA")
-		if doc.state is None:
+		if not doc.state or doc.state == '':
 			frappe.throw("State field is Mandatory")
 	else:
 		frappe.throw('Country is Mandatory')
 
 	if doc.state_rigpl:
+		doc.state = doc.state_rigpl
 		verify_state_country(doc.state_rigpl, doc.country)
 
 	if doc.gstin:
