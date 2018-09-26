@@ -45,14 +45,12 @@ def validate(doc,method):
 				frappe.throw("If Pincode is not Known then Enter NA")
 		if doc.state is None:
 			frappe.throw("State field is Mandatory")
-		else:
-			state_doc = frappe.get_doc("State", doc.state_rigpl)
-			if state_doc.country != doc.country:
-				frappe.throw(("State {} belongs to Country {} hence choose correct \
-					State or Change Country to {}").format(state_doc.name, \
-					state_doc.country, state_doc.country))
 	else:
 		frappe.throw('Country is Mandatory')
+
+	if doc.state_rigpl:
+		verify_state_country(doc.state_rigpl, doc.country)
+
 	if doc.gstin:
 		if doc.gstin != "NA":
 			if len(doc.gstin)!= 15:
@@ -87,6 +85,13 @@ def validate(doc,method):
 		
 	#Todo: Add the GST check digit checksum for the last digit so that all GST numbers are
 	#checked and entered properly.
+
+def verify_state_country(state, country):
+	state_doc = frappe.get_doc("State", state)
+	if state_doc.country != country:
+		frappe.throw(("State {} belongs to Country {} hence choose correct \
+			State or Change Country to {}").format(state, \
+			state_doc.country, state_doc.country))
 	
 def validate_primary_address(doc, method):
 	"""Validate that there can only be one primary address for particular customer, supplier"""
