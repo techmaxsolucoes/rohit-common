@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 /* eslint-disable */
 
-frappe.query_reports["GST Offline Import Format RIGPL"] = {
+frappe.query_reports["Clear Tax Import Format"] = {
 	"filters": [
 		{
 			"fieldname":"type",
@@ -11,20 +11,6 @@ frappe.query_reports["GST Offline Import Format RIGPL"] = {
 			"options": "\nSales Invoice\nPurchase Invoice",
 			"reqd": 1,
 			"default": "Sales Invoice",
-		},
-		{
-			"fieldname":"customer",
-			"label": __("Customer"),
-			"fieldtype": "Link",
-			"reqd": 0,
-			"options": "Customer",
-		},
-		{
-			"fieldname":"supplier",
-			"label": __("Supplie"),
-			"fieldtype": "Link",
-			"reqd": 0,
-			"options": "Supplier",
 		},
 		{
 			"fieldname":"from_date",
@@ -47,22 +33,6 @@ frappe.query_reports["GST Offline Import Format RIGPL"] = {
 			"reqd": 0,
 			"options": "Letter Head",
 			"default": frappe.defaults.get_default("letter_head"),
-		},
-		{
-			"fieldname":"taxes",
-			"label": __("Tax"),
-			"fieldtype": "Link",
-			"options": "Sales Taxes and Charges Template",
-		},
-		{
-			"fieldname":"item_wise",
-			"label": __("Item Wise"),
-			"fieldtype": "Check",
-		},
-		{
-			"fieldname":"hsn",
-			"label": __("HSN Wise"),
-			"fieldtype": "Check",
 		},
 	]
 }

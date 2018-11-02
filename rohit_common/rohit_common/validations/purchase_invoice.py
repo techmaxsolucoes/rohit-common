@@ -48,10 +48,13 @@ def check_gst_rules(doc,method):
 					in Different Country {1}, hence either change Supplier Address or Change the \
 					Selected Tax").format(doc.taxes_and_charges, supplier_country))
 
-def update_fields(doc,method):
-	letter_head_tax = frappe.db.get_value("Purchase Taxes and Charges Template", \
+def update_fields(doc,method): 
+	doc.letter_head = frappe.db.get_value("Purchase Taxes and Charges Template", \
 		doc.taxes_and_charges, "letter_head")
-	doc.letter_head = letter_head_tax
+	doc.place_of_supply = frappe.db.get_value("Purchase Taxes and Charges Template", \
+		doc.taxes_and_charges, "state")
+	doc.supplier_gstin = frappe.db.get_value("Address", doc.supplier_address "gstin")
+	doc.company_gstin = frappe.db.get_value("Address", doc.shipping_address "gstin")
 
 def check_taxes_integrity(doc,method):
 	template = frappe.get_doc("Purchase Taxes and Charges Template", doc.taxes_and_charges)
