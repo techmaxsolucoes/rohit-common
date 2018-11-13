@@ -53,8 +53,8 @@ def update_fields(doc,method):
 		doc.taxes_and_charges, "letter_head")
 	doc.place_of_supply = frappe.db.get_value("Purchase Taxes and Charges Template", \
 		doc.taxes_and_charges, "state")
-	doc.supplier_gstin = frappe.db.get_value("Address", doc.supplier_address "gstin")
-	doc.company_gstin = frappe.db.get_value("Address", doc.shipping_address "gstin")
+	doc.supplier_gstin = frappe.db.get_value("Address", doc.supplier_address, "gstin")
+	doc.company_gstin = frappe.db.get_value("Address", doc.shipping_address, "gstin")
 
 def check_taxes_integrity(doc,method):
 	template = frappe.get_doc("Purchase Taxes and Charges Template", doc.taxes_and_charges)
