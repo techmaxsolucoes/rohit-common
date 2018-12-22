@@ -13,13 +13,14 @@ def execute():
 			if cetsh_number:
 				frappe.db.set_value("Sales Invoice Item", dnd[0], "cetsh_number", cetsh_number)
 				frappe.db.set_value("Sales Invoice Item", dnd[0], "gst_hsn_code", cetsh_number)
-				frappe.db.commit()
 				print("Updated CETSH Number and GST HSN Code in Sales Invoice # " \
 					+ sid_doc.parent + " Item No: " + str(sid_doc.idx))
 			else:
 				print("SI# " + sid_doc.parent + " Item Code: " + sid[1] + \
 					" At Row No " + str(sid_doc.idx) + \
 					" Does Not Have CETSH Number Linked")
+	frappe.db.commit()
+	print("Committed Changes")
 
 	sid_list = frappe.db.sql("""SELECT name, gst_hsn_code, cetsh_number FROM `tabSales Invoice Item` 
 		WHERE cetsh_number IS NOT NULL AND gst_hsn_code IS NULL 
@@ -29,5 +30,6 @@ def execute():
 			cetsh_number = frappe.get_value("Sales Invoice Item", sid[0], "cetsh_number")
 			sid_doc = frappe.get_doc("Sales Invoice Item", sid[0])
 			frappe.db.set_value("Sales Invoice Item", sid[0], "gst_hsn_code", cetsh_number)
-			frappe.db.commit()
 			print("Updated GST HSN Code in SI # " + sid_doc.parent + " Item No: " + str(sid_doc.idx))
+	frappe.db.commit()
+	print("Committed Changes")
