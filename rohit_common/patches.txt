@@ -3,3 +3,4 @@ rohit_common.patches.20170524_new_state_doctype
 rohit_common.patches.20170701_add_cetsh_missing_si
 rohit_common.patches.20180217_update_state_field_address
 rohit_common.patches.20181101_update_gst_fields_p_inoivce
+rohit_common.patches.20181222_update_gst_hsn

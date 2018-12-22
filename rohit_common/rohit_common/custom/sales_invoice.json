@@ -401,10 +401,8 @@
    "width": null
   }
  ], 
- "custom_perms": [
- ], 
+ "custom_perms": [], 
  "doctype": "Sales Invoice", 
- "property_setters": [
- ], 
+ "property_setters": [], 
  "sync_on_migrate": 1
 }
