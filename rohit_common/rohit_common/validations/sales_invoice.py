@@ -27,7 +27,7 @@ def validate(doc,method):
 		custom_tariff = frappe.db.get_value("Item", items.item_code, "customs_tariff_number")
 		if custom_tariff:
 			if len(custom_tariff) == 8:
-				items.cetsh_number = custom_tariff 
+				items.gst_hsn_code = custom_tariff 
 			else:
 				frappe.throw(("Item Code {0} in line# {1} has a Custom Tariff {2} which not  \
 					8 digit, please get the Custom Tariff corrected").\
@@ -55,14 +55,7 @@ def validate(doc,method):
 				Selected Tax").format(doc.taxes_and_charges, ship_country))
 	#lastly check the child taxes table are in sync with the template
 	check_taxes_integrity(doc, method, template_doc)
-	make_custom_tariff_hsn_same(doc,method)
 
-def make_custom_tariff_hsn_same(doc,method):
-	for it in doc.items:
-		if it.cetsh_number:
-			it.gst_hsn_code = it.cetsh_number
-		else:
-			frappe.throw(("Cetsh Number is Mandatory for Item in Row Number {0}").format(it.idx))
 
 def check_taxes_integrity(doc,method, template):
 	if doc.taxes:
