@@ -12,6 +12,10 @@ def validate(doc,method):
 	if child_asset:
 		frappe.throw(("Cannot Change this Asset Category as Asset {0} already \
 			submitted").format(child_asset[0][0]))
+
+	if len(doc.finance_books) >1:
+		frappe.throw("Only Row Allowed in Finance Books per Asset Category")
+
 	if len(doc.accounts) >1:
 		frappe.throw("Only one account allowed per Asset Category")
 		
