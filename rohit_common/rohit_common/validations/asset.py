@@ -10,6 +10,12 @@ from dateutil import relativedelta
 def validate(doc, method):
 	ass_cat = frappe.get_doc("Asset Category", doc.asset_category)
 	dep_freq, tot_no_of_deps, dep_meth = get_defaults(ass_cat)
+	if doc.is_existing_asset != 1:
+		doc.opening_accumulated_depreciation = 0
+		doc.number_of_depreciations_booked = 0
+	else:
+		if doc.opening_accumulated_depreciation == 0:
+			doc.number_of_depreciations_booked = 0
 	if doc.finance_books:
 		if len(doc.finance_books) != 1:
 			frappe.throw("Only 1 Line is Allowed in Finance Books Table")
