@@ -28,7 +28,8 @@ def execute(filters=None):
 			total_dep = purchase - a.salvage
 			period_dep = 0
 			row += [(total_dep - period_dep), total_dep, period_dep]
-		row += [(purchase - total_dep), a.salvage, a.fixed_asset_account, a.asset_category, \
+		row += [(purchase - total_dep), a.salvage, a.status, a.disposal_date, \
+		a.fixed_asset_account, a.asset_category, \
 		a.warehouse, a.model, a.manufacturer, a.description]
 		
 
@@ -41,7 +42,8 @@ def get_columns():
 		"Purchase Date:Date:80", "Gross Purchase Amt:Currency:100", "Total # Dep:Int:60", 
 		"Op Acc Dep:Currency:100", "Op Dep Period:Currency:100", 
 		"Total Depreciation:Currency:100", "Period Dep:Currency:100",
-		"Net Block:Currency:100", "Salvage Value:Currency:100", "Account:Link/Account:200",
+		"Net Block:Currency:100", "Salvage Value:Currency:100", 
+		"Status::100", "Disposal Date:Date:80", "Account:Link/Account:200",
 		"AssetCategory:Link/Asset Category:150", "Warehouse::150", "Model::150", 
 		"Manufacturer::150", "Description::250"
 	]
@@ -49,10 +51,11 @@ def get_columns():
 def get_assets(conditions, filters):
 	query = """SELECT ass.name, ass.item_code, ass.asset_category, 
 		IFNULL(ass.warehouse, "NIL") as warehouse, IFNULL(ass.model, "NIL") as model, 
-		IFNULL(ass.manufacturer, "NIL") as manufacturer,
+		IFNULL(ass.manufacturer, "NIL") as manufacturer, IFNULL(ass.status, "NO STATUS") as status,
 		IFNULL(ass.description, "NIL") as description, ass.purchase_date, 
 		ass.gross_purchase_amount, ass.opening_accumulated_depreciation, 
 		IFNULL(ass_fb.expected_value_after_useful_life, 0) AS salvage, 
+		IFNULL(ass.disposal_date, '2199-12-31') as disposal_date,
 		ass_fb.total_number_of_depreciations, as_cat_acc.fixed_asset_account
 		FROM `tabAsset` ass, `tabAsset Category` as_cat, `tabAsset Category Account` as_cat_acc,
 			`tabAsset Finance Book` ass_fb
@@ -61,6 +64,7 @@ def get_assets(conditions, filters):
 			AND IFNULL(ass.disposal_date, '2099-12-31') >= '%s' 
 			AND as_cat_acc.parent = as_cat.name  %s
 		ORDER BY ass.purchase_date DESC, ass.asset_category""" %(filters.get("to_date"),conditions)
+	#frappe.msgprint(query)
 	assets = frappe.db.sql(query, as_dict = 1)
 	if assets:
 		pass
