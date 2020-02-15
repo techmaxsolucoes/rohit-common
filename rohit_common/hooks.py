@@ -86,7 +86,7 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"rohit_common.tasks.all"
 # 	],
@@ -98,11 +98,11 @@ doc_events = {
 # 	],
 # 	"weekly": [
 # 		"rohit_common.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"rohit_common.tasks.monthly"
-# 	]
-# }
+# 	],
+ 	"monthly": [
+ 		"rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute"
+	]
+ }
 
 # Testing
 # -------
