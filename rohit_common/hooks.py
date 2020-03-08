@@ -100,7 +100,8 @@ scheduler_events = {
 # 		"rohit_common.tasks.weekly"
 # 	],
  	"monthly": [
- 		"rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute"
+ 		"rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute",
+ 		"rohit_common.rohit_common.scheduled_tasks.prepared_report_delete.execute"
 	]
  }
 

@@ -4,7 +4,8 @@
 
 #This Scheduled task deletes all the Unneeded Email Queue files to reduce the size of the DB
 #1. All Email Queue with reference_doctype == NULL to be deleted is more than Month Old
-#2.
+#2. All Emails Queue with reference_doctype in Long Terms would be deleted after long_term_period = 90 days
+#3. Other short-term doctype email queue would be deleted after normal period of 30 days
 
 from __future__ import unicode_literals
 import frappe
