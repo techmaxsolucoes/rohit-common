@@ -9,7 +9,7 @@ import frappe
 from frappe.utils.file_manager import delete_file
 
 def execute():
-	set_days = 300
+	set_days = 30
 	query = """SELECT name, creation FROM `tabPrepared Report` 
 		WHERE docstatus = 0 AND creation < (DATE_SUB(CURDATE(), INTERVAL %s DAY)) ORDER BY creation"""%(set_days)
 
