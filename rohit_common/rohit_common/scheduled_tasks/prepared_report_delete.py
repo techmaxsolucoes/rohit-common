@@ -27,8 +27,9 @@ def execute():
 		frappe.db.sql("""DELETE FROM `tabFile` WHERE attached_to_doctype = 'Prepared Report' 
 			AND attached_to_name = '%s'"""%(pr[0]))
 		print ("Deleting the Actual File from System for Prepared Report# " + pr[0])
-		file_doc_frappe = frappe.get_doc('File', file_name[0])
-		delete_file_from_filesystem(file_doc_frappe)
+		print (file_name[0])
+		file_doc = frappe.get_doc('File', file_name[0])
+		delete_file_from_filesystem(file_doc)
 
 
 
