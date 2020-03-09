@@ -18,7 +18,7 @@ def execute():
 	for pr in pr_list:
 		sno += 1
 		print(str(sno) + " Deleting Prepared Report# " + pr[0])
-		#frappe.db.sql("""DELETE FROM `tabPrepared Report` WHERE name = '%s'"""%(pr[0]))
+		frappe.db.sql("""DELETE FROM `tabPrepared Report` WHERE name = '%s'"""%(pr[0]))
 		print ("Deleting File Data for Prepared Report# " + pr[0])
 		file_name = frappe.db.sql("""SELECT name, file_name, is_private, file_url FROM `tabFile` 
 			WHERE attached_to_doctype = 'Prepared Report' 
