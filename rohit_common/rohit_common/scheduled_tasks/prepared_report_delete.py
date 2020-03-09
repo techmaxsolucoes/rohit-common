@@ -22,7 +22,7 @@ def execute():
 		print ("Deleting File Data for Prepared Report# " + pr[0])
 		file_name = frappe.db.sql("""SELECT name, file_name, is_private FROM `tabFile` 
 			WHERE attached_to_doctype = 'Prepared Report' 
-			AND attached_to_docname = '%s' """%(pr[0]), as_list=1)
+			AND attached_to_name = '%s' """%(pr[0]), as_list=1)
 
 		frappe.db.sql("""DELETE FROM `tabFile` WHERE attached_to_doctype = 'Prepared Report' 
 			AND attached_to_name = '%s'"""%(pr[0]))
