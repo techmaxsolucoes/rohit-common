@@ -1,3 +1,6 @@
+# Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
+# License: GNU General Public License v3. See license.txt
+
 from __future__ import unicode_literals
 import frappe
 from frappe.utils import flt
@@ -14,31 +17,29 @@ def execute(filters=None):
 		return columns, invoice_list
 
 	invoice_income_map = get_invoice_income_map(invoice_list)
-	invoice_income_map, invoice_tax_map = get_invoice_tax_map(invoice_list, invoice_income_map)
+	invoice_income_map, invoice_tax_map = get_invoice_tax_map(invoice_list,
+		invoice_income_map, income_accounts)
 
-	invoice_so_dn_map = get_invoice_so_dn_map(invoice_list)
-	customer_map = get_customer_deatils(invoice_list)
-	account_map = get_account_details(invoice_list)
-	customer_info = get_customer_info(invoice_list)
+	customer_map = get_customer_details(invoice_list)
+	address_map = get_address_details(invoice_list)
 
 	data = []
 	for inv in invoice_list:
 		# invoice details
-		#sales_order = list(set(invoice_so_dn_map.get(inv.name, {}).get("sales_order", [])))
-		#delivery_note = list(set(invoice_so_dn_map.get(inv.name, {}).get("delivery_note", [])))
 
-		row = [inv.name, inv.posting_date, inv.customer, customer_info.get(inv.customer),
-			inv.tin_no,inv.taxes_and_charges, inv.lr_no]
+		row = [inv.name, inv.posting_date, inv.customer, inv.tin_no, inv.taxes_and_charges, 
+			inv.lr_no, address_map.get(inv.customer_address, {}).get("state"),
+			address_map.get(inv.customer_address, {}).get("country")]
 
 		# map income values
-		net_total = 0
+		base_net_total = 0
 		for income_acc in income_accounts:
 			income_amount = flt(invoice_income_map.get(inv.name, {}).get(income_acc))
-			net_total += income_amount
+			base_net_total += income_amount
 			row.append(income_amount)
 
 		# net total
-		row.append(net_total)
+		row.append(base_net_total or inv.base_net_total)
 
 		# tax account
 		total_tax = 0
@@ -49,7 +50,7 @@ def execute(filters=None):
 				row.append(tax_amount)
 
 		# total tax, grand total, outstanding amount & rounded total
-		row += [total_tax, inv.grand_total, inv.rounded_total, inv.outstanding_amount]
+		row += [total_tax, inv.base_grand_total, inv.base_rounded_total, inv.outstanding_amount]
 
 		data.append(row)
 
@@ -59,8 +60,9 @@ def execute(filters=None):
 def get_columns(invoice_list):
 	"""return columns based on filters"""
 	columns = [
-		"Invoice:Link/Sales Invoice:120", "Posting Date:Date:80", "Customer:Link/Customer:220", "TIN in Customer::120",
-		"TIN in Invoice::120","Sale Type::80", "LR No::80"
+		_("Invoice") + ":Link/Sales Invoice:100", _("Posting Date") + ":Date:80", _("Customer Id") + ":Link/Customer:180",
+		_("Billing TIN No") + "::100", _("Tax Type") + ":Link/Sales Taxes and Charges Template:120",
+		_("LR No") + "::100", _("Billing State") + "::100", _("Billing Country") + "::100",
 	]
 
 	income_accounts = tax_accounts = income_columns = tax_columns = []
@@ -73,7 +75,7 @@ def get_columns(invoice_list):
 
 		tax_accounts = 	frappe.db.sql_list("""select distinct account_head
 			from `tabSales Taxes and Charges` where parenttype = 'Sales Invoice'
-			and docstatus = 1 and ifnull(tax_amount, 0) != 0
+			and docstatus = 1 and base_tax_amount_after_discount_amount != 0
 			and parent in (%s) order by account_head""" %
 			', '.join(['%s']*len(invoice_list)), tuple([inv.name for inv in invoice_list]))
 
@@ -82,9 +84,8 @@ def get_columns(invoice_list):
 		if account not in income_accounts:
 			tax_columns.append(account + ":Currency:120")
 
-	columns = columns + income_columns + ["Net Total:Currency:120"] + tax_columns + \
-		["Total Tax:Currency:120"] + ["Grand Total:Currency:120"] + \
-		["Rounded Total:Currency:120"] + ["Outstanding Amount:Currency:120"]
+	columns = columns + income_columns + [_("Net Total") + ":Currency:120"] + tax_columns + \
+		[_("Total Tax") + ":Currency:120", _("Grand Total") + ":Currency:120"]
 
 	return columns, income_accounts, tax_accounts
 
@@ -92,7 +93,7 @@ def get_conditions(filters):
 	conditions = ""
 
 	if filters.get("company"): conditions += " and company=%(company)s"
-	if filters.get("account"): conditions += " and debit_to = %(account)s"
+	if filters.get("customer"): conditions += " and customer = %(customer)s"
 
 	if filters.get("from_date"): conditions += " and posting_date >= %(from_date)s"
 	if filters.get("to_date"): conditions += " and posting_date <= %(to_date)s"
@@ -101,14 +102,14 @@ def get_conditions(filters):
 
 def get_invoices(filters):
 	conditions = get_conditions(filters)
-	return frappe.db.sql("""select name, posting_date, customer, taxes_and_charges, lr_no,
-		tin_no ,net_total, other_charges_total, grand_total, rounded_total,
-		outstanding_amount from `tabSales Invoice`
+	return frappe.db.sql("""select name, posting_date, customer, taxes_and_charges, tin_no, lr_no,
+		base_net_total, base_grand_total, customer_address
+		from `tabSales Invoice`
 		where docstatus = 1 %s order by posting_date desc, name desc""" %
 		conditions, filters, as_dict=1)
 
 def get_invoice_income_map(invoice_list):
-	income_details = frappe.db.sql("""select parent, income_account, sum(amount) as amount
+	income_details = frappe.db.sql("""select parent, income_account, sum(base_net_amount) as amount
 		from `tabSales Invoice Item` where parent in (%s) group by parent, income_account""" %
 		', '.join(['%s']*len(invoice_list)), tuple([inv.name for inv in invoice_list]), as_dict=1)
 
@@ -119,60 +120,40 @@ def get_invoice_income_map(invoice_list):
 
 	return invoice_income_map
 
-def get_invoice_tax_map(invoice_list, invoice_income_map):
-	tax_details = frappe.db.sql("""select parent, account_head, sum(tax_amount) as tax_amount
+def get_invoice_tax_map(invoice_list, invoice_income_map, income_accounts):
+	tax_details = frappe.db.sql("""select parent, account_head,
+		sum(base_tax_amount_after_discount_amount) as tax_amount
 		from `tabSales Taxes and Charges` where parent in (%s) group by parent, account_head""" %
 		', '.join(['%s']*len(invoice_list)), tuple([inv.name for inv in invoice_list]), as_dict=1)
 
 	invoice_tax_map = {}
 	for d in tax_details:
-		if d.account_head in invoice_income_map.get(d.parent):
-			invoice_income_map[d.parent][d.account_head] += flt(d.tax_amount)
+		if d.account_head in income_accounts:
+			if invoice_income_map[d.parent].has_key(d.account_head):
+				invoice_income_map[d.parent][d.account_head] += flt(d.tax_amount)
+			else:
+				invoice_income_map[d.parent][d.account_head] = flt(d.tax_amount)
 		else:
 			invoice_tax_map.setdefault(d.parent, frappe._dict()).setdefault(d.account_head, [])
 			invoice_tax_map[d.parent][d.account_head] = flt(d.tax_amount)
 
 	return invoice_income_map, invoice_tax_map
 
-def get_invoice_so_dn_map(invoice_list):
-	si_items = frappe.db.sql("""select parent, sales_order, delivery_note
-		from `tabSales Invoice Item` where parent in (%s)
-		and (ifnull(sales_order, '') != '' or ifnull(delivery_note, '') != '')""" %
-		', '.join(['%s']*len(invoice_list)), tuple([inv.name for inv in invoice_list]), as_dict=1)
 
-	invoice_so_dn_map = {}
-	for d in si_items:
-		if d.sales_order:
-			invoice_so_dn_map.setdefault(d.parent, frappe._dict()).setdefault(
-				"sales_order", []).append(d.sales_order)
-		if d.delivery_note:
-			invoice_so_dn_map.setdefault(d.parent, frappe._dict()).setdefault(
-				"delivery_note", []).append(d.delivery_note)
-
-	return invoice_so_dn_map
-
-def get_customer_deatils(invoice_list):
+def get_customer_details(invoice_list):
 	customer_map = {}
 	customers = list(set([inv.customer for inv in invoice_list]))
-	for cust in frappe.db.sql("""select name, territory from `tabCustomer`
+	for cust in frappe.db.sql("""select name, territory, customer_group from `tabCustomer`
 		where name in (%s)""" % ", ".join(["%s"]*len(customers)), tuple(customers), as_dict=1):
-			customer_map[cust.name] = cust.territory
+			customer_map.setdefault(cust.name, cust)
 
 	return customer_map
 
-def get_account_details(invoice_list):
-	account_map = {}
-	accounts = list(set([inv.debit_to for inv in invoice_list]))
-	for acc in frappe.db.sql("""select name, parent_account from tabAccount
-		where name in (%s)""" % ", ".join(["%s"]*len(accounts)), tuple(accounts), as_dict=1):
-			account_map[acc.name] = acc.parent_account
-
-	return account_map
-
-def get_customer_info(invoice_list):
-	customer_info = {}
-	customer = list(set([inv.customer for inv in invoice_list]))
-	for cust in frappe.db.sql ("""select name, tin_no from `tabCustomer`
-		where name in (%s)""" % ", ".join(["%s"]*len(customer)), tuple(customer), as_dict=1):
-			customer_info [cust.name] = cust.tin_no
-	return customer_info
+def get_address_details(invoice_list):
+	address_map = {}
+	address = list(set([inv.customer_address for inv in invoice_list]))
+	for add in frappe.db.sql("""SELECT name, city, state, country FROM `tabAddress` 
+		WHERE name in (%s) """ % ", ".join(["%s"]*len(address)), tuple(address), as_dict=1):
+		address_map.setdefault(add.name, add)
+	
+	return address_map

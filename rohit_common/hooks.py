@@ -8,6 +8,7 @@ app_email = "aditya@rigpl.com"
 app_url = "https://github.com/adityaduggal/rohit_common"
 app_version = "0.0.1"
 fixtures = ["Custom Field"]
+hide_in_installer = True
 # Includes in <head>
 # ------------------
 
@@ -62,8 +63,18 @@ doc_events = {
 	"Address": {
 		"validate": "rohit_common.rohit_common.validations.address.validate"
 		},
+	"Asset": {
+		"validate": "rohit_common.rohit_common.validations.asset.validate",
+		"autoname": "rohit_common.rohit_common.validations.asset.autoname"
+	},
+	"Asset Category": {
+		"validate": "rohit_common.rohit_common.validations.asset_category.validate"
+	},
 	"Sales Invoice": {
 		"validate": "rohit_common.rohit_common.validations.sales_invoice.validate"
+		},
+	"Purchase Invoice": {
+		"validate": "rohit_common.rohit_common.validations.purchase_invoice.validate"
 		},
 # 	"*": {
 # 		"on_update": "method",
@@ -75,7 +86,7 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"rohit_common.tasks.all"
 # 	],
@@ -87,11 +98,12 @@ doc_events = {
 # 	],
 # 	"weekly": [
 # 		"rohit_common.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"rohit_common.tasks.monthly"
-# 	]
-# }
+# 	],
+ 	"monthly": [
+ 		"rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute",
+ 		"rohit_common.rohit_common.scheduled_tasks.prepared_report_delete.execute"
+	]
+ }
 
 # Testing
 # -------
