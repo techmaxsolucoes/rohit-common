@@ -1,0 +1,22 @@
+{
+ "align_labels_left": 1, 
+ "creation": "2016-11-07 16:50:18.693263", 
+ "custom_format": 1, 
+ "disabled": 0, 
+ "doc_type": "Payment Entry", 
+ "docstatus": 0, 
+ "doctype": "Print Format", 
+ "font": "Default", 
+ "html": "{%- macro add_header(page_num, max_pages, doc, letter_head, no_letterhead) -%}\n\t{% if letter_head and not no_letterhead %}\n\t<div class=\"letter-head\">{{ letter_head }}</div>\n\t{% endif %}\n\t{%- if doc.meta.is_submittable and doc.docstatus==0-%}\n\t<div class=\"alert alert-info text-center\">\n\t\t<h4 style=\"margin: 0px;\">{{ _(\"DRAFT\") }}</h4></div>\n\t{%- endif -%}\n\t{%- if doc.meta.is_submittable and doc.docstatus==2-%}\n\t<div class=\"alert alert-danger text-center\">\n\t\t<h4 style=\"margin: 0px;\">{{ _(\"CANCELLED\") }}</h4></div>\n\t{%- endif -%}\n\t{% if max_pages > 1 %}\n\t<p class=\"text-right\">{{ _(\"Page #{0} of {1}\").format(page_num, max_pages) }}</p>\n\t{% endif %}\n{%- endmacro -%}\n\n<style>\n\t.table-hover>tbody>tr:hover>td, .table-hover>tbody>tr:hover>th {\n\tbackground-color: #B7CCF2;\n\tcolor:#000000;\n\tfont-size:16px;\n\t}\n\t.print-format table, .print-format tr, \n\t.print-format td, .print-format div, .print-format p {\n\t\tfont-family: sans-serif;\n\t\tline-height: 90%;\n\t\tvertical-align: middle;\n\t}\n\t@media screen {\n\t\t.print-format {\n\t\t\twidth: 210mm;\n\t\t\tpadding: 10mm;\n\t\t\tmin-height: 297mm;\n\t\t\tfooter {page-break-after: always;}\n\t\t}\n\t}\n</style>\n\n<small>\n{{ add_header(0,1,doc,letter_head, no_letterhead) }}\n<table class=\"table table-condensed table-bordered\">\n  <tr>\n    <td colspan=\"2\">\n    \t<b style=\"font-size:16px;\">{{ doc.select_print_heading or (doc.print_heading if doc.print_heading != None\n\t\t\telse _(doc.doctype)) }}</b>  \n    </td>\n    <td style=\"width:30%\">    \t\t\n    \t<b style=\"font-size:16px; text-align:left; vertical-align:middle;\">{{ _(\"# \") }}{{ doc.name }}</b><br>\n    </td>\n  </tr>\n</table>\n\n<table class = \"table table-condensed table-bordered\">\n  <tr>\n    <td style=\"width: 70%;\">\n    \t<b style=\"font-size:16px;\">{{ _(\"To\") }}: {{ doc.party_name }}</b><br>\n        <b style=\"font-size:16px;\">{{ _(\"Total Amount\") }}: {{ doc.get_formatted(\"total_allocated_amount\") }} </b>\n    </td>\n    <td style=\"width: 30%;\">\n    \t<b>{{ _(\"Ref No\") }}:</b> {{ doc.reference_no }}<br>\n        <b>{{ _(\"Ref Date\") }}:</b> {{ doc.get_formatted(\"reference_date\") }}\n    </td>\n  </tr>\n</table>\n\n<table class=\"table table-condensed table-hover table-bordered\">\n\t\t<tr>\n\t\t\t<th>Sr</th>\n\t\t\t<th>Our Ref#</th>\n\t\t\t<th>Our Ref Date</th>\n\t\t\t<th class=\"text-right\">Invoice or PO #</th>\n\t\t\t<th>Your Ref Date</th>\n\t\t\t<th class=\"text-right\">Total</th>\n\t\t\t<th class=\"text-right\">Paid/Received</th>\n\t\t</tr>\n\t\t{%- for row in doc.references -%}\n\t\t<tr>\n\t\t\t<td style=\"width: 3%;\">{{ row.idx }}</td>\n\t\t\t<td style=\"width: 22%;\">{{ row.reference_name }}</td>\n\t\t\t<td style=\"width: 10%;\">{{ frappe.db.get_value(row.reference_doctype, row.reference_name, \"posting_date\") }}</td>\n\t\t\t{% if row.reference_doctype == \"Purchase Invoice\" and not no_letterhead %}\n\t\t\t\t<td style=\"width: 25%; text-align: right;\">{{ frappe.db.get_value(row.reference_doctype, row.reference_name, \"bill_no\") }}</td>\n\t\t\t\t<td style=\"width: 10%; text-align: right;\">{{ frappe.db.get_value(row.reference_doctype, row.reference_name, \"bill_date\") }}</td>\n\t\t\t{% endif %}\n\t\t\t{% if row.reference_doctype == \"Sales Invoice\" and not no_letterhead %}\n\t\t\t\t<td style=\"width: 25%; text-align: right;\">{{ frappe.db.get_value(row.reference_doctype, row.reference_name, \"po_no\") }}</td>\n\t\t\t\t<td style=\"width: 10%; text-align: right;\">{{ frappe.db.get_value(row.reference_doctype, row.reference_name, \"po_date\") }}</td>\n\t\t\t{% endif %}\n\t\t\t<td style=\"width: 15%; text-align: right;\">{{\n\t\t\t\trow.get_formatted(\"total_amount\", doc) }}</td>\n\t\t\t<td style=\"width: 15%; text-align: right;\">{{\n\t\t\t\trow.get_formatted(\"allocated_amount\", doc) }}</td>\n\t\t</tr>\n\t\t{%- endfor -%}\n\t</tbody>\n</table>", 
+ "idx": 0, 
+ "line_breaks": 1, 
+ "modified": "2016-11-07 17:39:10.058383", 
+ "modified_by": "Administrator", 
+ "module": "rohit_common", 
+ "name": "Payment Advice", 
+ "owner": "Administrator", 
+ "print_format_builder": 0, 
+ "print_format_type": "Server", 
+ "show_section_headings": 1, 
+ "standard": "Yes"
+}
