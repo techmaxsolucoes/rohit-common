@@ -60,53 +60,52 @@ hide_in_installer = True
 # Hook on document methods and events
 
 doc_events = {
-	"Address": {
-		"validate": "rohit_common.rohit_common.validations.address.validate"
-		},
-	"Asset": {
-		"validate": "rohit_common.rohit_common.validations.asset.validate",
-		"autoname": "rohit_common.rohit_common.validations.asset.autoname"
-	},
-	"Asset Category": {
-		"validate": "rohit_common.rohit_common.validations.asset_category.validate"
-	},
-	"Sales Invoice": {
-		"validate": "rohit_common.rohit_common.validations.sales_invoice.validate"
-		},
-	"Purchase Invoice": {
-		"validate": "rohit_common.rohit_common.validations.purchase_invoice.validate"
-		},
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
+    "Address": {
+        "validate": "rohit_common.rohit_common.validations.address.validate"
+    },
+    "Asset": {
+        "validate": "rohit_common.rohit_common.validations.asset.validate",
+        "autoname": "rohit_common.rohit_common.validations.asset.autoname"
+    },
+    "Asset Category": {
+        "validate": "rohit_common.rohit_common.validations.asset_category.validate"
+    },
+    "Sales Invoice": {
+        "validate": "rohit_common.rohit_common.validations.sales_invoice.validate"
+    },
+    "Purchase Invoice": {
+        "validate": "rohit_common.rohit_common.validations.purchase_invoice.validate"
+    },
+    # 	"*": {
+    # 		"on_update": "method",
+    # 		"on_cancel": "method",
+    # 		"on_trash": "method"
+    #	}
 }
 
 # Scheduled Tasks
 # ---------------
 
 scheduler_events = {
-# 	"all": [
-# 		"rohit_common.tasks.all"
-# 	],
-# 	"daily": [
-# 		"rohit_common.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"rohit_common.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"rohit_common.tasks.weekly"
-# 	],
- 	"monthly": [
- 		"rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute",
- 		"rohit_common.rohit_common.scheduled_tasks.prepared_report_delete.execute"
-	]
- }
+    # 	"all": [
+    # 		"rohit_common.tasks.all"
+    # 	],
+    # 	"daily": [
+    # 		"rohit_common.tasks.daily"
+    # 	],
+    # 	"hourly": [
+    # 		"rohit_common.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"rohit_common.tasks.weekly"
+    # 	],
+    "monthly": [
+        "rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute",
+        "rohit_common.rohit_common.scheduled_tasks.prepared_report_delete.execute"
+    ]
+}
 
 # Testing
 # -------
 
 # before_tests = "rohit_common.install.before_tests"
-
