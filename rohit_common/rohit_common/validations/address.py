@@ -198,25 +198,28 @@ def update_fields_from_gmaps(doc, address_dict):
     if doc.longitude != address_dict.get("lng"):
         doc.longitude = address_dict.get("lng")
     if address_dict.get("partial_match") != 1:
-        # frappe.msgprint(str(address_dict))
-        frappe.msgprint("Updating Address Automatically from Google Maps")
-        if doc.country != address_dict.get("country"):
-            doc.country = address_dict.get("country")
-        if doc.state != address_dict.get("state"):
-            doc.state = address_dict.get("state")
-        if doc.city != address_dict.get("city"):
-            # frappe.msgprint(str(address_dict))
-            if address_dict.get("city") == "":
-                doc.city = "NA"
-            else:
-                doc.city = address_dict.get("city")
-        if doc.address_line1 != address_dict.get("address_line1"):
-            doc.address_line1 = address_dict.get("address_line1")
-        add_line2 = address_dict.get("sublocal1", "") + ", " + address_dict.get("sublocal2", "") \
-                    + ", " + address_dict.get("locality", "")
-        if doc.address_line2 != add_line2:
-            doc.address_line2 = add_line2
-        if doc.pincode != address_dict.get("postal_code"):
-            doc.pincode = address_dict.get("postal_code")
+        if doc.update_from_google == 1:
+            frappe.msgprint("Updating Address Automatically from Google Maps")
+            if doc.country != address_dict.get("country"):
+                doc.country = address_dict.get("country")
+            if doc.state != address_dict.get("state"):
+                doc.state = address_dict.get("state")
+            if doc.city != address_dict.get("city"):
+                # frappe.msgprint(str(address_dict))
+                if address_dict.get("city") == "":
+                    doc.city = "NA"
+                else:
+                    doc.city = address_dict.get("city")
+            if doc.address_line1 != address_dict.get("address_line1"):
+                doc.address_line1 = address_dict.get("address_line1")
+            add_line2 = address_dict.get("sublocal1", "") + ", " + address_dict.get("sublocal2", "") \
+                        + ", " + address_dict.get("locality", "")
+            if doc.address_line2 != add_line2:
+                doc.address_line2 = add_line2
+            if doc.pincode != address_dict.get("postal_code"):
+                doc.pincode = address_dict.get("postal_code")
+        else:
+            frappe.msgprint("You can update Address: {} directly from Google. For this Click on Check "
+                            "Box to Update Directly from Google.".format(doc.name))
     else:
         doc.approximate_location = 1

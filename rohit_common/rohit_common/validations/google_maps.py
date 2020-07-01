@@ -50,25 +50,45 @@ def render_gmap_json(json_txt):
         locality = ""
         sublocal1 = ""
         sublocal2 = ""
-
+        # frappe.msgprint(str(address_comps))
         for d in address_comps:
-            if d.get("types")[0] == 'postal_code':
-                postal_code = d.get("long_name")
-            if d.get("types")[0] == 'country':
-                country_long = d.get("long_name")
-                country_short = d.get("short_name")
-            if d.get("types")[0] == 'administrative_area_level_1':
-                state_long = d.get("long_name")
-            if d.get("types")[0] == 'administrative_area_level_2':
-                city_long = d.get("long_name")
-            if d.get("types")[0] == 'locality':
-                locality = d.get("long_name")
-            if d.get("types")[0] == 'political':
-                if d.get("types")[1] == 'sublocality':
-                    if d.get("types")[2] == 'sublocality_level_1':
-                        sublocal1 = d.get("long_name")
-                    elif d.get("types")[2] == 'sublocality_level_2':
-                        sublocal2 = d.get("long_name")
+            if d.get("types"):
+                if d.get("types")[0] == 'postal_code':
+                    postal_code = d.get("long_name")
+            else:
+                postal_code = ""
+            if d.get("types"):
+                if d.get("types")[0] == 'country':
+                    country_long = d.get("long_name")
+                    country_short = d.get("short_name")
+            else:
+                country_long = ""
+                country_short = ""
+            if d.get("types"):
+                if d.get("types")[0] == 'administrative_area_level_1':
+                    state_long = d.get("long_name")
+            else:
+                state_long = ""
+            if d.get("types"):
+                if d.get("types")[0] == 'administrative_area_level_2':
+                    city_long = d.get("long_name")
+            else:
+                city_long = ""
+            if d.get("types"):
+                if d.get("types")[0] == 'locality':
+                    locality = d.get("long_name")
+            else:
+                locality = ""
+            if d.get("types"):
+                if d.get("types")[0] == 'political':
+                    if d.get("types")[1] == 'sublocality':
+                        if d.get("types")[2] == 'sublocality_level_1':
+                            sublocal1 = d.get("long_name")
+                        elif d.get("types")[2] == 'sublocality_level_2':
+                            sublocal2 = d.get("long_name")
+            else:
+                sublocal1 = ""
+                sublocal2 = ""
         add_dict["postal_code"] = postal_code
         add_dict["country"] = country_long
         add_dict["state"] = state_long
