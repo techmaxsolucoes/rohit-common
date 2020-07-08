@@ -116,8 +116,11 @@ def render_gmap_json(json_txt):
 
 
 def get_google_maps_api_key():
-    gmapset = frappe.get_single("Google Maps Settings")
-    return gmapset.client_key
+    gmapset = frappe.get_single("Google Settings")
+    if gmapset.enable == 1:
+        return gmapset.api_key
+    else:
+        frappe.throw('Google Settings is not Enabled')
 
 
 def get_google_maps_url():
