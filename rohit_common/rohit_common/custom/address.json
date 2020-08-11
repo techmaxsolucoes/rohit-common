@@ -595,7 +595,7 @@
    "columns": 0,
    "creation": "2017-06-28 14:53:06.402276",
    "default": null,
-   "depends_on": "eval: (doc.country == 'India' || doc.country == 'United States')",
+   "depends_on": "eval: (doc.country == 'India' || doc.country == 'United States' || doc.country == 'Canada')",
    "description": null,
    "docstatus": 0,
    "dt": "Address",

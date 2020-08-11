@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 import frappe
 import re
 import ast
-
-from .google_maps import geocoding, render_gmap_json, get_google_maps_api_key
+from frappe import _
+from .google_maps import geocoding, render_gmap_json
 from frappe.utils import flt
 
 
@@ -48,6 +48,19 @@ def validate(doc, method):
                     frappe.throw(_("Invalid Pincode only digits in Pincode for US allowed"))
             else:
                 frappe.throw('US Pincode should always be 5 or 9 Digits')
+        elif doc.country == 'Canada':
+            doc.gstin = 'NA'
+            doc.gst_state = ""
+            doc.gst_state_number = ""
+            if doc.state_rigpl is None:
+                frappe.throw("State RIGPL for Canada is Mandatory")
+            else:
+                doc.state = doc.state_rigpl
+                doc.gst_state = ""
+            if len(doc.pincode) == 6:
+                p = re.compile("[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}")
+                if not p.match(doc.pincode):
+                    frappe.throw(_("Invalid Canadian Pincode format for Canada Pin Code = A1A1A1"))
         else:
             doc.gstin = 'NA'
             doc.gst_state = ""
