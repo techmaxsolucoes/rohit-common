@@ -4,9 +4,10 @@ from __future__ import unicode_literals
 import frappe
 import re
 import ast
-
-from .google_maps import geocoding, render_gmap_json, get_google_maps_api_key
+from frappe import _
+from .google_maps import geocoding, render_gmap_json
 from frappe.utils import flt
+from rigpl_erpnext.utils.manufacturing_utils import replace_java_chars
 
 
 def validate(doc, method):
@@ -16,47 +17,52 @@ def validate(doc, method):
     valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
 
     if doc.country:
-        if doc.country == 'India':
-            if doc.state_rigpl is None:
-                frappe.throw('State RIGPL for Country India is Mandatory')
-            else:
-                doc.state = doc.state_rigpl
-                doc.gst_state = doc.state_rigpl
-            if len(doc.pincode) != 6:
-                frappe.throw('India Pincode should always be 6 Digits')
-            else:
-                p = re.compile("[0-9]{6}")
-                if not p.match(doc.pincode):
-                    frappe.throw(_("Invalid Pincode only digits in Pincode for India allowed"))
-        elif doc.country == 'United States':
+        country_doc = frappe.get_doc("Country", doc.country)
+        if country_doc.gst_details != 1:
             doc.gstin = 'NA'
             doc.gst_state = ""
             doc.gst_state_number = ""
 
-            if doc.state_rigpl is None:
-                frappe.throw('State RIGPL for Country US is Mandatory')
+        if country_doc.known_states == 1:
+            # Country has known states means state doctype should have states for that country
+            state_list = frappe.db.sql("""SELECT name FROM `tabState` WHERE country = '%s'""" % doc.country, as_dict=1)
+            if state_list:
+                if doc.state_rigpl is None or not doc.state_rigpl or doc.state_rigpl == "":
+                    frappe.throw('State RIGPL for Country {} is Mandatory in Address {}'.format(doc.country, doc.name))
+                if country_doc.pincode_length:
+                    pincode_length = replace_java_chars(country_doc.pincode_length)
+                    if 'or' in pincode_length:
+                        pc_length = pincode_length.split("or")
+                    else:
+                        pc_length = [pincode_length]
+                    pincode_pass = 0
+                    for d in pc_length:
+                        if len(doc.pincode) == flt(d):
+                            pincode_pass = 1
+                    if pincode_pass != 1:
+                        frappe.throw("For Address {}: Pincode should be {} Digits Long".format(doc.name,
+                                                                                                   pincode_length))
+                if country_doc.pincode_regular_expression:
+                    pincode_regex = replace_java_chars(country_doc.pincode_regular_expression)
+                    if 'or' in pincode_regex:
+                        pc_regex = pincode_regex.split("or")
+                    else:
+                        pc_regex = [pincode_regex]
+                    pc_regex_pass = 0
+                    for d in pc_regex:
+                        p = re.compile(d.strip())
+                        if not p.match(doc.pincode):
+                            pass
+                        else:
+                            pc_regex_pass = 1
+                    if pc_regex_pass != 1:
+                        frappe.throw("Country {}: Pincode Should be of Format {}".format(doc.country, pincode_regex))
             else:
-                doc.state = doc.state_rigpl
-                doc.gst_state = ""
-            if len(doc.pincode) == 5:
-                p = re.compile("[0-9]{5}")
-                if not p.match(doc.pincode):
-                    frappe.throw(_("Invalid Pincode only digits in Pincode for US allowed"))
-            elif len(doc.pincode) == 9:
-                p = re.compile("[0-9]{9}")
-                if not p.match(doc.pincode):
-                    frappe.throw(_("Invalid Pincode only digits in Pincode for US allowed"))
-            else:
-                frappe.throw('US Pincode should always be 5 or 9 Digits')
+                frappe.throw("For Country {} no states exists in State Table".format(doc.country))
         else:
-            doc.gstin = 'NA'
-            doc.gst_state = ""
-            doc.gst_state_number = ""
             doc.state_rigpl = ""
             if doc.pincode is None:
                 frappe.throw("If Pincode is not Known then Enter NA")
-        if not doc.state or doc.state == '':
-            frappe.throw("State field is Mandatory")
     else:
         frappe.throw('Country is Mandatory')
 

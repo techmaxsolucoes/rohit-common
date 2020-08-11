@@ -13,3 +13,15 @@ frappe.ui.form.on('Address', "gstin", function(frm, cdt, cdn){
 	frappe.model.set_value(cdt, cdn, "gst_state_number", d.gstin.substring(0,2));	
 	cur_frm.refresh_fields();
 });
+
+frappe.ui.form.on("Address", {
+    onload: function(frm){
+        frm.set_query("state_rigpl", function(doc){
+            return {
+				"filters": {
+					"country": frm.doc.country
+				}
+            };
+        });
+    }
+});
