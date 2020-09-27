@@ -4,10 +4,11 @@ from __future__ import unicode_literals
 import frappe
 import re
 import ast
-from frappe import _
 from .google_maps import geocoding, render_gmap_json
 from frappe.utils import flt
 from rigpl_erpnext.utils.manufacturing_utils import replace_java_chars
+from ..india_gst_api.gst_public_api import search_gstin
+from ..india_gst_api.common import get_asp_settings
 
 
 def validate(doc, method):
@@ -79,6 +80,13 @@ def validate(doc, method):
                     if not valid_chars_gstin.count(char):
                         frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in GSTIN or NA",
                                         raise_exception=1)
+                if doc.validated_gstin != doc.gstin:
+                    gstin_json = search_gstin(doc.gstin)
+                    doc.gstin_json_reply = str(gstin_json)
+                    doc.validated_gstin = gstin_json.get("gstin")
+                    doc.gst_status = gstin_json.get("sts")
+                if doc.gst_status in ('Inactive', 'Cancelled'):
+                    doc.disabled = 1
                 if doc.state_rigpl:
                     state = frappe.get_doc("State", doc.state_rigpl)
                 else:
