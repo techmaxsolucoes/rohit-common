@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "creation": "2020-09-30 11:25:54.298527",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "start_date",
+  "self_eway",
+  "others_eway",
+  "cb0",
+  "last_execution",
+  "last_fetched_date",
+  "sb0",
+  "details",
+  "sb1",
+  "inward_json",
+  "json_reply"
+ ],
+ "fields": [
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "cb0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_execution",
+   "fieldtype": "Datetime",
+   "label": "Last Execution",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_fetched_date",
+   "fieldtype": "Date",
+   "label": "Last Fetched Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb0",
+   "fieldtype": "Section Break",
+   "label": "Details of Pulled of eWay Bills"
+  },
+  {
+   "fieldname": "json_reply",
+   "fieldtype": "Text",
+   "label": "Json Reply",
+   "read_only": 1
+  },
+  {
+   "fieldname": "self_eway",
+   "fieldtype": "Button",
+   "label": "Get Self Generated eWay Bills",
+   "options": "pull_eway_bills"
+  },
+  {
+   "fieldname": "others_eway",
+   "fieldtype": "Button",
+   "label": "Get Others Generated eWay Bills",
+   "options": "eway_bill_others"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Table",
+   "label": "Details",
+   "options": "Dates and Types of Pulled eWay Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "Json Reply"
+  },
+  {
+   "default": "0",
+   "fieldname": "inward_json",
+   "fieldtype": "Check",
+   "label": "Inward Json",
+   "read_only": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2020-10-08 12:07:54.465535",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "Pull eWay Bills",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
