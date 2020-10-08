@@ -12,6 +12,9 @@ def validate(doc,method):
 def check_gst_rules(doc,method):
 	ship_state = frappe.db.get_value("Address", doc.shipping_address, "state_rigpl")
 	template_doc = frappe.get_doc("Purchase Taxes and Charges Template", doc.taxes_and_charges)
+	doc.billing_address = template_doc.from_address
+	bill_add_doc = frappe.get_doc('Address', doc.billing_address)
+	doc.company_gstin = bill_add_doc.gstin
 	ship_country = frappe.db.get_value("Address", doc.shipping_address, "country")
 	supplier_state = frappe.db.get_value("Address", doc.supplier_address, "state_rigpl")
 	supplier_country = frappe.db.get_value("Address", doc.supplier_address, "country")
@@ -50,6 +53,10 @@ def check_gst_rules(doc,method):
 
 
 def update_fields(doc,method):
+	for it in doc.items:
+		it_gst = frappe.get_value('Item', it.item_code, 'customs_tariff_number')
+		if it.gst_hsn_code != it_gst:
+			it.gst_hsn_code = it_gst
 	doc.letter_head = frappe.db.get_value("Purchase Taxes and Charges Template", doc.taxes_and_charges, "letter_head")
 	doc.place_of_supply = frappe.db.get_value("Purchase Taxes and Charges Template", doc.taxes_and_charges, "state")
 	doc.supplier_gstin = frappe.db.get_value("Address", doc.supplier_address, "gstin")

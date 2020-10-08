@@ -5,6 +5,7 @@ import frappe
 
 def validate(doc, method):
     template_doc = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
+    update_sender_details(doc, template_doc)
     validate_address_google_update(doc)
     validate_other_fields(doc)
     check_customs_tariff(doc)
@@ -13,7 +14,16 @@ def validate(doc, method):
 
 
 def on_update(doc, method):
-    populate_item_synopsis(doc)
+    it_list = get_item_synopsis(doc)
+    if not doc.item_synopsis:
+        for d in it_list:
+            doc.append("item_synopsis", d.copy())
+
+
+def update_sender_details(doc, tmp_doc):
+    send_add_doc = frappe.get_doc('Address', tmp_doc.from_address)
+    doc.company_address = tmp_doc.from_address
+    doc.company_gstin = send_add_doc.gstin
 
 
 def check_local_natl_tax_rules(doc, template_doc):
@@ -57,10 +67,13 @@ def check_customs_tariff(doc):
 def validate_other_fields(doc):
     validate_add_fields(doc)
     validate_export_bill_fields(doc)
-    populate_item_synopsis(doc)
+    it_list = get_item_synopsis(doc)
+    if not doc.item_synopsis:
+        for d in it_list:
+            doc.append("item_synopsis", d.copy())
 
 
-def populate_item_synopsis(doc):
+def get_item_synopsis(doc):
     it_list = []
     for item in doc.items:
         if item.idx == 1:
@@ -79,15 +92,14 @@ def populate_item_synopsis(doc):
                         break
             if found == 0:
                 it_list = update_item_table(it_list, item)
-    if not doc.items_synopsis:
-        for d in it_list:
-            doc.append("items_synopsis", d.copy())
+    return it_list
 
 
 def update_item_table(it_list, item_row):
     it_dict = frappe._dict({})
-    it_dict["item_code"] = item_row.item_code
-    it_dict["description"] = item_row.description
+    tariff_doc = frappe.get_doc('Customs Tariff Number', item_row.gst_hsn_code)
+    it_dict["item_code"] = tariff_doc.item_code
+    it_dict["description"] = tariff_doc.description
     it_dict["qty"] = item_row.qty
     it_dict["uom"] = item_row.uom
     it_dict["conversion_factor"] = item_row.conversion_factor
@@ -97,7 +109,7 @@ def update_item_table(it_list, item_row):
     it_dict["base_amount"] = round(item_row.base_amount, 2)
     it_dict["base_rate"] = round(it_dict["base_amount"] / it_dict["qty"], 2)
     it_dict["rate"] = round(it_dict["amount"] / it_dict["qty"], 2)
-    it_dict["income_account"] = item_row.income_account
+    it_dict["income_account"] = item_row.get('income_account', '')
     it_dict["cost_center"] = item_row.cost_center
     it_dict["expense_account"] = item_row.expense_account
     it_list.append(it_dict.copy())
