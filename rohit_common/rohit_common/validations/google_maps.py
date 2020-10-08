@@ -8,9 +8,36 @@ import ast
 import re
 
 
+def get_distance_matrix(origin, dest, mode='driving', units='metric'):
+    key = get_google_maps_api_key()
+    url = get_google_maps_url() + 'distancematrix/json?'
+    # find_data =
+    full_url = url + 'units=' + units +'&origins=' + origin + '&destinations=' + dest + '&mode=' + mode + "&key=" + key
+    characters = [" ", "#"]
+    for ch in characters:
+        full_url = full_url.replace(ch, "+")
+    response = requests.get(url=full_url)
+    print(response.content)
+    response_json = json.loads(response.content)
+    print(response_json)
+    return response_json
+
+
+def get_approx_dist_frm_matrix(dist_matrix, unit="km"):
+    if dist_matrix.get('status') == 'OK':
+        rows = dist_matrix.get('rows')[0]
+        elements = rows.get('elements')[0]
+        dist = elements.get('distance')
+        dist_mts = dist.get('value')
+    if unit=='km':
+        return dist_mts/1000
+    else:
+        return dist_mts
+
+
 def geocoding(doc):
     key = get_google_maps_api_key()
-    url = get_google_maps_url()
+    url = get_google_maps_url() + 'geocode/json?'
     address_data = "address=" + str(doc.address_title) + " " + str(doc.address_line1) + str(doc.address_line2) + \
                    " " + str(doc.city) + " " + str(doc.state) + " " + str(doc.country) + " " + str(doc.pincode)
     full_url = url + address_data + "&key=" + key
@@ -124,4 +151,4 @@ def get_google_maps_api_key():
 
 
 def get_google_maps_url():
-    return "https://maps.googleapis.com/maps/api/geocode/json?"
+    return "https://maps.googleapis.com/maps/api/"
