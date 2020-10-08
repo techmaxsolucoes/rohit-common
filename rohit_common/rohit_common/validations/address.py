@@ -8,7 +8,6 @@ from .google_maps import geocoding, render_gmap_json
 from frappe.utils import flt
 from rigpl_erpnext.utils.manufacturing_utils import replace_java_chars
 from ..india_gst_api.gst_public_api import search_gstin
-from ..india_gst_api.common import get_asp_settings
 
 
 def validate(doc, method):
