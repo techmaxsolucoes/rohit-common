@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "creation": "2020-10-01 12:56:38.004862",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "update_mode",
+  "vehicle_number",
+  "from_place",
+  "from_state_number",
+  "cb0",
+  "mode_of_transport",
+  "transport_doc_no",
+  "transport_doc_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "update_mode",
+   "fieldtype": "Data",
+   "label": "Update Mode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "vehicle_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Vehicle Number"
+  },
+  {
+   "fieldname": "from_place",
+   "fieldtype": "Data",
+   "label": "From Place"
+  },
+  {
+   "fieldname": "from_state_number",
+   "fieldtype": "Data",
+   "label": "From State Number"
+  },
+  {
+   "fieldname": "mode_of_transport",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode of Transport",
+   "options": "\nRoad\nRail\nAir\nShip\nInTransit"
+  },
+  {
+   "fieldname": "transport_doc_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Transport Doc No"
+  },
+  {
+   "fieldname": "transport_doc_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Transport Doc Date"
+  },
+  {
+   "fieldname": "cb0",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2020-10-01 13:06:57.915564",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "eWay Bill Vehicles",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

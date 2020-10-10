@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "creation": "2020-10-01 11:50:47.098731",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "product_id",
+  "item_code",
+  "description",
+  "gst_hsn_code",
+  "qty",
+  "uom",
+  "cb0",
+  "base_amount",
+  "sgst_rate",
+  "cgst_rate",
+  "igst_rate",
+  "cess_rate",
+  "cess_non_advol"
+ ],
+ "fields": [
+  {
+   "fieldname": "product_id",
+   "fieldtype": "Data",
+   "label": "Product ID"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Qty"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Data",
+   "label": "UoM"
+  },
+  {
+   "fieldname": "sgst_rate",
+   "fieldtype": "Percent",
+   "label": "SGST Rate"
+  },
+  {
+   "fieldname": "cgst_rate",
+   "fieldtype": "Percent",
+   "label": "CGST Rate"
+  },
+  {
+   "fieldname": "igst_rate",
+   "fieldtype": "Percent",
+   "label": "IGST Rate"
+  },
+  {
+   "fieldname": "cess_rate",
+   "fieldtype": "Percent",
+   "label": "Cess Rate"
+  },
+  {
+   "fieldname": "cess_non_advol",
+   "fieldtype": "Data",
+   "label": "Cess Non AdVol"
+  },
+  {
+   "fieldname": "cb0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "label": "Product Name"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Product Description"
+  },
+  {
+   "fieldname": "gst_hsn_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "HSN Code"
+  },
+  {
+   "fieldname": "base_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Taxable Value"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2020-10-05 12:15:44.618224",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "eWay Bill Items",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -1,0 +1,112 @@
+{
+ "actions": [],
+ "creation": "2020-09-23 15:55:42.979487",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb0",
+  "tax_pro_asp_id",
+  "tax_pro_password",
+  "gstin",
+  "tax_pro_asp_secret",
+  "sandbox_mode",
+  "cb0",
+  "eway_bill_id",
+  "eway_bill_password",
+  "api_link",
+  "sandbox_api_link",
+  "access_token",
+  "access_token_time"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb0",
+   "fieldtype": "Section Break",
+   "label": "Tax Pro GSP"
+  },
+  {
+   "fieldname": "tax_pro_asp_id",
+   "fieldtype": "Data",
+   "label": "Tax Pro ASP ID"
+  },
+  {
+   "fieldname": "tax_pro_asp_secret",
+   "fieldtype": "Data",
+   "label": "Tax Pro ASP Secret"
+  },
+  {
+   "fieldname": "cb0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "eway_bill_id",
+   "fieldtype": "Data",
+   "label": "Eway Bill ID"
+  },
+  {
+   "fieldname": "eway_bill_password",
+   "fieldtype": "Data",
+   "label": "Eway Bill Password"
+  },
+  {
+   "fieldname": "tax_pro_password",
+   "fieldtype": "Data",
+   "label": "Tax Pro Password"
+  },
+  {
+   "fieldname": "api_link",
+   "fieldtype": "Data",
+   "label": "API Link"
+  },
+  {
+   "default": "0",
+   "fieldname": "sandbox_mode",
+   "fieldtype": "Check",
+   "label": "Sandbox Mode"
+  },
+  {
+   "fieldname": "sandbox_api_link",
+   "fieldtype": "Data",
+   "label": "Sandbox API Link"
+  },
+  {
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "fieldname": "access_token",
+   "fieldtype": "Data",
+   "label": "Access Token"
+  },
+  {
+   "fieldname": "access_token_time",
+   "fieldtype": "Datetime",
+   "label": "Access Token Time"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2020-09-29 16:20:01.489627",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "Rohit Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
