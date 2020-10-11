@@ -10,7 +10,7 @@ frappe.ui.form.on('Address', "state_rigpl", function(frm, cdt, cdn){
 frappe.ui.form.on('Address', "gstin", function(frm, cdt, cdn){
 	var d = locals[cdt][cdn]
 	frappe.model.set_value(cdt, cdn, "gst_state", d.state_rigpl);
-	frappe.model.set_value(cdt, cdn, "gst_state_number", d.gstin.substring(0,2));	
+	frappe.model.set_value(cdt, cdn, "gst_state_number", d.gstin.substring(0,2));
 	cur_frm.refresh_fields();
 });
 
@@ -23,5 +23,14 @@ frappe.ui.form.on("Address", {
 				}
             };
         });
-    }
+    },
+	onload_post_render(frm) {
+		if (!frm.doc.location && frm.doc.latitude && frm.doc.longitude) {
+			frm.fields_dict.location.map.setView([frm.doc.latitude, frm.doc.longitude], 22);
+		}
+		else {
+			frm.doc.latitude = frm.fields_dict.location.map.getCenter()['lat'];
+			frm.doc.longitude = frm.fields_dict.location.map.getCenter()['lng'];
+		}
+	},
 });
