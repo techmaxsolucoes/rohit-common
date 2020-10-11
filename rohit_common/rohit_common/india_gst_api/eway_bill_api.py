@@ -241,9 +241,9 @@ def get_docno (data, dt, dn):
         if tax_doc.is_import == 1:
             data.docNo = doc.boe_no
         else:
-            data.docNo = dn
+            data.docNo = doc.name
     else:
-        data.docNo = dn
+        data.docNo = doc.name
     return data
 
 

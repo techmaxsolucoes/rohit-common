@@ -1,6 +1,7 @@
 {
  "_last_update": "1297792942",
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:shipping_co",
  "creation": "2011-02-14 08:24:41",
@@ -12,10 +13,22 @@
   "track_on_shipway",
   "fedex_credentials",
   "fedex_tracking_only",
+  "dtdc_tracking_only",
+  "dtdc_credentials",
+  "calculate_cost_from_quote",
+  "is_domestic_only",
+  "is_export_only",
+  "is_imports_only",
+  "is_outward_only",
+  "max_percent_of_invoice_value",
+  "invoice_courier_charges_account",
   "cb0",
   "self_pickup",
+  "is_test_server",
   "gstin_for_eway",
+  "api_key",
   "mode_of_transport",
+  "minimum_weight",
   "sb0",
   "shipway_id",
   "sb1",
@@ -25,17 +38,18 @@
   "fedex_meter_number",
   "region_code",
   "maximum_amount",
-  "max_percent_of_invoice_value",
-  "invoice_courier_charges_account",
   "cb1",
   "fedex_password",
-  "fedex_key",
-  "is_test_server",
-  "is_export_only",
-  "is_imports_only",
-  "is_domestic_only",
-  "is_outward_only",
-  "minimum_weight"
+  "sb2",
+  "dtdc_base_link",
+  "dtdc_tracking_base_link",
+  "dtdc_service_id",
+  "cb2",
+  "dtdc_tracking_username",
+  "dtdc_tracking_password",
+  "dtdc_customer_code",
+  "sb3",
+  "quote"
  ],
  "fields": [
   {
@@ -46,6 +60,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.self_pickup !== 1 && doc.fedex_credentials !== 1 && doc.fedex_tracking_only !== 1 && doc.dtdc_credentials !== 1 && doc.dtdc_tracking_only !== 1",
    "fieldname": "track_on_shipway",
    "fieldtype": "Check",
    "in_standard_filter": 1,
@@ -57,18 +72,21 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.self_pickup !== 1 && doc.track_on_shipway !== 1 && doc.fedex_tracking_only !== 1 && doc.dtdc_credentials !== 1 && doc.dtdc_tracking_only !== 1",
    "fieldname": "fedex_credentials",
    "fieldtype": "Check",
    "label": "Fedex Credentials"
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.self_pickup !== 1 && doc.track_on_shipway !== 1 && doc.fedex_credentials !== 1 && doc.dtdc_credentials !== 1 && doc.dtdc_tracking_only !== 1",
    "fieldname": "fedex_tracking_only",
    "fieldtype": "Check",
    "label": "Fedex Tracking Only"
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.fedex_credentials !== 1 && doc.track_on_shipway !== 1 && doc.fedex_tracking_only !== 1 && doc.dtdc_credentials !== 1",
    "fieldname": "self_pickup",
    "fieldtype": "Check",
    "label": "Self Pickup"
@@ -77,7 +95,8 @@
    "depends_on": "eval:doc.self_pickup !== 1",
    "fieldname": "gstin_for_eway",
    "fieldtype": "Data",
-   "label": "GSTIN for eWay"
+   "label": "GSTIN for eWay",
+   "mandatory_depends_on": "eval: doc.fedex_credentials === 1 || doc.dtdc_credentials === 1 || doc.fedex_tracking_only"
   },
   {
    "collapsible_depends_on": "eval:doc.track_on_shipway == 1",
@@ -87,12 +106,12 @@
    "label": "Shipway Section"
   },
   {
-   "depends_on": "eval: doc.track_on_shipway==1",
    "fieldname": "shipway_id",
    "fieldtype": "Int",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Shipway ID",
+   "mandatory_depends_on": "eval: doc.track_on_shipway==1",
    "no_copy": 1
   },
   {
@@ -142,12 +161,14 @@
    "label": "Maximum Amount"
   },
   {
+   "depends_on": "eval:doc.fedex_credentials === 1 || doc.dtdc_credentials === 1",
    "fieldname": "max_percent_of_invoice_value",
    "fieldtype": "Percent",
    "label": "Max Percent of Invoice Value",
    "precision": "1"
   },
   {
+   "depends_on": "eval:doc.fedex_credentials === 1 || doc.dtdc_credentials === 1",
    "fieldname": "invoice_courier_charges_account",
    "fieldtype": "Link",
    "label": "Invoice Courier Charges Account",
@@ -165,21 +186,15 @@
    "permlevel": 1
   },
   {
-   "depends_on": "eval: doc.fedex_credentials == 1",
-   "fieldname": "fedex_key",
-   "fieldtype": "Data",
-   "label": "Fedex Key",
-   "permlevel": 1
-  },
-  {
    "default": "0",
-   "depends_on": "eval: doc.fedex_credentials == 1",
+   "depends_on": "eval: doc.fedex_credentials === 1 || doc.dtdc_credentials === 1",
    "fieldname": "is_test_server",
    "fieldtype": "Check",
    "label": "Is Test Server"
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.is_domestic_only !== 1 && doc.is_imports_only !== 1 && doc.dtdc_tracking_only !== 1 && doc.fedex_tracking_only !== 1 && doc.track_on_shipway !== 1",
    "description": "Use this check box if this service is used only for EXPORTS",
    "fieldname": "is_export_only",
    "fieldtype": "Check",
@@ -187,6 +202,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.is_domestic_only !== 1 && doc.is_export_only !== 1 && doc.dtdc_tracking_only !== 1 && doc.fedex_tracking_only !== 1 && doc.track_on_shipway !== 1",
    "description": "Only use this check box if this service is used only for Imports",
    "fieldname": "is_imports_only",
    "fieldtype": "Check",
@@ -194,6 +210,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval:(doc.fedex_credentials === 1 || doc.dtdc_credentials === 1) && (doc.is_export_only !== 1 || doc.is_imports_only !== 1)",
    "description": "Use if this service is only used for Domestic Couriers",
    "fieldname": "is_domestic_only",
    "fieldtype": "Check",
@@ -201,12 +218,14 @@
   },
   {
    "default": "0",
+   "depends_on": "eval:(doc.fedex_credentials === 1 || doc.dtdc_credentials === 1) && doc.is_import_only !== 1 && doc.dtdc_tracking_only !== 1 && doc.fedex_tracking_only !== 1",
    "description": "Only use this If this Service Only for Outward Couriers",
    "fieldname": "is_outward_only",
    "fieldtype": "Check",
    "label": "Is Outward Only"
   },
   {
+   "depends_on": "eval:doc.fedex_credentials === 1 || doc.dtdc_credentials === 1",
    "description": "Minimum Weight requirement for this Service Like Fedex Freight has 71kg minimum weight",
    "fieldname": "minimum_weight",
    "fieldtype": "Int",
@@ -218,10 +237,96 @@
    "label": "Mode of Transport",
    "options": "\nRoad\nRail\nAir\nShip",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.self_pickup !== 1 && doc.track_on_shipway !== 1 && doc.fedex_tracking_only !== 1 && doc.fedex_credentials !== 1 && doc.dtdc_tracking_only !== 1",
+   "fieldname": "dtdc_credentials",
+   "fieldtype": "Check",
+   "label": "DTDC Credentials"
+  },
+  {
+   "depends_on": "eval: doc.fedex_credentials === 1 || doc.dtdc_credentials === 1",
+   "fieldname": "api_key",
+   "fieldtype": "Data",
+   "label": "API Key",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.dtdc_credentials === 1 || doc.dtdc_tracking_only === 1",
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "DTDC Section"
+  },
+  {
+   "fieldname": "dtdc_base_link",
+   "fieldtype": "Data",
+   "label": "DTDC Base Link",
+   "mandatory_depends_on": "eval:doc.dtdc_credentials === 1"
+  },
+  {
+   "fieldname": "dtdc_tracking_base_link",
+   "fieldtype": "Data",
+   "label": "DTDC Tracking Base Link",
+   "mandatory_depends_on": "eval:doc.dtdc_credentials === 1"
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dtdc_tracking_username",
+   "fieldtype": "Data",
+   "label": "DTDC Tracking Username",
+   "mandatory_depends_on": "eval:doc.dtdc_credentials === 1"
+  },
+  {
+   "fieldname": "dtdc_tracking_password",
+   "fieldtype": "Data",
+   "label": "DTDC Tracking Password",
+   "mandatory_depends_on": "eval:doc.dtdc_credentials === 1"
+  },
+  {
+   "depends_on": "eval: doc.calculate_cost_from_quote === 1",
+   "fieldname": "sb3",
+   "fieldtype": "Section Break",
+   "label": "Quote"
+  },
+  {
+   "fieldname": "quote",
+   "fieldtype": "Table",
+   "label": "Quote",
+   "options": "Transporters Quote"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.dtdc_credentials === 1 || doc.fedex_credentials === 1",
+   "fieldname": "calculate_cost_from_quote",
+   "fieldtype": "Check",
+   "label": "Calculate Cost from Quote"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.self_pickup !== 1 && doc.track_on_shipway !== 1 && doc.fedex_credentials !== 1 && doc.dtdc_credentials !== 1 && doc.fedex_tracking_only !== 1",
+   "fieldname": "dtdc_tracking_only",
+   "fieldtype": "Check",
+   "label": "DTDC Tracking Only"
+  },
+  {
+   "fieldname": "dtdc_customer_code",
+   "fieldtype": "Data",
+   "label": "DTDC Customer Code",
+   "mandatory_depends_on": "eval: doc.dtdc_credentials === 1"
+  },
+  {
+   "fieldname": "dtdc_service_id",
+   "fieldtype": "Data",
+   "label": "DTDC Service ID",
+   "mandatory_depends_on": "eva: doc.dtdc_credentials === 1"
   }
  ],
  "links": [],
- "modified": "2020-10-05 19:54:24.053273",
+ "modified": "2020-10-11 11:37:07.962770",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Transporters",
@@ -229,14 +334,24 @@
  "owner": "aditya@rigpl.com",
  "permissions": [
   {
-   "read": 1,
-   "role": "All",
-   "share": 1
-  },
-  {
    "create": 1,
    "delete": 1,
    "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "set_user_permissions": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
    "print": 1,
    "read": 1,
    "report": 1,

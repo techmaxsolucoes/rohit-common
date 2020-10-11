@@ -231,16 +231,20 @@ class eWayBill(Document):
 				elif text == 'from' and self.supply_type == 'Outward':
 					setattr(self, 'generated_by', add_doc.get('gstin'))
 			else:
-				setattr(self, text + '_pincode', 999999)
-				setattr(self, text + '_state_code', 99)
-				setattr(self, text + '_gstin', 'URP')
+				self.update_actual_details(text, add_doc)
 
 	def update_actual_details(self, text, add_doc):
-		setattr(self, text + '_pincode', add_doc.get('pincode'))
-		setattr(self, text + '_state_code', add_doc.get('gst_state_number'))
-		setattr(self, text + '_gstin', add_doc.get('gstin'))
+		if add_doc.country == 'India':
+			setattr(self, text + '_pincode', add_doc.get('pincode'))
+			setattr(self, text + '_state_code', add_doc.get('gst_state_number'))
+			setattr(self, text + '_gstin', add_doc.get('gstin'))
+		else:
+			setattr(self, text + '_pincode', 999999)
+			setattr(self, text + '_state_code', 99)
+			setattr(self, text + '_gstin', 'URP')
 
 	def update_sandbox_details(self, text):
+		setattr(self, text + 'generated_by', '05AAACG1539P1ZH')
 		setattr(self, text + '_gstin', '05AAACG1539P1ZH')
 		setattr(self, text + '_state_code', 5)
 		setattr(self, text + '_pincode', 263652)
@@ -287,10 +291,12 @@ class eWayBill(Document):
 			veh["vehicle_number"] = si_doc.lr_no
 		else:
 			veh["transport_doc_no"] = si_doc.lr_no
-			veh["transport_doc_date"] = si_doc.removal_date
+			if self.document_type == 'Sales Invoice':
+				veh["transport_doc_date"] = si_doc.removal_date
+			else:
+				veh["transport_doc_date"] = datetime.today()
 		veh["mode_of_transport"] = trans_doc.mode_of_transport
 		veh["from_place"] = frm_add.city
-		frappe.msgprint(str(self.from_state_code))
 		veh["from_state_number"] = int(self.from_state_code)
 		self.append("vehicles", veh.copy())
 
@@ -367,6 +373,6 @@ def ewb_po_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fa
 	FROM `tabPurchase Order` po, `tabPurchase Taxes and Charges Template` tx
 	WHERE (po.is_subcontracting = 1 OR tx.is_import = 1) AND po.docstatus = 1 
 	AND po.taxes_and_charges = tx.name AND po.status in ('To Receive and Bill', 'To Receive')
-	AND po.name LIKE {txt} 
+	AND (po.name LIKE {txt} OR po.supplier LIKE {txt}) 
 	ORDER BY po.name DESC""".format(txt = frappe.db.escape('%{0}%'.format(txt)))
 	return frappe.db.sql(query, as_dict=as_dict)
