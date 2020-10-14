@@ -34,7 +34,7 @@ class GSTReturnStatus(Document):
 				else:
 					temp_dict['valid_gst_return'] = 'No'
 				temp_dict['mode_of_filing'] = d.get('mof')
-				temp_dict['date_of_filing'] = getdate(d.get('dof'))
+				temp_dict['date_of_filing'] = (datetime.strptime(d.get('dof'), '%d-%m-%Y')).date()
 				temp_dict['return_period'] = d.get('ret_prd')
 				temp_dict['return_type'] = d.get('rtntype')
 				temp_dict['arn_number'] = d.get('arn')

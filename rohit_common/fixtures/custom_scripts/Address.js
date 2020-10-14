@@ -25,8 +25,11 @@ frappe.ui.form.on("Address", {
         });
     },
 	onload_post_render(frm) {
-		if (!frm.doc.location && frm.doc.latitude && frm.doc.longitude) {
-			frm.fields_dict.location.map.setView([frm.doc.latitude, frm.doc.longitude], 22);
+		if (frm.doc.latitude && frm.doc.longitude) {
+		    frappe.msgprint('Hello')
+		    var marker = L.marker([frm.doc.latitude, frm.doc.longitude]).addTo(frm.fields_dict.location.map);
+		    marker.bindPopup(frm.doc.address_title).openPopup();
+			frm.fields_dict.location.map.setView([frm.doc.latitude, frm.doc.longitude], 20);
 		}
 		else {
 			frm.doc.latitude = frm.fields_dict.location.map.getCenter()['lat'];
