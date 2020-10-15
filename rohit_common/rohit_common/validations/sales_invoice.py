@@ -11,6 +11,8 @@ def validate(doc, method):
     check_customs_tariff(doc)
     check_local_natl_tax_rules(doc, template_doc)
     check_taxes_integrity(doc, method, template_doc)
+    check_validated_gstin(doc.customer_address)
+    check_validated_gstin(doc.shipping_address_name)
 
 
 def on_update(doc, method):
@@ -202,3 +204,13 @@ def validate_address(add_doc):
     if not add_doc.json_reply and add_doc.dont_update_from_google != 1:
         frappe.throw(
             'Address {} is Not Updated from Google, Please Open and Save the Address once'.format(add_doc.name))
+
+
+def check_validated_gstin(add_name):
+    add_doc = frappe.get_doc("Address", add_name)
+    if add_doc.gstin:
+        if add_doc.gstin != "NA":
+            if add_doc.validated_gstin != add_doc.gstin:
+                frappe.throw("GSTIN# {} for {} is NOT Validated from GST Website. Please update the "
+                             "Address from GST Website".
+                             format(add_doc.gstin, frappe.get_desk_link(add_doc.doctype, add_doc.name)))

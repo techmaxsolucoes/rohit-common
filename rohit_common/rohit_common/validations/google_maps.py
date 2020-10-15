@@ -44,10 +44,8 @@ def geocoding(doc):
     characters = [" ", "#"]
     for ch in characters:
         full_url = full_url.replace(ch, "+")
-    # frappe.msgprint(str(full_url))
     response = requests.get(url=full_url)
     response_json = json.loads(response.content)
-    # frappe.msgprint(str(response_json))
     doc.json_reply = str(response_json)
 
 
