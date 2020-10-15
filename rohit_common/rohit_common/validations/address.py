@@ -4,10 +4,11 @@ from __future__ import unicode_literals
 import frappe
 import re
 import ast
-from .google_maps import geocoding, render_gmap_json
 from frappe.utils import flt
-from rigpl_erpnext.utils.manufacturing_utils import replace_java_chars
+from difflib import SequenceMatcher as sm
+from .google_maps import geocoding, render_gmap_json
 from ..india_gst_api.gst_public_api import search_gstin
+from rigpl_erpnext.utils.manufacturing_utils import replace_java_chars
 
 
 def validate(doc, method):
@@ -102,18 +103,15 @@ def validate(doc, method):
                     else:
                         frappe.throw("State Selected {0} for Address {1}, GSTIN number should begin with {2}".
                                      format(doc.state_rigpl, doc.name, state.state_code_numeric))
-            if doc.gstin != "NA":
-                doc.pan = doc.gstin[2:12]
-            else:
-                doc.pan = ""
+            doc.pan = doc.gstin[2:12]
+            update_address_title_from_gstin_json(doc)
+        else:
+            doc.pan = ""
     else:
         if doc.country == 'India':
             frappe.throw('GSTIN Mandatory for Indian Addresses or Enter NA for NO GSTIN')
     geocode(doc, method)
 
-
-# Todo: Add the GST check digit checksum for the last digit so that all GST numbers are
-# checked and entered properly.
 
 def verify_state_country(state, country):
     state_doc = frappe.get_doc("State", state)
@@ -173,11 +171,7 @@ def check_id(doc, method):
 
 def geocode(doc, method):
     if doc.dont_update_from_google == 1:
-        doc.json_reply = ""
-        doc.latitude = ""
-        doc.longitude = ""
-        doc.global_google_code = ""
-        doc.approximate_location = 0
+        remove_google_updates(doc)
     else:
         if not doc.json_reply:
             geocoding(doc)
@@ -194,45 +188,70 @@ def geocode(doc, method):
                 geocoding(doc)
 
 
+def remove_google_updates(doc):
+    doc.json_reply = ""
+    doc.latitude = ""
+    doc.longitude = ""
+    doc.global_google_code = ""
+    doc.approximate_location = 0
+
+
 def update_fields_from_gmaps(doc, address_dict):
-    # frappe.msgprint(str(address_dict))
-    if address_dict.get("global_code"):
-        doc.global_google_code = address_dict.get("global_code")
-        # global_code = address_dict.get("global_code")
-        '''
-        key = get_google_maps_api_key()
-        iframe_code = '<iframe width="600" height="450" frameborder="0" style="border:0" ' \
-                      'src="https://www.google.com/maps/embed/v1/place?q=' + global_code + '&key=' + \
-                      key + '" allowfullscreen></iframe> '
-        doc.google_maps_view = iframe_code
-        '''
-    if doc.latitude != address_dict.get("lat"):
-        doc.latitude = address_dict.get("lat")
-    if doc.longitude != address_dict.get("lng"):
-        doc.longitude = address_dict.get("lng")
-    if address_dict.get("partial_match") != 1:
-        if doc.update_from_google == 1:
-            frappe.msgprint("Updating Address Automatically from Google Maps")
-            if doc.country != address_dict.get("country"):
-                doc.country = address_dict.get("country")
-            if doc.state != address_dict.get("state"):
-                doc.state = address_dict.get("state")
-            if doc.city != address_dict.get("city"):
-                # frappe.msgprint(str(address_dict))
-                if address_dict.get("city") == "":
-                    doc.city = "NA"
-                else:
-                    doc.city = address_dict.get("city")
-            if doc.address_line1 != address_dict.get("address_line1"):
-                doc.address_line1 = address_dict.get("address_line1")
-            add_line2 = address_dict.get("sublocal1", "") + ", " + address_dict.get("sublocal2", "") \
-                        + ", " + address_dict.get("locality", "")
-            if doc.address_line2 != add_line2:
-                doc.address_line2 = add_line2
-            if doc.pincode != address_dict.get("postal_code"):
-                doc.pincode = address_dict.get("postal_code")
+    if doc.country == address_dict["country"]:
+        if address_dict.get("global_code"):
+            doc.global_google_code = address_dict.get("global_code")
+        if doc.latitude != address_dict.get("lat"):
+            doc.latitude = address_dict.get("lat")
+        if doc.longitude != address_dict.get("lng"):
+            doc.longitude = address_dict.get("lng")
+        if address_dict.get("partial_match") != 1:
+            if doc.update_from_google == 1:
+                frappe.msgprint("Updating Address Automatically from Google Maps")
+                if doc.country != address_dict.get("country"):
+                    doc.country = address_dict.get("country")
+                if doc.state != address_dict.get("state"):
+                    doc.state = address_dict.get("state")
+                if doc.city != address_dict.get("city"):
+                    # frappe.msgprint(str(address_dict))
+                    if address_dict.get("city") == "":
+                        doc.city = "NA"
+                    else:
+                        doc.city = address_dict.get("city")
+                if doc.address_line1 != address_dict.get("address_line1"):
+                    doc.address_line1 = address_dict.get("address_line1")
+                add_line2 = address_dict.get("sublocal1", "") + ", " + address_dict.get("sublocal2", "") \
+                            + ", " + address_dict.get("locality", "")
+                if doc.address_line2 != add_line2:
+                    doc.address_line2 = add_line2
+                if doc.pincode != address_dict.get("postal_code"):
+                    doc.pincode = address_dict.get("postal_code")
+            else:
+                frappe.msgprint("You can update Address: {} directly from Google. For this Click on Check "
+                                "Box to Update Directly from Google.".format(doc.name))
         else:
-            frappe.msgprint("You can update Address: {} directly from Google. For this Click on Check "
-                            "Box to Update Directly from Google.".format(doc.name))
+            doc.approximate_location = 1
     else:
-        doc.approximate_location = 1
+        doc.dont_update_from_google = 1
+        remove_google_updates(doc)
+
+
+def update_address_title_from_gstin_json(doc):
+    if doc.validated_gstin:
+        if doc.validated_gstin == doc.gstin:
+            gst_json = ast.literal_eval(doc.gstin_json_reply)
+            if gst_json.get("status_cd", 1) == 1:
+                # Now Check the Legal Name lgnm and Also another field is Trade Name (tradeNam)
+                lgl_name = gst_json.get("lgnm")
+                trd_name = gst_json.get("tradeNam")
+                lgl_ratio = sm(lambda x: x in (" ", ".", ",", "(", ")"), (doc.address_title).lower(),
+                               lgl_name.lower()).ratio()
+                trd_ratio = sm(lambda x: x in (" ", ".", ",", "(", ")"), (doc.address_title).lower(),
+                               trd_name.lower()).ratio()
+                if lgl_ratio > 0.6:
+                    # Update Address Title from Legal Name
+                    doc.address_title = lgl_name
+                    frappe.msgprint("Updated Address Title from Legal Name on GST Website for {}".format(doc.name))
+                elif trd_ratio > 0.6:
+                    # Update Address Title from Legal Name
+                    doc.address_title = trd_name
+                    frappe.msgprint("Updated Address Title from Trade Name on GST Website for {}".format(doc.name))
