@@ -31,14 +31,19 @@ class PulleWayBills(Document):
 
 	def check_already_pulled(self, ewb_date, inward=0):
 		gstin = frappe.get_value('Rohit Settings', 'Rohit Settings', 'gstin')
-		for d in self.details:
-			message = 'Already Pulled eWay Bills for {} Created by {} for GSTIN: {}'.format(ewb_date,
-																							d.type_of_eway_bill, gstin)
-			if d.date == ewb_date and d.gstin == gstin:
-				if inward == 1 and d.type_of_eway_bill == 'Others':
-					frappe.throw(message)
-				elif inward == 0 and d.type_of_eway_bill == 'Self':
-					frappe.throw(message)
+		sandbox = int(frappe.get_value('Rohit Settings', 'Rohit Settings', 'sandbox_mode'))
+		if sandbox == 1:
+			frappe.throw("Sandbox Mode Enabled Exiting")
+			exit()
+		else:
+			for d in self.details:
+				message = 'Already Pulled eWay Bills for {} Created by {} for GSTIN: {}'.\
+					format(ewb_date, d.type_of_eway_bill, gstin)
+				if d.date == ewb_date and d.gstin == gstin:
+					if inward == 1 and d.type_of_eway_bill == 'Others':
+						frappe.throw(message)
+					elif inward == 0 and d.type_of_eway_bill == 'Self':
+						frappe.throw(message)
 
 	def get_eway_dates(self):
 		last_exe_dt = datetime.now()
