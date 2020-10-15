@@ -1,6 +1,5 @@
 {
  "_last_update": "1297792942",
- "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:shipping_co",
@@ -43,6 +42,7 @@
   "sb2",
   "dtdc_base_link",
   "dtdc_tracking_base_link",
+  "dtdc_service_validation_link",
   "dtdc_service_id",
   "cb2",
   "dtdc_tracking_username",
@@ -95,8 +95,7 @@
    "depends_on": "eval:doc.self_pickup !== 1",
    "fieldname": "gstin_for_eway",
    "fieldtype": "Data",
-   "label": "GSTIN for eWay",
-   "mandatory_depends_on": "eval: doc.fedex_credentials === 1 || doc.dtdc_credentials === 1 || doc.fedex_tracking_only"
+   "label": "GSTIN for eWay"
   },
   {
    "collapsible_depends_on": "eval:doc.track_on_shipway == 1",
@@ -111,7 +110,6 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Shipway ID",
-   "mandatory_depends_on": "eval: doc.track_on_shipway==1",
    "no_copy": 1
   },
   {
@@ -261,14 +259,12 @@
   {
    "fieldname": "dtdc_base_link",
    "fieldtype": "Data",
-   "label": "DTDC Base Link",
-   "mandatory_depends_on": "eval:doc.dtdc_credentials === 1"
+   "label": "DTDC Base Link"
   },
   {
    "fieldname": "dtdc_tracking_base_link",
    "fieldtype": "Data",
-   "label": "DTDC Tracking Base Link",
-   "mandatory_depends_on": "eval:doc.dtdc_credentials === 1"
+   "label": "DTDC Tracking Base Link"
   },
   {
    "fieldname": "cb2",
@@ -277,14 +273,12 @@
   {
    "fieldname": "dtdc_tracking_username",
    "fieldtype": "Data",
-   "label": "DTDC Tracking Username",
-   "mandatory_depends_on": "eval:doc.dtdc_credentials === 1"
+   "label": "DTDC Tracking Username"
   },
   {
    "fieldname": "dtdc_tracking_password",
    "fieldtype": "Data",
-   "label": "DTDC Tracking Password",
-   "mandatory_depends_on": "eval:doc.dtdc_credentials === 1"
+   "label": "DTDC Tracking Password"
   },
   {
    "depends_on": "eval: doc.calculate_cost_from_quote === 1",
@@ -315,18 +309,20 @@
   {
    "fieldname": "dtdc_customer_code",
    "fieldtype": "Data",
-   "label": "DTDC Customer Code",
-   "mandatory_depends_on": "eval: doc.dtdc_credentials === 1"
+   "label": "DTDC Customer Code"
   },
   {
    "fieldname": "dtdc_service_id",
    "fieldtype": "Data",
-   "label": "DTDC Service ID",
-   "mandatory_depends_on": "eva: doc.dtdc_credentials === 1"
+   "label": "DTDC Service ID"
+  },
+  {
+   "fieldname": "dtdc_service_validation_link",
+   "fieldtype": "Data",
+   "label": "DTDC Service Validation Link"
   }
  ],
- "links": [],
- "modified": "2020-10-11 11:37:07.962770",
+ "modified": "2020-10-14 13:54:06.502412",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Transporters",
