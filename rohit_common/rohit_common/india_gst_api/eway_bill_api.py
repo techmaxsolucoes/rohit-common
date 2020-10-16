@@ -99,7 +99,7 @@ def process_ewb_post_request(api, action, json_data):
     if ewb_no == "":
         ewb_no = res_json.get('ewbNo', "")
     if ewb_no != "":
-        if int(res_json.get('status_cd')) == 1:
+        if int(res_json.get('status_cd', 1)) == 1:
             return res_json
         elif int(res_json.get('status_cd')) == 0:
             frappe.msgprint('Error Returned from GST Server Check Logs')
@@ -247,47 +247,35 @@ def get_docno (data, dt, dn):
     return data
 
 
-def get_from_address(doc, data, text):
-    if text == 'fromGstin':
+def get_from_address_doc(doc, data, text):
+    if text == 'from':
         data.fromGstin = doc.from_gstin
-    elif text == 'userGstin':
         data.userGstin = doc.generated_by
-    elif text == 'toGstin':
-        data.toGstin = doc.to_gstin
-    elif text == 'toPincode':
-        data.toPincode = int(doc.to_pincode)
-    elif text == 'fromPincode':
         data.fromPincode = int(doc.from_pincode)
-    elif text == 'fromStateCode':
         data.fromStateCode = int(doc.from_state_code)
         if doc.from_state_code != 99:
             data.actFromStateCode = int(doc.from_state_code)
         else:
             data.actFromStateCode = int(doc.to_state_code)
-    elif text == 'toStateCode':
+    elif text == 'to':
+        data.toGstin = doc.to_gstin
+        data.toPincode = int(doc.to_pincode)
         data.toStateCode = int(doc.to_state_code)
         data.actToStateCode = int(doc.to_state_code)
     return data
 
 
-def get_value_of_tax(data, dt, dn, text):
-    doc = frappe.get_doc(dt, dn)
-    tax_dict = get_taxes_type(dt, dn)
-    if text == 'total':
-        data.totalValue = doc.base_grand_total
-    elif text == 'net':
-        data.totInvValue = doc.base_net_total
-    elif text == 'cgst':
-        data.cgstValue = tax_dict.get('cgst_amt', 0)
-    elif text == 'sgst':
-        data.sgstValue = tax_dict.get('sgst_amt', 0)
-    elif text == 'igst':
-        data.igstValue = tax_dict.get('igst_amt', 0)
-    elif text == 'cess':
-        data.cessValue = tax_dict.get('cess_amt', 0)
-    elif text == 'cess_non_advol':
-        data.cessNonAdvolValue = 0
-
+def get_value_of_tax(data, doc):
+    # data.totalValue = doc.total_value
+    # data.totInvValue = doc.taxable_value
+    data.totInvValue = doc.total_value
+    data.totalValue = doc.taxable_value
+    data.otherValue = doc.other_value
+    data.cgstValue = doc.cgst_value
+    data.sgstValue = doc.sgst_value
+    data.igstValue = doc.igst_value
+    data.cessValue = doc.cess_value
+    data.cessNonAdvolValue = 0
     return data
 
 
@@ -434,6 +422,7 @@ def ewb_from_ewb_summary(ewbj):
 
 
 def ewb_from_ewb_detail(ewbj, created_by="self"):
+    frappe.msgprint(str(ewbj))
     gstin = frappe.get_value('Rohit Settings', 'Rohit Settings', 'gstin')
     # First Search for eWay Bill if not exists then create a new eWay Bill
     existing_ewb = search_existing_ewb(ewbj.get('ewbNo'))

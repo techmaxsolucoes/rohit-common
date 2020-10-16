@@ -28,6 +28,7 @@ class eWayBill(Document):
 					self.eway_bill_date = datetime.strptime(json_reply.get('ewayBillDate'), '%d/%m/%Y %I:%M:%S %p')
 					return json_reply.get('ewayBillNo')
 				else:
+					frappe.msgprint("Got Error")
 					error = json_reply.get('error')
 					if error.get('error_cd') == '604,':
 						# Search for eWay Bill by Doctype and Document Number and get details for the same.
@@ -36,6 +37,8 @@ class eWayBill(Document):
 						self.eway_bill_date = datetime.strptime(res_json.get('ewayBillDate'), '%d/%m/%Y %I:%M:%S %p')
 						self.save()
 						self.reload()
+		else:
+			frappe.throw("eWay Bill Already Generated for {}".format(self.name))
 
 	def update_ewb_partb(self):
 		if not self.valid_upto:
@@ -75,6 +78,7 @@ class eWayBill(Document):
 		if self.eway_bill_no:
 			json_reply = get_eway_bill_details(self.eway_bill_no)
 			self.json_reply = str(json_reply)
+			frappe.msgprint(str(json_reply))
 			if self.generated_by == gstin:
 				created_by = "self"
 			else:
@@ -92,26 +96,13 @@ class eWayBill(Document):
 		data = get_supply_sub_type(data, self.supply_sub_type)
 		data = get_doctype(data=data, text=self.ewb_document_type)
 		data = get_docno(data, dt, dn)
-		data = get_from_address(self, data, 'userGstin')
-		data = get_from_address(self, data, 'fromGstin')
-		data = get_from_address(self, data, 'fromPincode')
-		data = get_from_address(self, data, 'fromStateCode')
-		# data = get_from_address(self, data, 'actFromStateCode')
-		data = get_from_address(self, data, 'toGstin')
-		data = get_from_address(self, data, 'toPincode')
-		data = get_from_address(self, data, 'toStateCode')
-		# data = get_from_address(data, actToStateCode')
-		data = get_value_of_tax(data, dt, dn, 'total')
-		data = get_value_of_tax(data, dt, dn, 'net')
-		data = get_value_of_tax(data, dt, dn, 'sgst')
-		data = get_value_of_tax(data, dt, dn, 'cgst')
-		data = get_value_of_tax(data, dt, dn, 'igst')
+		data = get_from_address_doc(self, data, 'from')
+		data = get_from_address_doc(self, data, 'to')
+		data = get_value_of_tax(data, self)
 		data = get_doc_date(data, dt, dn)
 		data = get_trans_type(data, self.transaction_type)
 		data = get_items_table(data, self.items)
 		data.transDistance = self.approx_distance
-		# data = get_transport_details(self, data)
-		# frappe.throw(str(data))
 		return data
 
 	def validate(self, created_by_api=0):
@@ -120,6 +111,7 @@ class eWayBill(Document):
 			if self.document_type and self.document_number:
 				self.created_by_api = 1
 		else:
+			self.check_eway_bill_no()
 			enforce = 1
 		created_by_api = self.created_by_api
 		if created_by_api == 1:
@@ -127,6 +119,10 @@ class eWayBill(Document):
 			self.update_and_validate_fields()
 			self.get_vehicle_details()
 			self.validate_vehicle_details(enforce=enforce)
+
+	def check_eway_bill_no(self):
+		if self.eway_bill_no:
+			self.docstatus = 1
 
 	def update_and_validate_fields(self):
 		rset = frappe.get_single('Rohit Settings')
@@ -146,8 +142,6 @@ class eWayBill(Document):
 
 	def update_tax_related_fields(self):
 		doc = frappe.get_doc(self.document_type, self.document_number)
-		self.taxable_value = round(doc.base_net_total)
-		self.total_value = round(doc.base_grand_total)
 		if self.document_type == 'Sales Invoice':
 			self.supply_type = 'Outward'
 			self.ewb_document_type = 'Tax Invoice'
@@ -171,9 +165,14 @@ class eWayBill(Document):
 			for d in it_list:
 				self.append("items", d.copy())
 		taxes_dict = get_taxes_type(self.document_type, self.document_number)
-		self.sgst_value = taxes_dict.get('sgst_amt', 0)
-		self.cgst_value = taxes_dict.get('cgst_amt', 0)
-		self.igst_value = taxes_dict.get('igst_amt', 0)
+		self.sgst_value = round(taxes_dict.get('sgst_amt', 0),0)
+		self.cgst_value = round(taxes_dict.get('cgst_amt', 0),0)
+		self.igst_value = round(taxes_dict.get('igst_amt', 0),0)
+		self.cess_value = round(taxes_dict.get('cess_amt', 0), 0)
+		self.taxable_value = round(doc.base_net_total,0)
+		self.total_value = round(doc.base_grand_total, 0)
+		self.other_value = self.total_value - (self.taxable_value + self.sgst_value + self.cgst_value +
+											   self.igst_value + self.cess_value)
 		for d in self.items:
 			d.sgst_rate = taxes_dict.get('sgst_per', 0)
 			d.cgst_rate = taxes_dict.get('cgst_per', 0)
@@ -222,7 +221,7 @@ class eWayBill(Document):
 			elif text == 'from' and self.supply_type == 'Outward':
 				self.update_sandbox_details(text)
 			else:
-				self.update_actual_details(text, add_doc)
+				self.update_sandbox_details(text)
 		else:
 			if add_doc.country == 'India':
 				self.update_actual_details(text, add_doc)
@@ -244,10 +243,15 @@ class eWayBill(Document):
 			setattr(self, text + '_gstin', 'URP')
 
 	def update_sandbox_details(self, text):
-		setattr(self, text + 'generated_by', '05AAACG1539P1ZH')
-		setattr(self, text + '_gstin', '05AAACG1539P1ZH')
-		setattr(self, text + '_state_code', 5)
-		setattr(self, text + '_pincode', 263652)
+		if text == 'from':
+			setattr(self, text + 'generated_by', '05AAACG1539P1ZH')
+			setattr(self, text + '_gstin', '05AAACG1539P1ZH')
+			setattr(self, text + '_state_code', 5)
+			setattr(self, text + '_pincode', 263652)
+		elif text == 'to':
+			setattr(self, text + '_gstin', '02EHFPS5910D2Z0')
+			setattr(self, text + '_state_code', 2)
+			setattr(self, text + '_pincode', 176036)
 
 	def get_distance(self, frm_add_doc, to_add_doc):
 		if frm_add_doc.country == to_add_doc.country:
