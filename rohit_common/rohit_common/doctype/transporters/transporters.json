@@ -24,6 +24,7 @@
   "cb0",
   "self_pickup",
   "is_test_server",
+  "port_code",
   "gstin_for_eway",
   "api_key",
   "mode_of_transport",
@@ -320,9 +321,14 @@
    "fieldname": "dtdc_service_validation_link",
    "fieldtype": "Data",
    "label": "DTDC Service Validation Link"
+  },
+  {
+   "fieldname": "port_code",
+   "fieldtype": "Data",
+   "label": "Port Code"
   }
  ],
- "modified": "2020-10-14 13:54:06.502412",
+ "modified": "2020-10-16 05:37:45.275706",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Transporters",

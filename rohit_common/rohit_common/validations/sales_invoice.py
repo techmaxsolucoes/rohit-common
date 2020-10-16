@@ -1,25 +1,51 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import re
 import frappe
+from rigpl_erpnext.utils.manufacturing_utils import replace_java_chars
 
 
 def validate(doc, method):
     template_doc = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
+    check_customs_tariff(doc)
     update_sender_details(doc, template_doc)
+    check_series(doc, template_doc)
     validate_address_google_update(doc)
     validate_other_fields(doc)
-    check_customs_tariff(doc)
     check_local_natl_tax_rules(doc, template_doc)
     check_taxes_integrity(doc, method, template_doc)
     check_validated_gstin(doc.customer_address)
     check_validated_gstin(doc.shipping_address_name)
 
 
+def check_series(doc, tx_doc):
+    series_regex = replace_java_chars(tx_doc.series)
+    if series_regex:
+        if 'or' in series_regex:
+            ser_regex = series_regex.split("or")
+        else:
+            ser_regex = [series_regex]
+        series_regex_pass = 0
+        for d in ser_regex:
+            p = re.compile(d.strip())
+            if not p.match(doc.name):
+                pass
+            else:
+                series_regex_pass = 1
+        if series_regex_pass != 1:
+            frappe.throw("{}: is not as per the defined Series in {}".
+                         format(doc.name, tx_doc.name))
+    else:
+        frappe.throw("Series Regex Not Defined for {} and {}".
+                     format(frappe.get_desk_link(doc.doctype, doc.name),
+                            frappe.get_desk_link(tx_doc.doctype, tx_doc.name)))
+
+
 def on_update(doc, method):
     it_list = get_item_synopsis(doc)
-    if not doc.item_synopsis:
+    if not doc.items_synopsis:
         for d in it_list:
-            doc.append("item_synopsis", d.copy())
+            doc.append("items_synopsis", d.copy())
 
 
 def update_sender_details(doc, tmp_doc):
@@ -70,9 +96,9 @@ def validate_other_fields(doc):
     validate_add_fields(doc)
     validate_export_bill_fields(doc)
     it_list = get_item_synopsis(doc)
-    if not doc.item_synopsis:
+    if not doc.items_synopsis:
         for d in it_list:
-            doc.append("item_synopsis", d.copy())
+            doc.append("items_synopsis", d.copy())
 
 
 def get_item_synopsis(doc):
@@ -119,6 +145,7 @@ def update_item_table(it_list, item_row):
 
 
 def validate_export_bill_fields(doc):
+    trans_doc = frappe.get_doc("Transporters", doc.transporters)
     tx_tmp_doc = frappe.get_doc('Sales Taxes and Charges Template', doc.taxes_and_charges)
     ship_add_doc = frappe.get_doc('Address', doc.shipping_address_name)
     if tx_tmp_doc.is_export == 1 and tx_tmp_doc.is_sample != 1:
@@ -133,9 +160,6 @@ def validate_export_bill_fields(doc):
         if doc.mode_of_transport not in ('Air', 'Ship'):
             frappe.throw('Only Air or Sea as Mode of Transport is Allowed for Export Related {}'.
                          format(frappe.get_desk_link(doc.doctype, doc.name)))
-        if not doc.export_invoice_no:
-            frappe.throw('Export Invoice No is Mandatory for {}'.format(frappe.get_desk_link(doc.doctype,
-                                                                                             doc.name)))
         doc.gst_category = 'Overseas'
         if not tx_tmp_doc.iec_code:
             frappe.throw('IEC Code is not Mentioned in {} for {}'.
@@ -153,6 +177,22 @@ def validate_export_bill_fields(doc):
             frappe.throw('Export Type is not Mentioned in {} for {}'.
                          format(frappe.get_desk_link('Sales Taxes and Charges Template', doc.taxes_and_charges),
                                 frappe.get_desk_link(doc.doctype, doc.name)))
+        elif tx_tmp_doc.export_type == "Without Payment of Tax":
+            if not tx_tmp_doc.lut_no_and_date:
+                frappe.throw("{} is Without Payment of Taxes hence LUT is Mandatory".
+                             format(frappe.get_desk_link(tx_tmp_doc.doctype, tx_tmp_doc.name)))
+        if not trans_doc.port_code:
+            frappe.throw("{} does not have Port Code Mentioned".
+                         format(frappe.get_desk_link(trans_doc.doctype, trans_doc.name)))
+        if not doc.payment_terms_template:
+            frappe.throw("For Export {} Payment Terms Template is Mandatory".
+                         format(frappe.get_desk_link(doc.doctype, doc.name)))
+        else:
+            ptt = frappe.get_doc("Payment Terms Template", doc.payment_terms_template)
+            if not ptt.description:
+                frappe.throw("For Export {} Payment Terms Template Description is Mandatory for {}".
+                         format(frappe.get_desk_link(doc.doctype, doc.name),
+                                frappe.get_desk_link(ptt.doctype, ptt.name)))
         doc.export_type = tx_tmp_doc.export_type
 
 
