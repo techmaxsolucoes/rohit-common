@@ -16,7 +16,6 @@ def validate(doc, method):
     validate_shipping_address(doc, method)
     doc.pincode = re.sub('[^A-Za-z0-9]+', '', str(doc.pincode))
     valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
-
     if doc.country:
         country_doc = frappe.get_doc("Country", doc.country)
         if country_doc.gst_details != 1:
@@ -66,7 +65,6 @@ def validate(doc, method):
                 frappe.throw("If Pincode is not Known then Enter NA")
     else:
         frappe.throw('Country is Mandatory')
-
     if doc.state_rigpl:
         doc.state = doc.state_rigpl
         verify_state_country(doc.state_rigpl, doc.country)
