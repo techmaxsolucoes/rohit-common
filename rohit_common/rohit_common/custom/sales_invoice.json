@@ -42,7 +42,7 @@
    "modified_by": "aditya@rigpl.com",
    "name": "Receivable Voucher-ship_terms",
    "no_copy": 0,
-   "options": "\nEXW-Ex Works\nCPT-Transport Paid\nCIP-Transport & Insurance Paid",
+   "options": "\nEXW-Ex Works\nCPT-Transport Paid\nCIP-Transport & Insurance Paid\nCIF-Cost Insurance & Freight\nCFR-Cost & Freight\nFOB-Free on Board",
    "owner": "aditya@rigpl.com",
    "parent": null,
    "parentfield": "fields",
