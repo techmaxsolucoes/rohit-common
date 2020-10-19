@@ -5,6 +5,14 @@
 frappe.query_reports["Clear Tax Import Format"] = {
 	"filters": [
 		{
+			"fieldname":"company",
+			"label": "Company",
+			"fieldtype": "Link",
+			"options": "Company",
+			"reqd": 1,
+			"default": frappe.defaults.get_user_default("Company"),
+		},
+		{
 			"fieldname":"type",
 			"label": "Transaction Type",
 			"fieldtype": "Select",
