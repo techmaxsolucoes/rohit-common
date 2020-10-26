@@ -49,23 +49,27 @@ def on_update(doc, method):
 
 
 def update_sender_details(doc, tmp_doc):
-    send_add_doc = frappe.get_doc('Address', tmp_doc.from_address)
-    doc.company_address = tmp_doc.from_address
-    doc.company_gstin = send_add_doc.gstin
+    if tmp_doc.from_address:
+        send_add_doc = frappe.get_doc('Address', tmp_doc.from_address)
+        doc.company_address = tmp_doc.from_address
+        doc.company_gstin = send_add_doc.gstin
+    else:
+        frappe.throw("From Address is Needed in {}".format(frappe.get_desk_link(tmp_doc.doctype, tmp_doc.name)))
 
 
 def check_local_natl_tax_rules(doc, template_doc):
+    # Will only check if the Tax Rate is not Sample
     # Check if Shipping State is Same as Template State then check if the tax template is LOCAL
     # Else if the States are different then the template should NOT BE LOCAL
     bill_state = frappe.db.get_value("Address", doc.customer_address, "state_rigpl")
     ship_country = frappe.db.get_value("Address", doc.shipping_address_name, "country")
 
-    if bill_state == template_doc.state and template_doc.is_export == 0:
+    if bill_state == template_doc.state and template_doc.is_export == 0 and template_doc.is_sample != 1:
         if template_doc.is_local_sales != 1:
             frappe.throw("Selected Tax {0} is NOT LOCAL Tax but Billing Address is in Same State {1}, "
                          "hence either change Billing Address or Change the Selected Tax".
                          format(doc.taxes_and_charges, bill_state))
-    elif ship_country == 'India' and bill_state != template_doc.state:
+    elif ship_country == 'India' and bill_state != template_doc.state and template_doc.is_sample != 1:
         if template_doc.is_local_sales == 1:
             frappe.throw("Selected Tax {0} is LOCAL Tax but Billing Address is in Different State {1}, "
                          "hence either change Billing Address or Change the Selected Tax".
