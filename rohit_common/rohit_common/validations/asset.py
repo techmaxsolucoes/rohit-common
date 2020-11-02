@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.utils import getdate, get_last_day, flt, cint, add_months, add_days, date_diff
-from rigpl_erpnext.rigpl_erpnext.validations.item import fn_next_string, fn_check_digit
+from rohit_common.rohit_common.utils.rohit_common_utils import fn_next_string, fn_check_digit
 from dateutil import relativedelta
 
 def validate(doc, method):

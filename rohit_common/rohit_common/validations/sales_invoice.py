@@ -2,20 +2,31 @@
 from __future__ import unicode_literals
 import re
 import frappe
-from rigpl_erpnext.utils.manufacturing_utils import replace_java_chars
+from rohit_common.utils.rohit_common_utils import replace_java_chars, check_dynamic_link, \
+    check_sales_taxes_integrity
 
 
 def validate(doc, method):
     template_doc = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
     check_customs_tariff(doc)
+    check_all_dynamic_links(doc)
     update_sender_details(doc, template_doc)
     check_series(doc, template_doc)
     validate_address_google_update(doc)
     validate_other_fields(doc)
+    check_delivery_note_rule(doc, method)
     check_local_natl_tax_rules(doc, template_doc)
-    check_taxes_integrity(doc, method, template_doc)
+    check_sales_taxes_integrity(doc)
     check_validated_gstin(doc.customer_address)
     check_validated_gstin(doc.shipping_address_name)
+
+
+def check_all_dynamic_links(doc):
+    check_dynamic_link(parenttype="Address", parent=doc.customer_address, link_doctype="Customer",
+                       link_name=doc.customer)
+    check_dynamic_link(parenttype="Address", parent=doc.shipping_address_name,
+                       link_doctype="Customer", link_name=doc.customer)
+    check_dynamic_link(parenttype="Contact", parent=doc.contact_person, link_doctype="Customer", link_name=doc.customer)
 
 
 def check_series(doc, tx_doc):
@@ -127,6 +138,47 @@ def get_item_synopsis(doc):
     return it_list
 
 
+def check_delivery_note_rule(doc, method):
+    dn_dict = frappe._dict()
+    list_of_dn_dict = []
+
+    for d in doc.items:
+        # Stock Items without DN would need Update Stock Check
+        if d.delivery_note is None:
+            item_doc = frappe.get_doc('Item', d.item_code)
+            if item_doc.is_stock_item == 1 and doc.update_stock != 1:
+                frappe.throw(("Item Code {0} in Row # {1} is Stock Item without any DN so please check "
+                              "Update Stock Button").format(d.item_code, d.idx))
+
+        if d.dn_detail not in list_of_dn_dict and d.delivery_note is not None:
+            dn_dict['dn'] = d.delivery_note
+            dn_dict['dn_detail'] = d.dn_detail
+            dn_dict['item_code'] = d.item_code
+            list_of_dn_dict.append(dn_dict.copy())
+        # With SO DN is mandatory
+        if d.sales_order is not None and d.delivery_note is None:
+            # Rule no.5 in the above description for disallow SO=>SI no skipping DN
+            frappe.throw(("""Error in Row# {0} has SO# {1} but there is no DN. 
+            Hence making of Invoice is DENIED""").format(d.idx, d.sales_order))
+        # With DN SO is mandatory
+        if d.delivery_note is not None and d.sales_order is None:
+            frappe.throw(("""Error in Row# {0} has DN# {1} but there is no SO. 
+            Hence making of Invoice is DENIED""").format(d.idx, d.delivery_note))
+        # For DN items quantities should be same
+        if d.delivery_note is not None:
+            dn_qty = frappe.db.get_value('Delivery Note Item', d.dn_detail, 'qty')
+            if dn_qty != d.qty:
+                frappe.throw("Invoice Qty should be equal to DN quantity of {0} at Row # {1}".format(dn_qty, d.idx))
+    if list_of_dn_dict:
+        unique_dn = {v['dn']: v for v in list_of_dn_dict}.values()
+        for dn in unique_dn:
+            dn_doc = frappe.get_doc('Delivery Note', dn.dn)
+            for d in dn_doc.items:
+                if not any(x['dn_detail'] == d.name for x in list_of_dn_dict):
+                    frappe.throw(("Item No: {0} with Item Code: {1} in DN# {2} is not mentioned in "
+                                  "SI# {3}").format(d.idx, d.item_code, dn_doc.name, doc.name))
+
+
 def update_item_table(it_list, item_row):
     it_dict = frappe._dict({})
     tariff_doc = frappe.get_doc('Customs Tariff Number', item_row.gst_hsn_code)
@@ -216,25 +268,6 @@ def validate_add_fields(doc):
 
     doc.shipping_address_gstin = ship_gstin
     doc.billing_address_gstin = bill_gstin
-
-
-def check_taxes_integrity(doc, method, template):
-    if doc.taxes:
-        for tax in doc.taxes:
-            check = 0
-            for temp in template.taxes:
-                if tax.idx == temp.idx and check == 0:
-                    check = 1
-                    if tax.charge_type != temp.charge_type or tax.row_id != temp.row_id or \
-                            tax.account_head != temp.account_head or tax.included_in_print_rate \
-                            != temp.included_in_print_rate or tax.rate != temp.rate:
-                        frappe.throw("Selected Tax {0}'s table does not match with tax table of Invoice# {1}. "
-                                     "Check Row # {2} or reload Taxes".format(doc.taxes_and_charges, doc.name, tax.idx))
-            if check == 0:
-                frappe.throw("Selected Tax {0}'s table does not match with tax table of Invoice# {1}. "
-                             "Check Row # {2} or reload Taxes".format(doc.taxes_and_charges, doc.name, tax.idx))
-    else:
-        frappe.throw("Empty Tax Table is not Allowed for Sales Invoice {0}".format(doc.name))
 
 
 def validate_address_google_update(doc):
