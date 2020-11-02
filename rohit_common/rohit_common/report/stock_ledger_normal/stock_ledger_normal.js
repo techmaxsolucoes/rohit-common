@@ -22,7 +22,7 @@ frappe.query_reports["Stock Ledger Normal"] = {
 			"label": "From Date",
 			"fieldtype": "Date",
 			"reqd": 1,
-			"default": frappe.datetime.add_months(frappe.datetime.get_today(), -12),
+			"default": frappe.datetime.add_months(frappe.datetime.get_today(), -1),
 		},
 		{
 			"fieldname":"to_date",
