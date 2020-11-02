@@ -2209,7 +2209,7 @@
    "columns": 0,
    "creation": "2020-09-27 12:16:26.579479",
    "default": null,
-   "depends_on": "eval: doc.gst_category === 'Overseas'",
+   "depends_on": "eval: doc.gst_category === 'Overseas' || doc.update_stock === 1",
    "description": null,
    "docstatus": 0,
    "dt": "Sales Invoice",
