@@ -21,7 +21,7 @@ def execute():
         SellingController.update_stock_ledger(si_doc)
         frappe.db.set_value("Sales Invoice", si, "update_stock", 1, update_modified=False)
         print("Updated {} and Posted Stock Ledger Entries".format(si))
-        if total % 100 == 0 and total != 0:
+        if total % 10 == 0 and total != 0:
             frappe.db.commit()
             print("Updating the Databases After {} Entries".format(total))
             time.sleep(1)
