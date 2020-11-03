@@ -25,7 +25,7 @@ def execute():
         frappe.db.set_value("Sales Invoice", si, "update_stock", 1, update_modified=False)
         inv_end_time = time.time()
         inv_time = int(inv_end_time - inv_st_time)
-        print(f"Updated {si} and Posted Stock Ledger Entries Time for Invoice: {inv_time} "
+        print(f"#{total}. Updated {si} and Posted Stock Ledger Entries Time for Invoice: {inv_time} "
               f"seconds")
         if total % 10 == 0 and total != 0:
             frappe.db.commit()
