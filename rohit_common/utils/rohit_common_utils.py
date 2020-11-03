@@ -10,10 +10,7 @@ def check_sales_taxes_integrity(document):
                      format(template.name,document.name, document.taxes_and_charges))
     if document.taxes:
         for tax in document.taxes:
-            frappe.msgprint(str(tax.charge_type))
             for temp in template.taxes:
-                frappe.msgprint(str(temp.charge_type) + " from Template")
-                frappe.msgprint(str(tax.charge_type) + " From Document")
                 if tax.idx == temp.idx:
                     if tax.charge_type != temp.charge_type or tax.row_id != temp.row_id or tax.account_head != \
                             temp.account_head or tax.included_in_print_rate != temp.included_in_print_rate or tax.rate !=\
