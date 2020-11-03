@@ -5,6 +5,7 @@ import frappe
 from erpnext.controllers.selling_controller import SellingController
 
 def execute():
+    start_time = time.time()
     si_list = frappe.db.sql("""SELECT si.name, si.docstatus, si.update_stock FROM `tabSales Invoice` si, 
     `tabSales Invoice Item` sid WHERE sid.parent = si.name AND si.docstatus = 1 
     AND sid.delivery_note IS NULL AND si.update_stock = 0 ORDER BY si.posting_date""", as_dict=1)
@@ -18,10 +19,12 @@ def execute():
         total += 1
         si_doc = frappe.get_doc("Sales Invoice", si)
         SellingController.update_stock_ledger(si_doc)
-        frappe.db.set_value("Sales Invoice", si, "update_stock", 1)
+        frappe.db.set_value("Sales Invoice", si, "update_stock", 1, update_modified=False)
         print("Updated {} and Posted Stock Ledger Entries".format(si))
         if total % 100 == 0 and total != 0:
             frappe.db.commit()
             print("Updating the Databases After {} Entries".format(total))
-            time.sleep(5)
+            time.sleep(1)
+    end_time = time.time()
     print("Total Invoices Updated = {}".format(len(unique_si_list)))
+    print(f"Total Execution Time: {end_time - start_time} seconds")
