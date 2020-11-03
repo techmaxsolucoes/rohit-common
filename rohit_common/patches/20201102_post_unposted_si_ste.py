@@ -16,15 +16,23 @@ def execute():
     print("Total Invoices to be Updated = {}".format(len(unique_si_list)))
     total = 0
     for si in unique_si_list:
+        if total % 10 == 0:
+            bat_st_time = time.time()
         total += 1
+        inv_st_time = time.time()
         si_doc = frappe.get_doc("Sales Invoice", si)
         SellingController.update_stock_ledger(si_doc)
         frappe.db.set_value("Sales Invoice", si, "update_stock", 1, update_modified=False)
-        print("Updated {} and Posted Stock Ledger Entries".format(si))
+        inv_end_time = time.time()
+        inv_time = int(inv_end_time - inv_st_time)
+        print(f"Updated {si} and Posted Stock Ledger Entries Time for Invoice: {inv_time} "
+              f"seconds")
         if total % 10 == 0 and total != 0:
             frappe.db.commit()
-            print("Updating the Databases After {} Entries".format(total))
-            time.sleep(1)
+            bat_end_time = time.time()
+            batch_time = int(bat_end_time - bat_st_time)
+            print(f"Updating the Databases After {total} Entries Total Time for this Batch {batch_time} seconds")
     end_time = time.time()
+    total_time = int(end_time - start_time)
     print("Total Invoices Updated = {}".format(len(unique_si_list)))
-    print(f"Total Execution Time: {end_time - start_time} seconds")
+    print(f"Total Execution Time: {total_time} seconds")
