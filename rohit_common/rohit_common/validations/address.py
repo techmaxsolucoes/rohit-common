@@ -8,7 +8,7 @@ from frappe.utils import flt
 from difflib import SequenceMatcher as sm
 from .google_maps import geocoding, render_gmap_json
 from ..india_gst_api.gst_public_api import search_gstin
-from rohit_common.rohit_common.utils.rohit_common_utils import replace_java_chars
+from rohit_common.utils.rohit_common_utils import replace_java_chars
 
 
 def validate(doc, method):
