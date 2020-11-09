@@ -58,7 +58,7 @@ def autoname(doc, method):
 		name = str(purchase.year) + str('{:02d}'.format(purchase.month)) + \
 			ass_cat.asset_short_name + str(ass_cat.serial)
 		next_serial = fn_next_string(doc, str(ass_cat.serial))
-		cd = fn_check_digit(doc, name)
+		cd = fn_check_digit(name)
 		name = name + str(cd)
 		doc.name = name
 		#frappe.db.set_value("Item Attribute Value", fa[0][0], "serial", next_serial)
