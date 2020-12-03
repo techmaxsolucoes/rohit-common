@@ -8,10 +8,11 @@ from frappe.utils import flt
 from difflib import SequenceMatcher as sm
 from .google_maps import geocoding, render_gmap_json
 from ..india_gst_api.gst_public_api import search_gstin
-from rohit_common.utils.rohit_common_utils import replace_java_chars
+from rohit_common.utils.rohit_common_utils import replace_java_chars, validate_email_addresses
 
 
 def validate(doc, method):
+    validate_email_addresses(doc.email_id)
     validate_primary_address(doc, method)
     validate_shipping_address(doc, method)
     doc.pincode = re.sub('[^A-Za-z0-9]+', '', str(doc.pincode))
@@ -105,6 +106,9 @@ def validate(doc, method):
             update_address_title_from_gstin_json(doc)
         else:
             doc.pan = ""
+            doc.validated_gstin = ""
+            doc.gstin_json_reply = ""
+            doc.gst_status = ""
     else:
         if doc.country == 'India':
             frappe.throw('GSTIN Mandatory for Indian Addresses or Enter NA for NO GSTIN')
