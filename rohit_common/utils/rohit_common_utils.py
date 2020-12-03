@@ -1,6 +1,22 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import frappe
+from validate_email import validate_email
+
+
+def validate_email_addresses(comm_sep_email):
+    invalid = 0
+    if comm_sep_email:
+        emails = comm_sep_email.split(',')
+        for email_id in emails:
+            if email_id:
+                is_valid = validate_email(email_id, check_regex=True, check_mx=True)
+                if is_valid != 1:
+                    if email_id != "NA":
+                        frappe.throw(f"{email_id} is Not Valid Email Address either enter Valid Email ID or NA")
+                        return 0
+            else:
+                frappe.throw("Email ID is Empty, either enter Valid Email or NA")
 
 
 def check_sales_taxes_integrity(document):

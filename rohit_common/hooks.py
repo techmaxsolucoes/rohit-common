@@ -70,6 +70,9 @@ doc_events = {
     "Asset Category": {
         "validate": "rohit_common.rohit_common.validations.asset_category.validate"
     },
+    "Contact": {
+        "validate": "rohit_common.rohit_common.validations.contact.validate"
+    },
     "Sales Invoice": {
         "validate": "rohit_common.rohit_common.validations.sales_invoice.validate",
         "on_update_after_submit": "rohit_common.rohit_common.validations.sales_invoice.on_update"
