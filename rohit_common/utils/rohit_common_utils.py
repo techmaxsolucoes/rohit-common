@@ -4,6 +4,14 @@ import frappe
 from validate_email import validate_email
 
 
+def get_email_id(email_id):
+    if email_id:
+        if email_id != "NA":
+            return email_id
+        else:
+            return ""
+
+
 def validate_email_addresses(comm_sep_email):
     invalid = 0
     if comm_sep_email:
