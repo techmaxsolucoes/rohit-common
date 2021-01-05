@@ -34,7 +34,7 @@ def validate_email_addresses(comm_sep_email):
     else:
         em_domain = email_domain[0].name
         test_email = email_domain[0].email_id
-    invalid = 0
+    is_valid = 0
     if comm_sep_email:
         emails = comm_sep_email.split(',')
         for email_id in emails:
@@ -47,10 +47,9 @@ def validate_email_addresses(comm_sep_email):
                         frappe.throw(f"{email_id} is Not Valid Email Address either enter Valid Email ID or NA")
                     else:
                         return 0
-                else:
-                    return 1
             else:
                 frappe.throw("Email ID is Empty, either enter Valid Email or NA")
+        return is_valid
 
 
 def check_sales_taxes_integrity(document):
