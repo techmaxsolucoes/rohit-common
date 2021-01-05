@@ -73,6 +73,9 @@ doc_events = {
     "Contact": {
         "validate": "rohit_common.rohit_common.validations.contact.validate"
     },
+    "File": {
+        "validate": "rohit_common.rohit_common.validations.file.validate"
+    },
     "Sales Invoice": {
         "validate": "rohit_common.rohit_common.validations.sales_invoice.validate",
         "on_update_after_submit": "rohit_common.rohit_common.validations.sales_invoice.on_update"
@@ -82,6 +85,9 @@ doc_events = {
     },
     "Purchase Invoice": {
         "validate": "rohit_common.rohit_common.validations.purchase_invoice.validate"
+    },
+    "User": {
+        "validate": "rohit_common.rohit_common.validations.user.validate"
     },
     # 	"*": {
     # 		"on_update": "method",
