@@ -45,6 +45,8 @@ def validate_email_addresses(comm_sep_email):
                 if is_valid != 1:
                     if email_id != "NA":
                         frappe.throw(f"{email_id} is Not Valid Email Address either enter Valid Email ID or NA")
+                    else:
+                        return 0
                 else:
                     return 1
             else:
