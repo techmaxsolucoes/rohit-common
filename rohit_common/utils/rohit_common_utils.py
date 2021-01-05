@@ -4,6 +4,16 @@ import frappe
 from validate_email import validate_email
 
 
+def move_file_folder(file_name, old_folder, new_folder, is_folder=0):
+    frappe.msgprint(f"File={file_name} OldFolder={old_folder} NewFolder={new_folder} IsFolder={is_folder}")
+
+
+def get_folder_details(folder_name):
+    return frappe.db.sql("""SELECT name, parent, parentfield, parenttype, idx, file_name, attached_to_doctype, rgt, 
+    lft, (rgt-lft) as diff,is_home_folder, is_folder, folder, is_private, attached_to_field 
+    FROM `tabFile` WHERE name = '%s'""" % folder_name, as_dict=1)
+
+
 def get_email_id(email_id):
     if email_id:
         if email_id != "NA":
@@ -13,16 +23,30 @@ def get_email_id(email_id):
 
 
 def validate_email_addresses(comm_sep_email):
+    email_domain = frappe.db.sql("""SELECT name, email_id FROM `tabEmail Domain` 
+    WHERE use_domain_to_verify_email_addresses = 1 AND docstatus=0""", as_dict=1)
+    if len(email_domain) > 1:
+        frappe.throw("There are more than 1 Email Domains Defined to Check Email Addresses. Please make sure only "
+                     "1 Email Domain is Checked to Check the Email Addresses")
+    elif len(email_domain) != 1:
+        frappe.throw("There are NO Email Domains Defined to Check Email Addresses. Please make sure EXACTLY "
+                     "1 Email Domain is Checked to Check the Email Addresses")
+    else:
+        em_domain = email_domain[0].name
+        test_email = email_domain[0].email_id
     invalid = 0
     if comm_sep_email:
         emails = comm_sep_email.split(',')
         for email_id in emails:
             if email_id:
-                is_valid = validate_email(email_id, check_regex=True, check_mx=True)
+                is_valid = validate_email(email_id, check_regex=True, check_mx=True, from_address=test_email,
+                                          helo_host=em_domain, smtp_timeout=10, dns_timeout=10,
+                                          use_blacklist=True, debug=True)
                 if is_valid != 1:
                     if email_id != "NA":
                         frappe.throw(f"{email_id} is Not Valid Email Address either enter Valid Email ID or NA")
-                        return 0
+                else:
+                    return 1
             else:
                 frappe.throw("Email ID is Empty, either enter Valid Email or NA")
 
