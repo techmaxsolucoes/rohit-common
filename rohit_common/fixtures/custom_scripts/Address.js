@@ -7,6 +7,13 @@ frappe.ui.form.on('Address', "state_rigpl", function(frm, cdt, cdn){
 		cur_frm.refresh_fields();
 	}
 });
+
+frappe.ui.form.on('Address', "email_id", function(frm, cdt, cdn){
+	var d = locals[cdt][cdn]
+	frappe.model.set_value(cdt, cdn, "email_address_validated", 0);
+	cur_frm.refresh_fields();
+});
+
 frappe.ui.form.on('Address', "gstin", function(frm, cdt, cdn){
 	var d = locals[cdt][cdn]
 	frappe.model.set_value(cdt, cdn, "gst_state", d.state_rigpl);
