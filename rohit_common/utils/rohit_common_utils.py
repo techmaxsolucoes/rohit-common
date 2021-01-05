@@ -22,7 +22,7 @@ def get_email_id(email_id):
             return ""
 
 
-def validate_email_addresses(comm_sep_email):
+def validate_email_addresses(comm_sep_email, backend=0):
     email_domain = frappe.db.sql("""SELECT name, email_id FROM `tabEmail Domain` 
     WHERE use_domain_to_verify_email_addresses = 1 AND docstatus=0""", as_dict=1)
     if len(email_domain) > 1:
@@ -44,7 +44,10 @@ def validate_email_addresses(comm_sep_email):
                                           use_blacklist=True, debug=True)
                 if is_valid != 1:
                     if email_id != "NA":
-                        frappe.throw(f"{email_id} is Not Valid Email Address either enter Valid Email ID or NA")
+                        if backend == 0:
+                            frappe.throw(f"{email_id} is Not Valid Email Address either enter Valid Email ID or NA")
+                        else:
+                            return 0
                     else:
                         return 0
             else:
