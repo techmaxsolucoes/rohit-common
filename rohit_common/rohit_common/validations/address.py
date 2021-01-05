@@ -12,7 +12,9 @@ from rohit_common.utils.rohit_common_utils import replace_java_chars, validate_e
 
 
 def validate(doc, method):
-    validate_email_addresses(doc.email_id)
+    if doc.email_address_validated != 1:
+        valid_email = validate_email_addresses(doc.email_id)
+        doc.email_address_validated = valid_email
     validate_primary_address(doc, method)
     validate_shipping_address(doc, method)
     doc.pincode = re.sub('[^A-Za-z0-9]+', '', str(doc.pincode))
