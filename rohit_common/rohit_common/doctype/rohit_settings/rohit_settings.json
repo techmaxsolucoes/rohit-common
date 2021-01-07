@@ -1,5 +1,4 @@
 {
- "actions": [],
  "creation": "2020-09-23 15:55:42.979487",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -17,10 +16,15 @@
   "api_link",
   "sandbox_api_link",
   "access_token",
-  "access_token_time"
+  "access_token_time",
+  "sb1",
+  "roles_allow_pub_att",
+  "docs_with_pub_att",
+  "auto_convert_pub_priv"
  ],
  "fields": [
   {
+   "collapsible": 1,
    "fieldname": "sb0",
    "fieldtype": "Section Break",
    "label": "Tax Pro GSP"
@@ -84,11 +88,34 @@
    "fieldname": "access_token_time",
    "fieldtype": "Datetime",
    "label": "Access Token Time"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "File Attachment Settings"
+  },
+  {
+   "fieldname": "roles_allow_pub_att",
+   "fieldtype": "Table",
+   "label": "Roles Allowed Public Attachments",
+   "options": "Has Role"
+  },
+  {
+   "fieldname": "docs_with_pub_att",
+   "fieldtype": "Table",
+   "label": "Documents Allowed with Public Attachments",
+   "options": "Global Search DocType"
+  },
+  {
+   "fieldname": "auto_convert_pub_priv",
+   "fieldtype": "Table",
+   "label": "Auto Convert Public to Private Files",
+   "options": "Global Search DocType"
   }
  ],
  "issingle": 1,
- "links": [],
- "modified": "2020-09-29 16:20:01.489627",
+ "modified": "2021-01-07 23:13:24.562923",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",
