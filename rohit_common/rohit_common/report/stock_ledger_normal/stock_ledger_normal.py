@@ -17,9 +17,78 @@ def get_columns():
 
 
 	return [
-		"Date:Date:80", "Time:Time:70" ,"Item:Link/Item:130", "Description::250",
-		"Qty:Float:60", "Balance:Float:90", "Warehouse::120", "Voucher No:Dynamic Link/Voucher Type:130", 
-		"Voucher Type::140", "Customer or Supplier Name:Dynamic Link/Master Type:150","Name::100", "Master Type::50"
+		{
+			"label": "Date",
+			"fieldname": "date",
+			"fieldtype": "Date",
+			"width": 80
+		},
+		{
+			"label": "Time",
+			"fieldname": "time",
+			"fieldtype": "Time",
+			"width": 70
+		},
+		{
+			"label": "Item",
+			"fieldname": "item",
+			"fieldtype": "Link",
+			"options": "Item",
+			"width": 130
+		},
+		{
+			"label": "Description",
+			"fieldname": "description",
+			"width": 250
+		},
+		{
+			"label": "Qty",
+			"fieldname": "qty",
+			"fieldtype": "Float",
+			"width": 60
+		},
+		{
+			"label": "Balance",
+			"fieldname": "balance",
+			"fieldtype": "Float",
+			"width": 90
+		},
+		{
+			"label": "Warehouse",
+			"fieldname": "warehouse",
+			"fieldtype": "Link",
+			"options": "Warehouse",
+			"width": 120
+		},
+		{
+			"label": "Voucher No",
+			"fieldname": "voucher_no",
+			"fieldtype": "Dynamic Link",
+			"options": "voucher_type",
+			"width": 130
+		},
+		{
+			"label": "Voucher Type",
+			"fieldname": "voucher_type",
+			"width": 140
+		},
+		{
+			"label": "Customer or Supplier Name",
+			"fieldname": "cust_name",
+			"fieldtype": "Dynamic Link",
+			"options": "master_type",
+			"width": 150
+		},
+		{
+			"label": "Name",
+			"fieldname": "name",
+			"width": 100
+		},
+		{
+			"label": "Master Type",
+			"fieldname": "master_type",
+			"width": 50
+		},
 	]
 
 def get_sl_entries(filters):
