@@ -47,7 +47,7 @@ def execute():
             deleted_files_list.append(file.name)
             deleted_files_count += 1
             changes_done += 1
-            frappe.delete_doc("File", file.name)
+            frappe.delete_doc("File", file.name, for_reload=0)
         if changes_done % 500 == 0 and changes_done != 0:
             print(f"Saving Changes to Database after {changes_done} Changes")
             frappe.db.commit()
@@ -67,7 +67,7 @@ def execute():
                 fd.file_available_on_server = 1
                 fd.save()
         else:
-            frappe.delete_doc("File", file.name)
+            frappe.delete_doc("File", file.name, for_reload=0)
             deleted_files_list.append(file.name)
             deleted_files_count += 1
         if changes_done % 500 == 0 and changes_done != 0:
@@ -97,7 +97,7 @@ def execute():
             fd.save()
             changes_done += 1
         else:
-            frappe.delete_doc("File", file.name)
+            frappe.delete_doc("File", file.name, for_reload=0)
             deleted_files_list.append(file.name)
             deleted_files_count += 1
         if changes_done%500 == 0 and changes_done !=0:
@@ -111,11 +111,12 @@ def execute():
             fd.save()
             changes_done += 1
         else:
-            frappe.delete_doc("File", file.name)
+            frappe.delete_doc("File", file.name, for_reload=0)
             deleted_files_list.append(file.name)
             deleted_files_count += 1
         if changes_done%500 == 0 and changes_done !=0:
-            print(f"Saving Changes to Database after {changes_done} Changes")
+            print(f"Saving Changes to Database after {changes_done} Changes. "
+                  f"Total Time Elapsed = {int(time.time() - st_time)}")
             frappe.db.commit()
     frappe.db.commit()
     fold_time = int(time.time() - st_time - pub_time)
