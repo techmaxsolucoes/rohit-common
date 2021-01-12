@@ -26,20 +26,21 @@ def execute():
     orp_priv_size = 0
     orphan_pub = 0
     orp_pub_size = 0
-
     for list_of_files in [public_files, private_files]:
         if list_of_files:
             for files in list_of_files:
                 if list_of_files == public_files:
                     file_path = public_files_path + '/' + files
+                    file_url = '/files/' + files
                 else:
                     file_path = private_files_path + '/' + files
+                    file_url = '/private/files/' + files
                 if '"' in files:
                     query = """SELECT name, attached_to_doctype, attached_to_name, file_url, file_name 
-                    FROM `tabFile` WHERE  file_name = '%s' """ % (files)
+                    FROM `tabFile` WHERE  (file_name = '%s' OR file_url = '%s') """ % (files, file_url)
                 else:
                     query = """SELECT name, attached_to_doctype, attached_to_name, file_url, file_name
-                    FROM `tabFile` WHERE  file_name = "%s" """ % (files)
+                    FROM `tabFile` WHERE  (file_name = "%s" OR file_url = '%s') """ % (files, file_url)
                 file_db = frappe.db.sql(query, as_list=1)
                 if file_db:
                     pass
