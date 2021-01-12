@@ -21,6 +21,12 @@ def execute():
     FROM `tabFile` WHERE mark_for_deletion = 1""", as_dict=1)
     for file in files_marked_to_delete:
         fd = frappe.get_doc("File", file.name)
+        # Check if File URL not in another File so don't delete
+        other_file = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url = '%s'""" % fd.file_url)
+        if other_file:
+            file_exists_in_others_as_well = 1
+        else:
+            file_exists_in_others_as_well = 0
         file_path = make_file_path(fd)
         if file.attached_to_doctype and file.attached_to_name:
             doc = frappe.get_doc(file.attached_to_doctype, file.attached_to_name)
@@ -31,7 +37,7 @@ def execute():
         else:
             ignore_permissions = True
         file_available = check_file_availability(fd)
-        if file_available == 1:
+        if file_available == 1 and file_exists_in_others_as_well == 0:
             os.remove(file_path)
         frappe.delete_doc("File", file.name, ignore_permissions=ignore_permissions)
     frappe.db.commit()
