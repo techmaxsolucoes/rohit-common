@@ -47,14 +47,14 @@ def get_data(filters):
     conditions, cond_summary = get_conditions(filters)
     if filters.get("summary_dt") == 1:
         data = frappe.db.sql("""SELECT IFNULL(attached_to_doctype, "NO DOCTYPE"), COUNT(name) as no_of_files, 
-        ROUND(((SUM(file_size))/1024/1024),2) FROM `tabFile` WHERE docstatus=0 AND is_folder=0 %s
-        GROUP BY attached_to_doctype ORDER BY no_of_files DESC """ % cond_summary, as_list=1)
+        ROUND(((SUM(file_size))/1024/1024),2) as size FROM `tabFile` WHERE docstatus=0 AND is_folder=0 %s
+        GROUP BY attached_to_doctype ORDER BY size DESC, no_of_files DESC """ % cond_summary, as_list=1)
     elif filters.get("summary_fol") == 1:
         data = frappe.db.sql("""SELECT IFNULL(folder, "NO FOLDER"), COUNT(name) as no_of_files,
-            ROUND(((SUM(file_size))/1024/1024),2)
+            ROUND(((SUM(file_size))/1024/1024),2) as size
             FROM `tabFile`
             WHERE docstatus=0 AND is_folder=0 
-            GROUP BY folder ORDER BY no_of_files DESC """, as_list=1)
+            GROUP BY folder ORDER BY size DESC, no_of_files DESC """, as_list=1)
     else:
         if filters.get("is_folder") == 1:
             data = frappe.db.sql("""SELECT name, file_name, folder, ROUND(file_size/1024/1024,2), lft, rgt, (rgt - lft),
