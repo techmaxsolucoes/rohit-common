@@ -3,11 +3,21 @@ from __future__ import unicode_literals
 
 import os
 import frappe
-from frappe.core.doctype.file.file import File
+from ...utils.rohit_common_utils import make_file_path
+from frappe.utils import get_site_base_path
+from pathlib import Path
+
+
+def on_trash(doc, method):
+    if doc.important_document_for_archive == 1:
+        frappe.throw(f"{doc.name} is Checked for Archive hence Cannot be Deleted")
 
 
 def validate(doc, method):
     check_file_availability(doc)
+    get_size(doc)
+    if doc.mark_for_deletion == 1 and doc.important_document_for_archive == 1:
+        frappe.throw(f"{doc.name} Cannot be Marked for Deletion as its an Important Document")
     # If File being created is Public then check if the Doctype its attached to is allowed or not.
     # If Doctype is not allowed then check if the role is allowed to create Public Files or not.
     if doc.is_private != 1:
@@ -54,11 +64,33 @@ def validate(doc, method):
                              f"make this file Private and Proceed")
 
 
-def check_file_availability(file_doc):
+def get_size(doc):
+    file_path = get_site_base_path() + doc.file_url
+    if doc.file_available_on_server == 1:
+        if Path(file_path).stat().st_size != doc.file_size:
+            doc.file_size = Path(file_path).stat().st_size
+    '''
+    doc.flags.ignore_permissions = True
+    if doc.is_folder == 1:
+        files = frappe.db.sql("""SELECT name, size FROM `tabFile` WHERE lft > %s 
+        AND rgt < %s""" % (doc.lft, doc.rgt), as_dict=1)
+        print(files)
+    '''
+
+
+def check_file_availability(file_doc, backend=0):
     # Validate File available on Server
-    full_path = File.get_full_path(file_doc)
-    if os.path.exists(full_path):
-        file_doc.file_available_on_server = 1
-    else:
-        file_doc.file_available_on_server = 0
-        frappe.msgprint(f"{file_doc.file_name} is Not Available on Server")
+    full_path = get_site_base_path() + file_doc.file_url
+    if file_doc.is_folder != 1:
+        if os.path.exists(full_path):
+            file_doc.file_available_on_server = 1
+            if backend == 1:
+                print(f"{file_doc.name} is Available on Server and Status Updated")
+            return 1
+        else:
+            file_doc.file_available_on_server = 0
+            if backend == 0:
+                frappe.msgprint(f"{file_doc.file_name} is Not Available on Server")
+            else:
+                print(f"{file_doc.name} is Not Available on Server and Can be Deleted")
+            return 0

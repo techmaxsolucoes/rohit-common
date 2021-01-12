@@ -74,7 +74,8 @@ doc_events = {
         "validate": "rohit_common.rohit_common.validations.contact.validate"
     },
     "File": {
-        "validate": "rohit_common.rohit_common.validations.file.validate"
+        "validate": "rohit_common.rohit_common.validations.file.validate",
+        "on_trash": "rohit_common.rohit_common.validations.file.on_trash"
     },
     "Sales Invoice": {
         "validate": "rohit_common.rohit_common.validations.sales_invoice.validate",
