@@ -65,7 +65,7 @@ def validate(doc, method):
 
 
 def get_size(doc):
-    file_path = get_site_base_path() + doc.file_url
+    file_path = get_file_path_from_doc(doc)
     if doc.file_available_on_server == 1:
         if Path(file_path).stat().st_size != doc.file_size:
             doc.file_size = Path(file_path).stat().st_size
@@ -80,7 +80,7 @@ def get_size(doc):
 
 def check_file_availability(file_doc, backend=0):
     # Validate File available on Server
-    full_path = get_site_base_path() + file_doc.file_url
+    full_path = get_file_path_from_doc(file_doc)
     if file_doc.is_folder != 1:
         if os.path.exists(full_path):
             file_doc.file_available_on_server = 1
@@ -94,3 +94,11 @@ def check_file_availability(file_doc, backend=0):
             else:
                 print(f"{file_doc.name} is Not Available on Server and Can be Deleted")
             return 0
+
+
+def get_file_path_from_doc(file_doc):
+    if file_doc.is_private == 1:
+        full_path = get_site_base_path() + file_doc.file_url
+    else:
+        full_path = get_site_base_path() + "/public" + file_doc.file_url
+    return full_path
