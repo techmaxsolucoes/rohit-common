@@ -17,6 +17,7 @@ def execute():
     st_time = time.time()
     print("Checking for Files Marked to Delete")
     time.sleep(1)
+    marked = 0
     files_marked_to_delete = frappe.db.sql("""SELECT name, file_name, file_url, attached_to_doctype, attached_to_name 
     FROM `tabFile` WHERE mark_for_deletion = 1""", as_dict=1)
     for file in files_marked_to_delete:
@@ -31,6 +32,7 @@ def execute():
         if file.attached_to_doctype and file.attached_to_name:
             doc = frappe.get_doc(file.attached_to_doctype, file.attached_to_name)
             ignore_permissions = doc.has_permission("write") or False
+            marked += 1
             if frappe.flags.in_web_form:
                 ignore_permissions = True
             comment = doc.add_comment("Attachment Removed", f"Removed {file.name} as it Was Marked for Deletion")
@@ -39,7 +41,10 @@ def execute():
         file_available = check_file_availability(fd)
         if file_available == 1 and file_exists_in_others_as_well == 0:
             os.remove(file_path)
-        frappe.delete_doc("File", file.name, ignore_permissions=ignore_permissions)
+        frappe.delete_doc("File", file.name, ignore_permissions=ignore_permissions, for_reload=1)
+        if marked % 500 == 0 and marked > 0:
+            frappe.db.commit()
+            print(f"Committing Changes after {marked} files Marked for Delete Deleted.")
     frappe.db.commit()
     mark_time = int(time.time() - st_time)
 
@@ -49,6 +54,7 @@ def execute():
     ro_set = frappe.get_single("Rohit Settings")
     tot_auto_delete = 0
     archive_files = 0
+    auto_delete = 0
     for row in ro_set.auto_deletion_policy_for_files:
         dt_conds = ""
         if row.doctype_conditions:
@@ -64,15 +70,20 @@ def execute():
             # print(f"Checking {fd.name} Attached To: {fd.attached_to_doctype}: {fd.attached_to_name}")
             file_path = make_file_path(fd)
             if fd.important_document_for_archive != 1:
-                print(f"Removed File {file.name} Attached to {row.document_type}: {fd.attached_to_name}")
+                auto_delete += 1
+                print(f"{auto_delete}. Removed File {file.name} Attached to {row.document_type}: {fd.attached_to_name}")
                 doc.add_comment("Attachment Removed", f"Removed {file.name} Due to Deletion Policy to Delete After "
                                                       f"{row.days_to_keep} Days")
                 file_available = check_file_availability(fd)
                 if file_available == 1:
                     os.remove(file_path)
-                frappe.delete_doc("File", file.name, ignore_permissions=1)
+                frappe.delete_doc("File", file.name, ignore_permissions=1, for_reload=0)
             else:
                 archive_files += 1
+            if auto_delete % 500 == 0 and auto_delete > 0:
+                frappe.db.commit()
+                print(f"Committing Changes after {auto_delete} files Deleted. Total Time Elapsed "
+                      f"{int(time.time() - st_time)} seconds")
     frappe.db.commit()
     del_time = int(time.time() - st_time)
 
@@ -92,7 +103,8 @@ def execute():
             fd.save()
             avail_count += 1
         else:
-            frappe.delete_doc("File", fd.name, ignore_permissions=1)
+            # frappe.delete_doc("File", fd.name, ignore_permissions=1, for_reload=0)
+            print("Deleting Doc is Disabled")
         if avail_count % 500 == 0 and avail_count > 0:
             frappe.db.commit()
             print(f"Committing Changes after {avail_count} files made available")
