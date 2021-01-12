@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import frappe
 from validate_email import validate_email
+from frappe.utils import get_files_path, get_site_path
 
 
 def move_file_folder(file_name, old_folder, new_folder, is_folder=0):
@@ -12,6 +13,14 @@ def get_folder_details(folder_name):
     return frappe.db.sql("""SELECT name, parent, parentfield, parenttype, idx, file_name, attached_to_doctype, rgt, 
     lft, (rgt-lft) as diff,is_home_folder, is_folder, folder, is_private, attached_to_field 
     FROM `tabFile` WHERE name = '%s'""" % folder_name, as_dict=1)
+
+
+def make_file_path(file_doc):
+    if file_doc.is_private == 1:
+        fpath = get_files_path(is_private=1)
+    else:
+        fpath = get_files_path()
+    return fpath + '/' + file_doc.file_name
 
 
 def get_email_id(email_id):

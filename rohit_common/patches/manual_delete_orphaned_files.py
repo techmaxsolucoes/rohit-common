@@ -53,7 +53,7 @@ def execute():
                     else:
                         orphan_private += 1
                         orp_priv_size += Path(file_path).stat().st_size
-                # os.remove(file_path)
+                    os.remove(file_path)
     tot_time = int(time.time() - st_time)
     tot_pub_size = round(orp_pub_size / 1024 / 1024, 2)
     tot_priv_size = round(orp_priv_size / 1024 / 1024, 2)

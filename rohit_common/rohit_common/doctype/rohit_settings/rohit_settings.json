@@ -20,7 +20,7 @@
   "sb1",
   "roles_allow_pub_att",
   "docs_with_pub_att",
-  "auto_convert_pub_priv"
+  "auto_deletion_policy_for_files"
  ],
  "fields": [
   {
@@ -108,14 +108,14 @@
    "options": "Global Search DocType"
   },
   {
-   "fieldname": "auto_convert_pub_priv",
+   "fieldname": "auto_deletion_policy_for_files",
    "fieldtype": "Table",
-   "label": "Auto Convert Public to Private Files",
+   "label": "Auto Deletion Policy for Files",
    "options": "Global Search DocType"
   }
  ],
  "issingle": 1,
- "modified": "2021-01-07 23:13:24.562923",
+ "modified": "2021-01-10 12:57:10.452872",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",
