@@ -26,9 +26,18 @@ def execute():
     orp_priv_size = 0
     orphan_pub = 0
     orp_pub_size = 0
+    counting = 0
     for list_of_files in [public_files, private_files]:
         if list_of_files:
             for files in list_of_files:
+                counting += 1
+                if counting % 100 == 0 and counting > 0:
+                    print(f"Total Files Checked = {counting}. Time Elapsed = {int(time.time() - st_time)} seconds",
+                          end='\r')
+                if '"' in files:
+                    file_wild_card = '%' + files + '%'
+                else:
+                    file_wild_card = "%" + files + "%"
                 if list_of_files == public_files:
                     file_path = public_files_path + '/' + files
                     file_url = '/files/' + files
@@ -37,10 +46,12 @@ def execute():
                     file_url = '/private/files/' + files
                 if '"' in files:
                     query = """SELECT name, attached_to_doctype, attached_to_name, file_url, file_name 
-                    FROM `tabFile` WHERE  (file_name = '%s' OR file_url = '%s') """ % (files, file_url)
+                    FROM `tabFile` WHERE  (file_name = '%s' OR file_url = '%s' 
+                    OR file_url LIKE '%s') """ % (files, file_url, file_wild_card)
                 else:
                     query = """SELECT name, attached_to_doctype, attached_to_name, file_url, file_name
-                    FROM `tabFile` WHERE  (file_name = "%s" OR file_url = '%s') """ % (files, file_url)
+                    FROM `tabFile` WHERE  (file_name = "%s" OR file_url = "%s" 
+                    OR file_url LIKE "%s") """ % (files, file_url, file_wild_card)
                 file_db = frappe.db.sql(query, as_list=1)
                 if file_db:
                     pass
@@ -59,8 +70,8 @@ def execute():
     tot_pub_size = round(orp_pub_size / 1024 / 1024, 2)
     tot_priv_size = round(orp_priv_size / 1024 / 1024, 2)
 
-    print(f"Total Public Files = {len(public_files)}, Total Size = ")
-    print(f"Total Private Files = {len(private_files)}, Total Size = ")
+    print(f"Total Public Files = {len(public_files)}")
+    print(f"Total Private Files = {len(private_files)}")
     print(f"Public Files Orphaned and hence Deleted = {orphan_pub} with Total = {tot_pub_size} MB")
     print(f"Private Files Orphaned and hence Deleted = {orphan_private} with Total Size = {tot_priv_size} MB")
     print(f"Total Time Taken = {tot_time} seconds")
