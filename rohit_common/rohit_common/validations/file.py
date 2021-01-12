@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import os
 import frappe
-from ...utils.rohit_common_utils import make_file_path
 from frappe.utils import get_site_base_path
 from pathlib import Path
 
@@ -14,6 +13,7 @@ def on_trash(doc, method):
 
 
 def validate(doc, method):
+    # check_file_name(doc)
     check_file_availability(doc)
     get_size(doc)
     if doc.mark_for_deletion == 1 and doc.important_document_for_archive == 1:
@@ -76,6 +76,14 @@ def get_size(doc):
         AND rgt < %s""" % (doc.lft, doc.rgt), as_dict=1)
         print(files)
     '''
+
+
+def check_file_name(file_doc):
+    disallowed_chars = ["'", '"']
+    for d in disallowed_chars:
+        if d in file_doc.file_name:
+            frappe.throw(f"Illegal Character in File Name {file_doc.file_name}. "
+                         "Please change and remove the illegal character from the file name to Proceed.")
 
 
 def check_file_availability(file_doc, backend=0):
