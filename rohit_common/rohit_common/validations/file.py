@@ -138,6 +138,9 @@ def get_file_path_from_doc(file_doc):
                 if file_in_public == 1:
                     file_in_private = 0
                     file_url = "/files/" + file_name
+                else:
+                    # Keep the file URL same as that earlier
+                    file_url = file_doc.file_url
             file_doc.is_private = file_in_private
             file_doc.file_name = file_name
             file_doc.file_url = file_url
