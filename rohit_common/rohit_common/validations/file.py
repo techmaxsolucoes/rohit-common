@@ -109,10 +109,9 @@ def check_file_availability(file_doc, backend=0):
                             new_hash = get_content_hash(f.read())
                             if new_hash == file_doc.content_hash:
                                 print(f"File {file_doc.name} Found in Private Files hence Changing")
-                                frappe.db.set_value("File", file_doc.name, "is_private", 1)
-                                frappe.db.set_value("File", file_doc.name, "file_url", new_file_url)
-                                frappe.db.set_value("File", file_doc.name, "file_available_on_server", 1)
-                                frappe.db.commit()
+                                file_doc.is_private = 1
+                                file_doc.file_url = new_file_url
+                                file_doc.file_available_on_server = 1
                                 return 1
                             else:
                                 file_doc.file_available_on_server = 0
@@ -126,6 +125,7 @@ def check_file_availability(file_doc, backend=0):
 
 
 def get_file_path_from_doc(file_doc):
+    file_in_private = 0
     if file_doc.file_url:
         if "http" in file_doc.file_url:
             file_name = (file_doc.file_url).rsplit("/", 1)[-1]
@@ -133,22 +133,17 @@ def get_file_path_from_doc(file_doc):
             file_in_private = file_name_exists(file_name, is_private=1)
             if file_in_private == 1:
                 file_url = "/private/files/" + file_name
-                frappe.db.set_value("File", file_doc.name, "is_private", 1)
-                frappe.db.set_value("File", file_doc.name, "file_url", file_url)
-                frappe.db.set_value("File", file_doc.name, "file_name", file_name)
-                frappe.db.commit()
             else:
                 file_in_public = file_name_exists(file_name)
                 if file_in_public == 1:
+                    file_in_private = 0
                     file_url = "/files/" + file_name
-                    frappe.db.set_value("File", file_doc.name, "is_private", 0)
-                    frappe.db.set_value("File", file_doc.name, "file_url", file_url)
-                    frappe.db.set_value("File", file_doc.name, "file_name", file_name)
-                    frappe.db.commit()
+            file_doc.is_private = file_in_private
+            file_doc.file_name = file_name
+            file_doc.file_url = file_url
         elif file_doc.file_url[0] != "/":
             file_url = "/" + file_doc.file_url
-            frappe.db.set_value("File", file_doc.name, "file_url", file_url)
-            frappe.db.commit()
+            file_doc.file_url = file_url
         if file_doc.is_private == 1:
             full_path = get_site_base_path() + file_doc.file_url
         else:
