@@ -32,8 +32,7 @@ def execute():
             for files in list_of_files:
                 counting += 1
                 if counting % 100 == 0 and counting > 0:
-                    print(f"Total Files Checked = {counting}. Time Elapsed = {int(time.time() - st_time)} seconds",
-                          end='\r')
+                    print(f"Total Files Checked = {counting}. Time Elapsed = {int(time.time() - st_time)} seconds")
                 if '"' in files:
                     file_wild_card = '%' + files + '%'
                 else:
