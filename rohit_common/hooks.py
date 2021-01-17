@@ -110,12 +110,12 @@ scheduler_events = {
     # 	"hourly": [
     # 		"rohit_common.tasks.hourly"
     # 	],
-    # 	"weekly": [
-    # 		"rohit_common.tasks.weekly"
-    # 	],
+    "weekly_long": [
+        "rohit_common.rohit_common.scheduled_tasks.auto_delete_version.enqueue_deletion",
+        "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.execute"
+    ],
     "monthly": [
-        "rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute",
-        "rohit_common.rohit_common.scheduled_tasks.prepared_report_delete.execute"
+        "rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute"
     ]
 }
 

@@ -33,6 +33,7 @@ def execute():
     deleted_0 = 0
     deleted_1 = 0
     for d in un_regulated_version:
+        print(f"Deleting Versions for All Un-Listed Doctypes older than {max_days} Days")
         deleted_0 += 1
         frappe.delete_doc("Version", d.name, for_reload=1)
         if deleted_0 % 2000 == 0 and deleted_0 > 0:
@@ -42,7 +43,9 @@ def execute():
         # dt_conds = ""
         # if row.doctype_conditions:
         #    dt_conds = " AND %s" % row.doctype_conditions
-        max_days = flt(row.days_to_keep)
+
+        max_days = flt(row.days_to_keep) if flt(row.days_to_keep) > 0 else 1
+        print(f"Deleting Versions for {row.document_type} older than {max_days} Days")
         query = """SELECT name, creation, ref_doctype, docname FROM `tabVersion` WHERE ref_doctype = '%s'
         AND creation <= (DATE_SUB(CURDATE(), INTERVAL %s DAY))""" % (row.document_type, max_days)
         reg_version = frappe.db.sql(query, as_dict=1)
