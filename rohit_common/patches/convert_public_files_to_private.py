@@ -36,7 +36,10 @@ def execute():
             if fd.attached_to_doctype not in allowed_dt:
                 # print(f"{sno}. Processing {file.name} Attached to {fd.attached_to_doctype}: {fd.attached_to_name}")
                 if file_available == 1:
-                    frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+                    # frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+                    fd.file_available_on_server = 1
+                    fd.is_private = 1
+                    fd.save()
                     new_avail = 1
                     new_private = fd.is_private
                     if old_avail != new_avail or old_private != new_private:
