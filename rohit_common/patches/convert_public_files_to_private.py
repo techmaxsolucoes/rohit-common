@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import time
 import frappe
-from ..rohit_common.validations.file import check_file_availability
+from ..rohit_common.validations.file import check_file_availability, delete_file_dt
 from frappe.utils.nestedset import rebuild_tree
 
 
@@ -27,6 +27,7 @@ def execute():
     for d in roset.docs_with_pub_att:
         allowed_dt.append(d.document_type)
     for file in public_file_list:
+        # print(f"Checking {file.name}")
         fd = frappe.get_doc("File", file.name)
         file_available = check_file_availability(fd)
         if file_available == 1:
@@ -35,19 +36,19 @@ def execute():
             if fd.attached_to_doctype not in allowed_dt:
                 # print(f"{sno}. Processing {file.name} Attached to {fd.attached_to_doctype}: {fd.attached_to_name}")
                 if file_available == 1:
-                    fd.is_private = 1
-                    new_avail = fd.file_available_on_server
+                    frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+                    new_avail = 1
                     new_private = fd.is_private
                     if old_avail != new_avail or old_private != new_private:
-                        fd.save()
                         changes_done += 1
                     sno += 1
         else:
             # Delete the file in DB
+            comments = f"Removed {file.name} as Not Available on Server"
             deleted_files_list.append(file.name)
             deleted_files_count += 1
             changes_done += 1
-            frappe.delete_doc("File", file.name, for_reload=0)
+            delete_file_dt(fd=fd, comment=comments)
         if changes_done % 500 == 0 and changes_done != 0:
             print(f"Saving Changes to Database after {changes_done} Changes")
             frappe.db.commit()
@@ -64,10 +65,10 @@ def execute():
         file_available = check_file_availability(fd)
         if file_available == 1:
             if fd.file_available_on_server != 1:
-                fd.file_available_on_server = 1
-                fd.save()
+                frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
         else:
-            frappe.delete_doc("File", file.name, for_reload=0)
+            comments = f"Removed {file.name} as Not Available on Server"
+            delete_file_dt(fd=fd, comment=comments)
             deleted_files_list.append(file.name)
             deleted_files_count += 1
         if changes_done % 500 == 0 and changes_done != 0:
@@ -97,7 +98,8 @@ def execute():
             fd.save()
             changes_done += 1
         else:
-            frappe.delete_doc("File", file.name, for_reload=0)
+            comments = f"Removed {file.name} as Not Available on Server"
+            delete_file_dt(fd=fd, comment=comments)
             deleted_files_list.append(file.name)
             deleted_files_count += 1
         if changes_done%500 == 0 and changes_done !=0:
@@ -111,7 +113,8 @@ def execute():
             fd.save()
             changes_done += 1
         else:
-            frappe.delete_doc("File", file.name, for_reload=0)
+            comments = f"Removed {file.name} as Not Available on Server"
+            delete_file_dt(fd=fd, comment=comments)
             deleted_files_list.append(file.name)
             deleted_files_count += 1
         if changes_done%500 == 0 and changes_done !=0:
