@@ -37,6 +37,7 @@ def execute():
                 # print(f"{sno}. Processing {file.name} Attached to {fd.attached_to_doctype}: {fd.attached_to_name}")
                 if file_available == 1:
                     # frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+                    fd.reload()
                     fd.file_available_on_server = 1
                     fd.is_private = 1
                     fd.save()
