@@ -14,6 +14,7 @@ class RohitSettings(Document):
         self.sort_single_field_child("auto_deletion_policy_for_files", "document_type")
         self.sort_single_field_child("roles_allow_pub_att", "role")
         self.sort_single_field_child("docs_with_pub_att", "document_type")
+        self.sort_single_field_child("auto_delete_from_version", "document_type")
         for d in self.auto_deletion_policy_for_files:
             if flt(d.days_to_keep) < min_days_to_keep:
                 frappe.throw(f"Minimum {min_days_to_keep} Days is Needed to Keep Files")

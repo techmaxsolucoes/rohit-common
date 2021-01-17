@@ -20,7 +20,10 @@
   "sb1",
   "roles_allow_pub_att",
   "docs_with_pub_att",
-  "auto_deletion_policy_for_files"
+  "auto_deletion_policy_for_files",
+  "sb2",
+  "max_days_to_keep_version",
+  "auto_delete_from_version"
  ],
  "fields": [
   {
@@ -112,10 +115,27 @@
    "fieldtype": "Table",
    "label": "Auto Deletion Policy for Files",
    "options": "Global Search DocType"
+  },
+  {
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "Auto Delete Version"
+  },
+  {
+   "default": "365",
+   "fieldname": "max_days_to_keep_version",
+   "fieldtype": "Int",
+   "label": "Max Days to Keep Version"
+  },
+  {
+   "fieldname": "auto_delete_from_version",
+   "fieldtype": "Table",
+   "label": "Auto Delete from Version",
+   "options": "Global Search DocType"
   }
  ],
  "issingle": 1,
- "modified": "2021-01-10 12:57:10.452872",
+ "modified": "2021-01-17 12:08:12.065570",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",
