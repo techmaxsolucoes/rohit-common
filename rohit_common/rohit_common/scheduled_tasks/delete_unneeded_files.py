@@ -92,6 +92,7 @@ def execute():
         fd = frappe.get_doc("File", file.name)
         file_available = check_file_availability(fd)
         if file_available == 1:
+            fd.file_available_on_server = 1
             pub_allowed = 0
             # File is available and now check if its public and attached to DT where Public Files are not allowed
             # Then change the file to private and also mark as available
