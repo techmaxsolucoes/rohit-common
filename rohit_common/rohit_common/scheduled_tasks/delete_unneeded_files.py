@@ -6,11 +6,9 @@
 # It would also check the files which are attached to some doctypes which need to be deleted as per deletion policy
 
 from __future__ import unicode_literals
-import os
 import time
 import frappe
 from frappe.utils.fixtures import sync_fixtures
-from ...utils.rohit_common_utils import make_file_path
 from ..validations.file import check_file_availability, delete_file_dt
 
 sync_fixtures()
