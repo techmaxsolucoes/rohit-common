@@ -91,7 +91,6 @@ def execute():
         # print(f"Checking {file.name}")
         fd = frappe.get_doc("File", file.name)
         file_available = check_file_availability(fd)
-        fd.reload()
         if file_available == 1:
             pub_allowed = 0
             # File is available and now check if its public and attached to DT where Public Files are not allowed
@@ -111,7 +110,7 @@ def execute():
                     delete_file_dt(fd)
                     print(f"Deleting {fd.name} since Attached to Non-Existent Document")
             else:
-                frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+                fd.file_available_on_server = 1
             fd.save()
         else:
             comment = f"File Removed Since Not Available on Server"
