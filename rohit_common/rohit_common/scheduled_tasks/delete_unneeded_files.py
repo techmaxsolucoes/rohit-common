@@ -111,11 +111,11 @@ def execute():
                     print(f"Deleting {fd.name} since Attached to Non-Existent Document")
             else:
                 fd.file_available_on_server = 1
-            fd.save()
+            # fd.save()
         else:
             comment = f"File Removed Since Not Available on Server"
             delete_file_dt(fd, comment=comment)
-        if avail_count % 500 == 0 and avail_count > 0:
+        if avail_count % 5 == 0 and avail_count > 0:
             frappe.db.commit()
             print(f"Committing Changes after {avail_count} files made available Time Elapsed "
                   f"{int(time.time() - st_time)} seconds")
