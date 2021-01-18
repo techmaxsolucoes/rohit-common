@@ -111,7 +111,7 @@ def execute():
                     print(f"Deleting {fd.name} since Attached to Non-Existent Document")
             else:
                 fd.file_available_on_server = 1
-            # fd.save()
+            fd.save()
         else:
             comment = f"File Removed Since Not Available on Server"
             delete_file_dt(fd, comment=comment)
