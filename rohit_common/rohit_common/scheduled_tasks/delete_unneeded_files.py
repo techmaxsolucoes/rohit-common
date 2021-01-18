@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import time
 import frappe
 from frappe.utils.fixtures import sync_fixtures
-from ..validations.file import check_file_availability, delete_file_dt
+from ..validations.file import check_file_availability, delete_file_dt, change_file_path
 
 sync_fixtures()
 
@@ -112,10 +112,12 @@ def execute():
             else:
                 fd.file_available_on_server = 1
             fd.save()
+        elif file_available == 2:
+            change_file_path(fd)
         else:
             comment = f"File Removed Since Not Available on Server"
             delete_file_dt(fd, comment=comment)
-        if avail_count % 500 == 0 and avail_count > 0:
+        if avail_count % 5 == 0 and avail_count > 0:
             frappe.db.commit()
             print(f"Committing Changes after {avail_count} files made available Time Elapsed "
                   f"{int(time.time() - st_time)} seconds")

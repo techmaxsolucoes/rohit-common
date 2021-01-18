@@ -5,6 +5,7 @@ import os
 import frappe
 from frappe.utils import get_site_base_path
 from frappe.core.doctype.file.file import get_content_hash
+from frappe.core.doctype.file.file import File
 from pathlib import Path
 
 
@@ -109,10 +110,27 @@ def check_file_availability(file_doc, backend=0):
                             new_hash = get_content_hash(f.read())
                             if new_hash == file_doc.content_hash:
                                 print(f"File {file_doc.name} Found in Private Files hence Changing")
-                                file_doc.is_private = 1
-                                file_doc.file_url = new_file_url
-                                file_doc.file_available_on_server = 1
-                                return 1
+                                return 2
+                            else:
+                                file_doc.file_available_on_server = 0
+                                if backend == 0:
+                                    frappe.msgprint(f"{file_doc.file_name} is Not Available on Server")
+                                else:
+                                    return 0
+                    else:
+                        file_doc.file_available_on_server = 0
+                        return 0
+            else:
+                if file_doc.file_name:
+                    new_file_url = "/public/files/" + file_doc.file_name
+                    full_path = get_site_base_path() + new_file_url
+                    if os.path.exists(full_path):
+                        # Check the content hash
+                        with open(full_path, "rb") as f:
+                            new_hash = get_content_hash(f.read())
+                            if new_hash == file_doc.content_hash:
+                                print(f"File {file_doc.name} Found in Public Files hence Changing")
+                                return 2
                             else:
                                 file_doc.file_available_on_server = 0
                                 if backend == 0:
@@ -225,8 +243,30 @@ def delete_file_dt(fd, comment=None):
                     delete_only_file_doc(fd, comment=comment)
                     full_path = get_file_path_from_doc(fd)
                     os.remove(path=full_path)
+            elif file_available == 2:
+                change_file_path(fd)
             else:
                 delete_only_file_doc(fd, comment=comment)
+
+
+def change_file_path(fd):
+    print(f"Changing File Path for {fd.name}")
+    if fd.file_name:
+        # This is a condition when file is available on another folder like Private File actually in Public Folder
+        # or vice-versa
+        if fd.is_private == 1:
+            file_path = "/files/" + fd.file_name
+            frappe.db.set_value("File", fd.name, "file_url", file_path)
+            frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+            frappe.db.set_value("File", fd.name, "is_private", 0)
+        else:
+            file_path = "/private/files/" + fd.file_name
+            frappe.db.set_value("File", fd.name, "file_url", file_path)
+            frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+            frappe.db.set_value("File", fd.name, "is_private", 1)
+    else:
+        print("File Name is Not There hence Exiting")
+        exit()
 
 
 def delete_only_file_doc(fd, comment=None):

@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import time
 import frappe
-from ..rohit_common.validations.file import check_file_availability, delete_file_dt
+from ..rohit_common.validations.file import check_file_availability, delete_file_dt, change_file_path
 from frappe.utils.nestedset import rebuild_tree
 
 
@@ -46,6 +46,8 @@ def execute():
                     if old_avail != new_avail or old_private != new_private:
                         changes_done += 1
                     sno += 1
+        elif file_available == 2:
+            change_file_path(fd)
         else:
             # Delete the file in DB
             comments = f"Removed {file.name} as Not Available on Server"
@@ -70,6 +72,8 @@ def execute():
         if file_available == 1:
             if fd.file_available_on_server != 1:
                 frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+        elif file_available == 2:
+            change_file_path(fd)
         else:
             comments = f"Removed {file.name} as Not Available on Server"
             delete_file_dt(fd=fd, comment=comments)
@@ -101,6 +105,8 @@ def execute():
             fd.folder = att_fold
             fd.save()
             changes_done += 1
+        elif file_available == 2:
+            change_file_path(fd)
         else:
             comments = f"Removed {file.name} as Not Available on Server"
             delete_file_dt(fd=fd, comment=comments)
@@ -116,6 +122,8 @@ def execute():
             fd.folder = att_fold
             fd.save()
             changes_done += 1
+        elif file_available == 2:
+            change_file_path(fd)
         else:
             comments = f"Removed {file.name} as Not Available on Server"
             delete_file_dt(fd=fd, comment=comments)
