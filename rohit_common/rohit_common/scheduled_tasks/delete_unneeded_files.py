@@ -9,13 +9,36 @@ from __future__ import unicode_literals
 import time
 import frappe
 from frappe.utils.fixtures import sync_fixtures
-from ..validations.file import check_file_availability, delete_file_dt, change_file_path
+from ..validations.file import check_file_availability, delete_file_dt, check_and_move_file, correct_file_name_url
 
 sync_fixtures()
 
 
 def execute():
     st_time = time.time()
+    # Check and delete files without File Name and File URL
+    print("Deleting Files without File Name and File URL")
+    delete_files = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_name IS NULL 
+    AND file_url IS NULL""", as_dict=1)
+    for files in delete_files:
+        fd = frappe.get_doc("File", files.name)
+        delete_file_dt(fd)
+    print(f"Total Files Deleted due to no File Name and File URL {len(delete_files)}")
+    print("Converting the Incorrect File Names and File URL for Files")
+    incorrect_file_name = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_name IS NULL 
+    AND is_folder=0""", as_dict=1)
+    for file in incorrect_file_name:
+        fd = frappe.get_doc("File", file.name)
+        correct_file_name_url(fd)
+    print(f"Total Files Corrected with File Names {len(incorrect_file_name)}")
+    incorrect_file_url = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url IS NULL 
+    AND is_folder=0""", as_dict=1)
+    for file in incorrect_file_url:
+        fd = frappe.get_doc("File", file.name)
+        correct_file_name_url(fd)
+    frappe.db.commit()
+    print(f"Total Files Corrected with File URL {len(incorrect_file_url)}")
+    time.sleep(1)
     print("Checking for Archive Folders and Making All Files Under them Archive Files")
     time.sleep(1)
     archived = 0
@@ -113,7 +136,7 @@ def execute():
                 fd.file_available_on_server = 1
             fd.save()
         elif file_available == 2:
-            change_file_path(fd)
+            check_and_move_file(fd)
         else:
             comment = f"File Removed Since Not Available on Server"
             delete_file_dt(fd, comment=comment)

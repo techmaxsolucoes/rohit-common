@@ -2,7 +2,38 @@
 from __future__ import unicode_literals
 import frappe
 from validate_email import validate_email
-from frappe.utils import get_files_path, get_site_path
+from frappe.utils import get_files_path
+
+
+def rebuild_tree(doctype, parent_field, group_field):
+    # call rebuild_node for all root nodes
+    # get all roots
+    lft = 1
+    result = frappe.db.sql("SELECT name, %s, lft, rgt FROM `tab%s` WHERE `%s`='' or `%s` IS NULL "
+                           "ORDER BY name ASC" % (group_field, doctype, parent_field, parent_field), as_dict=1)
+    for r in result:
+        if r.get(group_field) == 1:
+            rebuild_group(doctype, parent_field, r.name, group_field, lft)
+        else:
+            frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (doctype, lft, lft+1, r.name))
+            lft += 2
+
+
+def rebuild_group(doctype, parent_field, parent, group_field, left):
+    right = left + 1
+    non_gp_query = """SELECT name, %s, lft, rgt FROM `tab%s` WHERE %s = '%s' 
+    AND %s = 0""" % (group_field, doctype, parent_field, parent, group_field)
+    non_grp_results = frappe.db.sql(non_gp_query, as_dict=1)
+    for r in non_grp_results:
+        frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (doctype, right, right+1, r.name))
+        right += 2
+    grp_result = frappe.db.sql("""SELECT name, %s FROM `tab%s` WHERE %s = '%s' 
+    AND %s = 1""" % (group_field, doctype, parent_field, parent, group_field), as_dict=1)
+    for r in grp_result:
+        print(f"Updating Groups for {r.name}")
+        right = rebuild_group(doctype, parent_field, r.name, group_field, right)
+    frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (doctype, left, right, parent))
+    return right
 
 
 def move_file_folder(file_name, old_folder, new_folder, is_folder=0):

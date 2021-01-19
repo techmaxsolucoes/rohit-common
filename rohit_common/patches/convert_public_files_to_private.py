@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 import time
 import frappe
-from ..rohit_common.validations.file import check_file_availability, delete_file_dt, change_file_path
-from frappe.utils.nestedset import rebuild_tree
+from ..rohit_common.validations.file import check_file_availability, delete_file_dt, check_and_move_file
+from ..utils.rohit_common_utils import rebuild_tree
 
 
 def execute():
@@ -33,7 +33,7 @@ def execute():
         if file_available == 1:
             old_private = fd.is_private
             old_avail = fd.file_available_on_server
-            if fd.attached_to_doctype not in allowed_dt:
+            if fd.attached_to_doctype not in allowed_dt and fd.attached_to_doctype:
                 # print(f"{sno}. Processing {file.name} Attached to {fd.attached_to_doctype}: {fd.attached_to_name}")
                 if file_available == 1:
                     # frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
@@ -47,7 +47,7 @@ def execute():
                         changes_done += 1
                     sno += 1
         elif file_available == 2:
-            change_file_path(fd)
+            check_and_move_file(fd)
         else:
             # Delete the file in DB
             comments = f"Removed {file.name} as Not Available on Server"
@@ -73,7 +73,7 @@ def execute():
             if fd.file_available_on_server != 1:
                 frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
         elif file_available == 2:
-            change_file_path(fd)
+            check_and_move_file(fd)
         else:
             comments = f"Removed {file.name} as Not Available on Server"
             delete_file_dt(fd=fd, comment=comments)
@@ -106,7 +106,7 @@ def execute():
             fd.save()
             changes_done += 1
         elif file_available == 2:
-            change_file_path(fd)
+            check_and_move_file(fd)
         else:
             comments = f"Removed {file.name} as Not Available on Server"
             delete_file_dt(fd=fd, comment=comments)
@@ -123,7 +123,7 @@ def execute():
             fd.save()
             changes_done += 1
         elif file_available == 2:
-            change_file_path(fd)
+            check_and_move_file(fd)
         else:
             comments = f"Removed {file.name} as Not Available on Server"
             delete_file_dt(fd=fd, comment=comments)
@@ -138,7 +138,7 @@ def execute():
     print(f"Total Time Take for Changing Folder = {fold_time} seconds")
     time.sleep(1)
     # Next Make the Changes in Tree Structure if needed
-    rebuild_tree("File", "folder")
+    rebuild_tree("File", "folder", "is_folder")
     nest_time = int(time.time() - st_time - pub_time - fold_time)
 
     # Next Recaclulated the Folder Size

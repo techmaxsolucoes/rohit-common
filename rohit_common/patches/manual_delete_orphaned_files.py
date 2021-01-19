@@ -17,6 +17,13 @@ from frappe.utils import get_files_path
 
 
 def execute():
+    delete_file = input("Do You Really Want to Delete Files Enter y or n: ")
+    if delete_file == "y" or delete_file == "n":
+        pass
+    else:
+        print("Wrong Input Enter either y or n. y = If you want to delete files and n = If you only want a list of "
+              "orphaned files at the end of this patch")
+        exit()
     st_time = time.time()
     public_files_path = get_files_path()
     private_files_path = get_files_path(is_private=1)
@@ -27,11 +34,12 @@ def execute():
     orphan_pub = 0
     orp_pub_size = 0
     counting = 0
+    deleted_file_list = []
     for list_of_files in [public_files, private_files]:
         if list_of_files:
             for files in list_of_files:
                 counting += 1
-                if counting % 100 == 0 and counting > 0:
+                if counting % 500 == 0 and counting > 0:
                     print(f"Total Files Checked = {counting}. Time Elapsed = {int(time.time() - st_time)} seconds")
                 if '"' in files:
                     file_wild_card = '%' + files + '%'
@@ -64,7 +72,9 @@ def execute():
                     else:
                         orphan_private += 1
                         orp_priv_size += Path(file_path).stat().st_size
-                    os.remove(file_path)
+                    if delete_file == "y":
+                        os.remove(file_path)
+                    deleted_file_list.append(file_path)
     tot_time = int(time.time() - st_time)
     tot_pub_size = round(orp_pub_size / 1024 / 1024, 2)
     tot_priv_size = round(orp_priv_size / 1024 / 1024, 2)
@@ -74,3 +84,4 @@ def execute():
     print(f"Public Files Orphaned and hence Deleted = {orphan_pub} with Total = {tot_pub_size} MB")
     print(f"Private Files Orphaned and hence Deleted = {orphan_private} with Total Size = {tot_priv_size} MB")
     print(f"Total Time Taken = {tot_time} seconds")
+    print(f"{deleted_file_list}")

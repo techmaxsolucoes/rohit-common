@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 
 import os
 import frappe
+from shutil import copyfile, move
 from frappe.utils import get_site_base_path
 from frappe.core.doctype.file.file import get_content_hash
-from frappe.core.doctype.file.file import File
 from pathlib import Path
 
 
@@ -15,11 +15,96 @@ def on_trash(doc, method):
 
 
 def validate(doc, method):
-    # check_file_name(doc)
-    check_file_availability(doc)
-    get_size(doc)
     if doc.mark_for_deletion == 1 and doc.important_document_for_archive == 1:
         frappe.throw(f"{doc.name} Cannot be Marked for Deletion as its an Important Document")
+    check_public_allowed(doc)
+    check_and_move_file(doc)
+    get_size(doc)
+
+
+def check_and_move_file(doc):
+    # Check if public file then if its in private folder then move from Private folder if the Public File is allowed
+    # If its a private file but available in Public Folder then copy the file to Private Folder
+    in_private = 0
+    in_public = 0
+    file_available = check_file_availability(doc)
+    rset = frappe.get_doc("Rohit Settings")
+    if doc.is_private != 1 and file_available == 2:
+        file_url = "/private/files/" + doc.file_name
+        old_full_path = get_site_base_path() + "/public" + doc.file_url
+        full_file_path = get_site_base_path() + file_url
+        if doc.attached_to_doctype:
+            dt_allowed = 0
+            # Check if the Doctype is Allowed for Public Attachments if allowed then move the file to Public
+            # Also make sure that file is not attached to another file if so all are public then move otherwise copy
+            for row in rset.docs_with_pub_att:
+                if doc.attached_to_doctype == row.document_type:
+                    dt_allowed = 1
+                    break
+            if dt_allowed == 1:
+                other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile` 
+                WHERE file_name = '%s' AND name != '%s'""" % (doc.file_name, doc.name), as_dict=1)
+                # frappe.msgprint(f"Same File Name attached to {str(len(other_files))} more files")
+                for file in other_files:
+                    if file.is_private == 1:
+                        # File exists in both Private and Public
+                        in_private = 1
+                        break
+                if in_private == 1:
+                    # Copy the file from Private to Public
+                    copyfile(old_full_path, full_file_path)
+                    frappe.msgprint(f"Copying file {doc.file_name} from {old_full_path} to {full_file_path}")
+                    print(f"Copying file {doc.file_name} from {old_full_path} to {full_file_path}")
+                else:
+                    # Move the file from Private to Public since all files are Public
+                    move(full_file_path, old_full_path)
+                    frappe.msgprint(f"Would Move the File From {full_file_path} to {old_full_path}")
+                    print(f"Would Move the File From {full_file_path} to {old_full_path}")
+            else:
+                # Doctype is not allowed to have public files so make it Private
+                frappe.msgprint(f"Convert {doc.name} from Public to Private via DB Call")
+                print(f"Convert {doc.name} from Public to Private via DB Call")
+                change_file_path(doc)
+        else:
+            # File attahcment not attached to any doctype so if its not there in any private file move else copy
+            other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile` 
+            WHERE file_name = '%s' AND name != '%s'""" % (doc.file_name, doc.name), as_dict=1)
+            for file in other_files:
+                if file.is_private == 1:
+                    # File exists in both private and public
+                    in_private = 1
+                    break
+            if in_private == 1:
+                # Copy the file from Private to Public
+                copyfile(full_file_path, old_full_path)
+                frappe.msgprint(f"Copying file {doc.file_name} from {old_full_path} to {full_file_path}")
+                print(f"Copying file {doc.file_name} from {old_full_path} to {full_file_path}")
+            else:
+                # Move the file from Private to Public since all files are Public
+                move(full_file_path, old_full_path)
+                frappe.msgprint(f"Would Move the File From {full_file_path} to {old_full_path}")
+                print(f"Would Move the File From {full_file_path} to {old_full_path}")
+    elif doc.is_private == 1 and file_available == 2:
+        file_url = "/public/files/" + doc.file_name
+        old_full_path = get_site_base_path() + doc.file_url
+        full_file_path = get_site_base_path() + file_url
+        other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile` WHERE file_name = '%s' 
+        AND name != '%s'""" % (doc.file_name, doc.name), as_dict=1)
+        for file in other_files:
+            if file.is_private == 0:
+                in_public = 1
+                break
+        if in_public == 1:
+            copyfile(old_full_path, full_file_path)
+            frappe.msgprint(f"Copying file {doc.file_name} from {old_full_path} to {full_file_path}")
+            print(f"Copying file {doc.file_name} from {old_full_path} to {full_file_path}")
+        else:
+            move(full_file_path, old_full_path)
+            frappe.msgprint(f"Would Move the File From {full_file_path} to {old_full_path}")
+            print(f"Would Move the File From {full_file_path} to {old_full_path}")
+
+
+def check_public_allowed(doc):
     # If File being created is Public then check if the Doctype its attached to is allowed or not.
     # If Doctype is not allowed then check if the role is allowed to create Public Files or not.
     if doc.is_private != 1:
@@ -114,8 +199,9 @@ def check_file_availability(file_doc, backend=0):
                             else:
                                 file_doc.file_available_on_server = 0
                                 if backend == 0:
-                                    frappe.msgprint(f"{file_doc.file_name} is Not Available on Server")
+                                    frappe.msgprint(f"{file_doc.file_name} is Not Available as Hash Not Matched")
                                 else:
+                                    print(f"{file_doc.file_name} is Not Available as Hash Not Matched")
                                     return 0
                     else:
                         file_doc.file_available_on_server = 0
@@ -134,8 +220,9 @@ def check_file_availability(file_doc, backend=0):
                             else:
                                 file_doc.file_available_on_server = 0
                                 if backend == 0:
-                                    frappe.msgprint(f"{file_doc.file_name} is Not Available on Server")
+                                    frappe.msgprint(f"{file_doc.file_name} is Not Available as Has Not Matched")
                                 else:
+                                    print(f"{file_doc.file_name} is Not Available as Has Not Matched")
                                     return 0
                     else:
                         file_doc.file_available_on_server = 0
@@ -244,9 +331,40 @@ def delete_file_dt(fd, comment=None):
                     full_path = get_file_path_from_doc(fd)
                     os.remove(path=full_path)
             elif file_available == 2:
-                change_file_path(fd)
+                check_and_move_file(fd)
             else:
                 delete_only_file_doc(fd, comment=comment)
+
+
+def correct_file_name_url(fd):
+    is_private = 0
+    if fd.file_name and not fd.file_url:
+        # Correct the File URL based on availability and also change the private etc
+        # Assume that the file name is the URL of the file on the server
+        full_path = get_site_base_path() + fd.file_name
+        if "/private/files/" in fd.file_name:
+            is_private = 1
+        if os.path.exists(full_path) == 1:
+            frappe.db.set_value("File", fd.name, "is_private", is_private)
+            frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+            frappe.db.set_value("File", fd.name, "file_url", fd.file_name)
+            frappe.db.set_value("File", fd.name, "file_name", fd.file_name.split("/")[-1])
+        else:
+            frappe.delete_doc("File", fd.name)
+            print(f"{fd.name} is Not Available and does not have a File URL. Basing on the File Name Which "
+                  f"does not Exists")
+    elif fd.file_url and not fd.file_name:
+        # Correct the File Name based on availability and also change the private etc
+        file_available = check_file_availability(fd)
+        if "/private/files/" in fd.file_url:
+            is_private = 1
+        if file_available == 1:
+            frappe.db.set_value("File", fd.name, "is_private", is_private)
+            frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+            frappe.db.set_value("File", fd.name, "file_name", fd.file_url.split("/")[-1])
+    else:
+        frappe.delete_doc("File", fd.name)
+        print(f"{fd.name} is Not in Condition and hence deleted")
 
 
 def change_file_path(fd):
