@@ -293,7 +293,7 @@ def file_name_exists(file_name, is_private=0):
         return 0
 
 
-def delete_file_dt(fd, comment=None):
+def delete_file_dt(fd, comment=None, ref_doc_exists=1):
     # fd = File doctype
     if fd.important_document_for_archive == 1:
         # Don't delete Files which are marked for archives
@@ -307,11 +307,11 @@ def delete_file_dt(fd, comment=None):
             if other_files == 1:
                 # Delete only the File Doc and not the actual file
                 print(f"Only Deleting the File Doc {fd.name} and not the Actual File")
-                delete_only_file_doc(fd, comment=comment)
+                delete_only_file_doc(fd, comment=comment, ref_doc_exists=ref_doc_exists)
             else:
                 # Delete the file doc and also the actual file on the server
                 print(f"Deleting the File Doc {fd.name} and Also the File")
-                delete_only_file_doc(fd, comment=comment)
+                delete_only_file_doc(fd, comment=comment, ref_doc_exists=ref_doc_exists)
                 full_path = get_file_path_from_doc(fd)
                 try:
                     os.remove(path=full_path)
@@ -324,16 +324,16 @@ def delete_file_dt(fd, comment=None):
                 other_files = check_other_files_with_same_file(fd)
                 if other_files:
                     print(f"Only Deleting the File Doc {fd.name} and not the Actual File Found in 2nd Attempt")
-                    delete_only_file_doc(fd, comment=comment)
+                    delete_only_file_doc(fd, comment=comment, ref_doc_exists=ref_doc_exists)
                 else:
                     print(f"Deleting the File Doc {fd.name} and Also the File")
-                    delete_only_file_doc(fd, comment=comment)
+                    delete_only_file_doc(fd, comment=comment, ref_doc_exists=ref_doc_exists)
                     full_path = get_file_path_from_doc(fd)
                     os.remove(path=full_path)
             elif file_available == 2:
                 check_and_move_file(fd)
             else:
-                delete_only_file_doc(fd, comment=comment)
+                delete_only_file_doc(fd, comment=comment, ref_doc_exists=ref_doc_exists)
 
 
 def correct_file_name_url(fd):
@@ -387,8 +387,8 @@ def change_file_path(fd):
         exit()
 
 
-def delete_only_file_doc(fd, comment=None):
-    if fd.attached_to_doctype and fd.attached_to_name and comment is not None:
+def delete_only_file_doc(fd, comment=None, ref_doc_exists=1):
+    if fd.attached_to_doctype and fd.attached_to_name and comment is not None and ref_doc_exists==1:
         dt = frappe.get_doc(fd.attached_to_doctype, fd.attached_to_name)
         dt.add_comment("Attachment Removed", comment)
     frappe.delete_doc("File", fd.name, for_reload=1, ignore_permissions=1)

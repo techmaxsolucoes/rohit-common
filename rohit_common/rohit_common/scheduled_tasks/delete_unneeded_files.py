@@ -132,7 +132,7 @@ def execute():
                 if not frappe.db.exists(fd.attached_to_doctype, fd.attached_to_name):
                     non_avail_dt += 1
                     dont_save = 1
-                    delete_file_dt(fd)
+                    delete_file_dt(fd, ref_doc_exists=0)
                     print(f"Deleting {fd.name} since Attached to Non-Existent Document")
             else:
                 fd.file_available_on_server = 1
