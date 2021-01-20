@@ -141,8 +141,13 @@ def execute():
         elif file_available == 2:
             check_and_move_file(fd)
         else:
+            if fd.attached_to_doctype:
+                if not frappe.db.exists(fd.attached_to_doctype, fd.attached_to_name):
+                    file_exists = 0
+                else:
+                    file_exists = 1
             comment = f"File Removed Since Not Available on Server"
-            delete_file_dt(fd, comment=comment)
+            delete_file_dt(fd, comment=comment, ref_doc_exists=file_exists)
         if avail_count % 500 == 0 and avail_count > 0:
             frappe.db.commit()
             print(f"Committing Changes after {avail_count} files made available Time Elapsed "
