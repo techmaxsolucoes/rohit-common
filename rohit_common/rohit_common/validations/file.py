@@ -362,6 +362,24 @@ def correct_file_name_url(fd):
             frappe.db.set_value("File", fd.name, "is_private", is_private)
             frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
             frappe.db.set_value("File", fd.name, "file_name", fd.file_url.split("/")[-1])
+    elif fd.file_name:
+        file_available = check_file_availability(fd)
+        if file_available == 1:
+            if fd.is_private == 1:
+                file_url = "/private/files/" + fd.file_name
+                frappe.db.set_value("File", fd.name, "file_url", file_url)
+                frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+            else:
+                file_url = "/files/" + fd.file_name
+                frappe.db.set_value("File", fd.name, "file_url", file_url)
+                frappe.db.set_value("File", fd.name, "file_available_on_server", 1)
+        else:
+            print(f"File name there Checking File Availability = {file_available} for {fd.name}")
+            exit()
+    elif fd.file_url:
+        file_available = check_file_availability(fd)
+        print(f"File URL there Checking File Availability = {file_available}")
+        exit()
     else:
         frappe.delete_doc("File", fd.name)
         print(f"{fd.name} is Not in Condition and hence deleted")

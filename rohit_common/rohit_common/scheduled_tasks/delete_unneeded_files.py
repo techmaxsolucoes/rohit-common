@@ -31,16 +31,23 @@ def execute():
         fd = frappe.get_doc("File", file.name)
         correct_file_name_url(fd)
     print(f"Total Files Corrected with File Names {len(incorrect_file_name)}")
-    incorrect_file_url = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url IS NULL 
+    null_file_url = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url IS NULL 
     AND is_folder=0""", as_dict=1)
-    for file in incorrect_file_url:
+    for file in null_file_url:
         fd = frappe.get_doc("File", file.name)
         correct_file_name_url(fd)
     frappe.db.commit()
-    print(f"Total Files Corrected with File URL {len(incorrect_file_url)}")
-    time.sleep(1)
+    print(f"Total Files Corrected with NULL File URL {len(null_file_url)}")
+    print(f"Checking the Files with http URL and Trying to Correct it")
+    http_file_url = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url LIKE 'http%' 
+    AND is_folder=0""", as_dict=1)
+    for file in http_file_url:
+        fd = frappe.get_doc("File", file.name)
+        correct_file_name_url(fd)
+    print(f"Total Files Corrected with http in File URL {len(http_file_url)}")
+    frappe.db.commit()
     print("Checking for Archive Folders and Making All Files Under them Archive Files")
-    time.sleep(1)
+    time.sleep(2)
     archived = 0
     arch_folders = frappe.db.sql("""SELECT name, lft, rgt FROM `tabFile` WHERE is_folder=1 
     AND important_document_for_archive=1 AND is_home_folder=0 AND is_attachments_folder=0""", as_dict=1)
