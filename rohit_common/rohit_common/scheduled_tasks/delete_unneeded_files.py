@@ -111,6 +111,7 @@ def execute():
     non_avail_dt = 0
     for file in non_validated_files:
         avail_count += 1
+        dont_save = 0
         # print(f"Checking {file.name}")
         fd = frappe.get_doc("File", file.name)
         file_available = check_file_availability(fd)
@@ -130,11 +131,13 @@ def execute():
             if fd.attached_to_name:
                 if not frappe.db.exists(fd.attached_to_doctype, fd.attached_to_name):
                     non_avail_dt += 1
+                    dont_save = 1
                     delete_file_dt(fd)
                     print(f"Deleting {fd.name} since Attached to Non-Existent Document")
             else:
                 fd.file_available_on_server = 1
-            fd.save()
+            if dont_save != 1:
+                fd.save()
         elif file_available == 2:
             check_and_move_file(fd)
         else:
