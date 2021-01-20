@@ -148,6 +148,7 @@ def execute():
         elif file_available == 2:
             check_and_move_file(fd)
         else:
+            file_exists = 0
             if fd.attached_to_doctype:
                 if not frappe.db.exists(fd.attached_to_doctype, fd.attached_to_name):
                     file_exists = 0
