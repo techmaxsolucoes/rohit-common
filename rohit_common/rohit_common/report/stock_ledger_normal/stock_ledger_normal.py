@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
-from frappe.utils import flt
+import datetime
 
 
 def execute(filters=None):
@@ -16,7 +16,7 @@ def execute(filters=None):
 
 
 def get_columns():
-    return [ "Date:Date:80", "Time:Time:120", "Item:Link/Item:130", "Description::350", "Qty:Float:60",
+    return [ "Date:Date:80", "Time:Time:80", "Item:Link/Item:130", "Description::350", "Qty:Float:60",
              "Balance:Float:90", "Warehouse:Link/Warehouse:120",
             {
                 "label": "Voucher No",
@@ -55,6 +55,7 @@ def get_sl_entries(filters):
         sle.name DESC""" % (conditions, conditions_item), as_dict=1)
 
     for d in temp_data:
+        d["posting_time"] = d["posting_time"] - datetime.timedelta(microseconds=d["posting_time"].microseconds)
         if d.voucher_type in ('Delivery Note', 'Sales Invoice'):
             dn_doc = frappe.get_doc(d.voucher_type, d.voucher_no)
             d["linked_name"] = dn_doc.customer
