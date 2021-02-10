@@ -1,3 +1,6 @@
+#  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
+#  For license information, please see license.txt
+
 app_name = "rohit_common"
 app_title = "Rohit ERPNext Extensions (Common)"
 app_publisher = "Rohit Industries Ltd."
@@ -9,6 +12,7 @@ app_url = "https://github.com/adityaduggal/rohit_common"
 app_version = "0.0.1"
 fixtures = ["Custom Field"]
 hide_in_installer = True
+
 # Includes in <head>
 # ------------------
 
@@ -110,6 +114,12 @@ scheduler_events = {
     # 	"hourly": [
     # 		"rohit_common.tasks.hourly"
     # 	],
+    "cron":{
+        "10 2 * * *": [
+            "rohit_common.rohit_common.scheduled_tasks.auto_update_gstin_status.enqueue_gstin_update"
+            # Runs everyday at 2:10 AM
+        ],
+    },
     "weekly_long": [
         "rohit_common.rohit_common.scheduled_tasks.auto_delete_version.enqueue_deletion",
         "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.execute"
