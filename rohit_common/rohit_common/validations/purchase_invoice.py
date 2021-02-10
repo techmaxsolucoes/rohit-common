@@ -1,4 +1,7 @@
+#  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
+#  For license information, please see license.txt
 # -*- coding: utf-8 -*-
+
 from __future__ import unicode_literals
 import frappe
 from .sales_invoice import check_validated_gstin
@@ -8,8 +11,9 @@ def validate(doc,method):
 	update_fields(doc,method)
 	check_gst_rules(doc,method)
 	check_taxes_integrity(doc,method)
-	check_validated_gstin(doc.supplier_address)
-	check_validated_gstin(doc.shipping_address)
+	add_list = [doc.shipping_address, doc.supplier_address]
+	for add in add_list:
+		check_validated_gstin(add, doc)
 
 
 def check_gst_rules(doc,method):
