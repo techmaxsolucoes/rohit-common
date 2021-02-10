@@ -1,10 +1,13 @@
+#  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
+#  For license information, please see license.txt
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
+from __future__ import unicode_literals
 import frappe
 import re
 import ast
-from frappe.utils import flt
+from datetime import date
+from frappe.utils import flt, getdate
 from difflib import SequenceMatcher as sm
 from .google_maps import geocoding, render_gmap_json
 from ..india_gst_api.gst_public_api import search_gstin
@@ -12,13 +15,57 @@ from rohit_common.utils.rohit_common_utils import replace_java_chars, validate_e
 
 
 def validate(doc, method):
-    if doc.email_address_validated != 1:
-        valid_email = validate_email_addresses(doc.email_id)
-        doc.email_address_validated = valid_email
+    if not doc.flags.ignore_mandatory:
+        country_validation(doc)
+        gstin_validation(doc)
+        geocode(doc, method)
+        if doc.email_address_validated != 1:
+            valid_email = validate_email_addresses(doc.email_id)
+            doc.email_address_validated = valid_email
     validate_primary_address(doc, method)
     validate_shipping_address(doc, method)
+
+
+def gstin_validation(doc):
+    if doc.gstin:
+        if doc.gstin != "NA":
+            if len(doc.gstin) != 15:
+                frappe.msgprint("GSTIN should be exactly as 15 digits or NA", raise_exception=1)
+            else:
+                valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
+                for n, char in enumerate(reversed(doc.gstin)):
+                    if not valid_chars_gstin.count(char):
+                        frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in GSTIN or NA",
+                                        raise_exception=1)
+                if doc.state_rigpl:
+                    state = frappe.get_doc("State", doc.state_rigpl)
+                else:
+                    frappe.throw("Selected State is NOT Valid for {0}".format(doc.state_rigpl))
+                if doc.gstin[:2] != state.state_code_numeric:
+                    # fetch and update the state automatically else throw error
+                    state_from_gst = frappe.db.sql("""SELECT name FROM `tabState` 
+                    WHERE state_code_numeric = '%s'""" % (doc.gstin[:2]), as_list=1)
+                    if state_from_gst:
+                        doc.state_rigpl = state_from_gst[0][0]
+                        doc.gst_state = state_from_gst[0][0]
+                        doc.state = state_from_gst[0][0]
+                    else:
+                        frappe.throw("State Selected {0} for Address {1}, GSTIN number should begin with {2}".
+                                     format(doc.state_rigpl, doc.name, state.state_code_numeric))
+                validate_gstin_from_portal(doc)
+            doc.pan = doc.gstin[2:12]
+        else:
+            doc.pan = ""
+            doc.validated_gstin = ""
+            doc.gstin_json_reply = ""
+            doc.gst_status = ""
+    else:
+        if doc.country == 'India':
+            frappe.throw('GSTIN Mandatory for Indian Addresses or Enter NA for NO GSTIN')
+
+
+def country_validation(doc):
     doc.pincode = re.sub('[^A-Za-z0-9]+', '', str(doc.pincode))
-    valid_chars_gstin = "0123456789ABCDEFGIHJKLMNOPQRSTUVYWXZ"
     if doc.country:
         country_doc = frappe.get_doc("Country", doc.country)
         if country_doc.gst_details != 1:
@@ -44,7 +91,7 @@ def validate(doc, method):
                             pincode_pass = 1
                     if pincode_pass != 1:
                         frappe.throw("For Address {}: Pincode should be {} Digits Long".format(doc.name,
-                                                                                                   pincode_length))
+                                                                                               pincode_length))
                 if country_doc.pincode_regular_expression:
                     pincode_regex = replace_java_chars(country_doc.pincode_regular_expression)
                     if 'or' in pincode_regex:
@@ -59,62 +106,18 @@ def validate(doc, method):
                         else:
                             pc_regex_pass = 1
                     if pc_regex_pass != 1:
-                        frappe.throw("Country {}: Pincode Should be of Format {}".format(doc.country, pincode_regex))
+                        frappe.throw("Country {}: Pin Code Should be of Format {}".format(doc.country, pincode_regex))
             else:
                 frappe.throw("For Country {} no states exists in State Table".format(doc.country))
         else:
             doc.state_rigpl = ""
             if doc.pincode is None:
-                frappe.throw("If Pincode is not Known then Enter NA")
+                frappe.throw("If Pin Code is not Known then Enter NA")
+        if doc.state_rigpl:
+            doc.state = doc.state_rigpl
+            verify_state_country(doc.state_rigpl, doc.country)
     else:
         frappe.throw('Country is Mandatory')
-    if doc.state_rigpl:
-        doc.state = doc.state_rigpl
-        verify_state_country(doc.state_rigpl, doc.country)
-
-    if doc.gstin:
-        if doc.gstin != "NA":
-            if len(doc.gstin) != 15:
-                frappe.msgprint("GSTIN should be exactly as 15 digits or NA", raise_exception=1)
-            else:
-                for n, char in enumerate(reversed(doc.gstin)):
-                    if not valid_chars_gstin.count(char):
-                        frappe.msgprint("Only Numbers and alphabets in UPPERCASE are allowed in GSTIN or NA",
-                                        raise_exception=1)
-                if doc.validated_gstin != doc.gstin:
-                    gstin_json = search_gstin(doc.gstin)
-                    doc.gstin_json_reply = str(gstin_json)
-                    doc.validated_gstin = gstin_json.get("gstin")
-                    doc.gst_status = gstin_json.get("sts")
-                if doc.gst_status in ('Inactive', 'Cancelled'):
-                    doc.disabled = 1
-                if doc.state_rigpl:
-                    state = frappe.get_doc("State", doc.state_rigpl)
-                else:
-                    frappe.throw("Selected State is NOT Valid for {0}".format(doc.state_rigpl))
-
-                if doc.gstin[:2] != state.state_code_numeric:
-                    # fetch and update the state automatically else throw error
-                    state_from_gst = frappe.db.sql("""SELECT name FROM `tabState` 
-                    WHERE state_code_numeric = '%s'""" % (doc.gstin[:2]), as_list=1)
-                    if state_from_gst:
-                        doc.state_rigpl = state_from_gst[0][0]
-                        doc.gst_state = state_from_gst[0][0]
-                        doc.state = state_from_gst[0][0]
-                    else:
-                        frappe.throw("State Selected {0} for Address {1}, GSTIN number should begin with {2}".
-                                     format(doc.state_rigpl, doc.name, state.state_code_numeric))
-            doc.pan = doc.gstin[2:12]
-            update_address_title_from_gstin_json(doc)
-        else:
-            doc.pan = ""
-            doc.validated_gstin = ""
-            doc.gstin_json_reply = ""
-            doc.gst_status = ""
-    else:
-        if doc.country == 'India':
-            frappe.throw('GSTIN Mandatory for Indian Addresses or Enter NA for NO GSTIN')
-    geocode(doc, method)
 
 
 def verify_state_country(state, country):
@@ -237,6 +240,34 @@ def update_fields_from_gmaps(doc, address_dict):
     else:
         doc.dont_update_from_google = 1
         remove_google_updates(doc)
+
+
+def validate_gstin_from_portal(doc):
+    auto_days = flt(frappe.get_value("Rohit Settings", "Rohit Settings", "auto_validate_gstin_after"))
+    if doc.gst_validation_date:
+        days_since_validation = (date.today() - getdate(doc.gst_validation_date)).days
+    else:
+        days_since_validation = 999
+    if doc.validated_gstin != doc.gstin or days_since_validation >= auto_days:
+        # Validate GSTIN status after 30 days if done manually changes
+        gstin_json = search_gstin(doc.gstin)
+        doc.gstin_json_reply = str(gstin_json)
+        doc.validated_gstin = gstin_json.get("gstin")
+        doc.gst_status = gstin_json.get("sts")
+        doc.gst_validation_date = date.today()
+    if doc.gst_status in ('Inactive', 'Cancelled'):
+        doc.disabled = 1
+    elif doc.gst_status == 'Suspended':
+        # Disable the address for Supplier or unlinked address
+        dl_list = frappe.db.sql("""SELECT name, link_doctype FROM `tabDynamic Link` WHERE parenttype = 'Address'
+        AND parent = '%s'""" % doc.name, as_dict=1)
+        if dl_list:
+            for dt in dl_list:
+                if dt.link_doctype == 'Supplier':
+                    doc.disabled = 1
+        else:
+            doc.disabled = 1
+    update_address_title_from_gstin_json(doc)
 
 
 def update_address_title_from_gstin_json(doc):
