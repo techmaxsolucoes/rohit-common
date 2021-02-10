@@ -9,6 +9,8 @@
   "tax_pro_password",
   "gstin",
   "tax_pro_asp_secret",
+  "auto_validate_gstin_after",
+  "stale_gstin_validation_days",
   "sandbox_mode",
   "cb0",
   "eway_bill_id",
@@ -117,6 +119,7 @@
    "options": "Global Search DocType"
   },
   {
+   "collapsible": 1,
    "fieldname": "sb2",
    "fieldtype": "Section Break",
    "label": "Auto Delete Version"
@@ -132,10 +135,28 @@
    "fieldtype": "Table",
    "label": "Auto Delete from Version",
    "options": "Global Search DocType"
+  },
+  {
+   "default": "60",
+   "description": "System would automatically validate GSTIN from GST Website after this many days",
+   "fieldname": "auto_validate_gstin_after",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Auto Validate GSTIN After",
+   "reqd": 1
+  },
+  {
+   "default": "90",
+   "description": "No Transactions after this many days of Validation of GSTIN",
+   "fieldname": "stale_gstin_validation_days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Stale GSTIN Validation Days",
+   "reqd": 1
   }
  ],
  "issingle": 1,
- "modified": "2021-01-17 12:08:12.065570",
+ "modified": "2021-02-10 08:23:53.446096",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",
