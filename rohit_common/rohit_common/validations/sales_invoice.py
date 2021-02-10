@@ -1,12 +1,20 @@
+#  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
+#  For license information, please see license.txt
 # -*- coding: utf-8 -*-
+
 from __future__ import unicode_literals
 import re
 import frappe
+from datetime import date
+from frappe.utils import getdate, flt
+from ...utils.accounts_utils import set_advances
 from rohit_common.utils.rohit_common_utils import replace_java_chars, check_dynamic_link, \
     check_sales_taxes_integrity
 
 
 def validate(doc, method):
+    if not doc.advances:
+        set_advances(doc)
     template_doc = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
     check_customs_tariff(doc)
     check_all_dynamic_links(doc)
@@ -17,8 +25,9 @@ def validate(doc, method):
     check_delivery_note_rule(doc, method)
     check_local_natl_tax_rules(doc, template_doc)
     check_sales_taxes_integrity(doc)
-    check_validated_gstin(doc.customer_address)
-    check_validated_gstin(doc.shipping_address_name)
+    add_list = [doc.customer_address, doc.shipping_address_name]
+    for add in add_list:
+        check_validated_gstin(add, doc)
 
 
 def check_all_dynamic_links(doc):
@@ -283,11 +292,38 @@ def validate_address(add_doc):
             'Address {} is Not Updated from Google, Please Open and Save the Address once'.format(add_doc.name))
 
 
-def check_validated_gstin(add_name):
+def check_validated_gstin(add_name, doc=None):
+    # If the Validation Date for GSTIN Validation is more than 90 days then Don't allow and aks for Revalidation
+    stale_days = flt(frappe.get_value("Rohit Settings", "Rohit Settings", "stale_gstin_validation_days"))
     add_doc = frappe.get_doc("Address", add_name)
+    status = ""
     if add_doc.gstin:
         if add_doc.gstin != "NA":
-            if add_doc.validated_gstin != add_doc.gstin:
-                frappe.throw("GSTIN# {} for {} is NOT Validated from GST Website. Please update the "
-                             "Address from GST Website".
-                             format(add_doc.gstin, frappe.get_desk_link(add_doc.doctype, add_doc.name)))
+            if add_doc.gst_validation_date:
+                days_since_validation = (date.today() - getdate(add_doc.gst_validation_date)).days
+            else:
+                days_since_validation = 999
+            if add_doc.validated_gstin != add_doc.gstin or days_since_validation > stale_days:
+                frappe.throw(f"GSTIN# {add_doc.gstin} for {frappe.get_desk_link(add_doc.doctype, add_doc.name)} is "
+                             f"NOT Validated from GST Website. Please update the Address from GST Website")
+            if add_doc.gst_status == "Suspended":
+                if doc:
+                    if doc.doctype == "Sales Invoice":
+                        if doc.base_grand_total >= 50000:
+                            frappe.throw(f"For {frappe.get_desk_link('Address', add_name)} GSTIN:{add_doc.gstin} is "
+                                         f"{add_doc.gst_status} hence Grand Total Cannot be more than 50000")
+                        else:
+                            if doc.outstanding_amount > 0:
+                                frappe.throw(f"For {doc.name} the GSTIN:{add_doc.gstin} is {add_doc.gst_status}. Hence "
+                                             f"Outstanding Amount Cannot be Greater than 0")
+                    elif doc.doctype in ("Purchase Invoice", "Purchase Receipt", "Purchase Order"):
+                        frappe.throw(f"For {frappe.get_desk_link('Address', add_name)}, GSTIN: {add_doc.gstin} is "
+                                     f"{add_doc.gst_status} hence {doc.doctype} is Not Allowed")
+                    else:
+                        frappe.msgprint(f"For {frappe.get_desk_link('Address', add_name)}, GSTIN: {add_doc.gstin} is "
+                                        f"{add_doc.gst_status} hence {doc.name} being made can get Stuck Later")
+            elif add_doc.gst_status in ("Cancelled", "Inactive"):
+                add_doc.disabled = 1
+                if doc:
+                    frappe.throw(f"For {frappe.get_desk_link('Address', add_name)} GSTIN: {add_doc.gstin} is "
+                                 f"{add_doc.gst_status} hence Not Allowed to Make {doc.doctype}")
