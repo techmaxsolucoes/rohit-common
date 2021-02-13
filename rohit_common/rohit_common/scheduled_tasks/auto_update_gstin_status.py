@@ -20,7 +20,7 @@ def execute():
     validate = 0
     auto_days = flt(frappe.get_value("Rohit Settings", "Rohit Settings", "auto_validate_gstin_after"))
     add_list = frappe.db.sql("""SELECT name, validated_gstin, gst_validation_date FROM `tabAddress`
-    WHERE validated_gstin IS NOT NULL ORDER BY gst_validation_date, name""", as_dict=1)
+    WHERE validated_gstin IS NOT NULL AND gst_status != 'Cancelled' ORDER BY gst_validation_date, name""", as_dict=1)
     for add in add_list:
         changes_made = 0
         if add.gst_validation_date:
