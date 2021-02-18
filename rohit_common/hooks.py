@@ -105,21 +105,21 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
-    # 	"all": [
-    # 		"rohit_common.tasks.all"
-    # 	],
+    "cron": {
+        "10 2 * * *": [
+            "rohit_common.rohit_common.scheduled_tasks.auto_update_gstin_status.enqueue_gstin_update"
+            # Runs everyday at 2:10 AM
+        ],
+    },
+    "all": [
+        "rohit_common.rohit_common.scheduled_tasks.auto_refresh_gstin_auth_code.execute"
+    ],
     # 	"daily": [
     # 		"rohit_common.tasks.daily"
     # 	],
     # 	"hourly": [
     # 		"rohit_common.tasks.hourly"
     # 	],
-    "cron":{
-        "10 2 * * *": [
-            "rohit_common.rohit_common.scheduled_tasks.auto_update_gstin_status.enqueue_gstin_update"
-            # Runs everyday at 2:10 AM
-        ],
-    },
     "weekly_long": [
         "rohit_common.rohit_common.scheduled_tasks.auto_delete_version.enqueue_deletion",
         "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.execute"
