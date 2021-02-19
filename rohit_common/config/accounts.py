@@ -12,6 +12,16 @@ def get_data():
             ]
         },
         {
+            "label": _("Goods and Services Tax (GST India)"),
+            "items": [
+                {
+                    "type": "doctype",
+                    "name": _("GSTR2A RIGPL"),
+                    "label": _("GSTR2A Returns"),
+                }
+            ]
+        },
+        {
             "label": _("Taxes"),
             "items":[
                 {
