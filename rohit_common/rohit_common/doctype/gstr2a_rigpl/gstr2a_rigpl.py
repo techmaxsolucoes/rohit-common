@@ -80,8 +80,8 @@ class GSTR2ARIGPL(Document):
                     ma_tax_val += flt(d.linked_doc_taxable_value)
                 else:
                     unma_tax_val += flt(d.taxable_value)
-                if 0.98 <=(d.linked_doc_taxable_value/d.taxable_value)<=1.02 and \
-                        0.98 <= (d.linked_doc_grand_total/d.grand_total) <= 1.02:
+                if 0.98 <=(d.linked_doc_taxable_value/(d.taxable_value+1))<=1.02 and \
+                        0.98 <= (d.linked_doc_grand_total/(d.grand_total+1)) <= 1.02:
                     d.fully_matched = 1
             if d.filing_status_gstr1 == 1:
                 tot_tax_val += flt(d.taxable_value)
@@ -207,21 +207,24 @@ def update_invoice_data(row, inv):
         row["irn_generation_date"] = datetime.strptime(inv.get("irngendate", "01-01-1900"), '%d-%M-%Y').date()
     row["differential_percentage"] = inv.get("diff_percent")
     items = inv.get("itms")
-    for it in items:
-        itd = it.get("itm_det")
-        item_row = update_item_data(row, itd)
-        row_list.append(item_row)
+    item_row = update_item_data(row, items)
+    for it in item_row:
+        row_list.append(it.copy())
     return row_list
 
 
-def update_item_data(row, itd):
-    row["taxable_value"] = itd.get("txval")
-    row["cgst_amount"] = itd.get("camt")
-    row["sgst_amount"] = itd.get("samt")
-    row["igst_amount"] = itd.get("iamt")
-    row["cess_amount"] = itd.get("csamt")
-    row["tax_rate"] = itd.get("rt")
-    return row
+def update_item_data(row, item_row):
+    item_list = []
+    for it in item_row:
+        itd = it.get("itm_det")
+        row["taxable_value"] = itd.get("txval")
+        row["cgst_amount"] = itd.get("camt")
+        row["sgst_amount"] = itd.get("samt")
+        row["igst_amount"] = itd.get("iamt")
+        row["cess_amount"] = itd.get("csamt")
+        row["tax_rate"] = itd.get("rt")
+        item_list.append(row.copy())
+    return item_list
 
 
 def get_party_from_gstin(ptype, gstin):
