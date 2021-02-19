@@ -179,7 +179,9 @@ def update_gstin_data(row, gstin_resp):
         row["filing_period_gstr1"] = gstin_resp.get("flprdr1")
         row["party_gstin"] = gstin_resp.get("ctin")
         for inv in gstin_resp.get("inv") or gstin_resp.get("nt"):
-            row_list = update_invoice_data(row, inv)
+            row_with_items = update_invoice_data(row, inv)
+            for full_row in row_with_items:
+                row_list.append(full_row)
     return row_list
 
 
@@ -207,20 +209,19 @@ def update_invoice_data(row, inv):
     items = inv.get("itms")
     for it in items:
         itd = it.get("itm_det")
-        row_list = update_item_data(row, itd)
+        item_row = update_item_data(row, itd)
+        row_list.append(item_row)
     return row_list
 
 
 def update_item_data(row, itd):
-    row_list = []
     row["taxable_value"] = itd.get("txval")
     row["cgst_amount"] = itd.get("camt")
     row["sgst_amount"] = itd.get("samt")
     row["igst_amount"] = itd.get("iamt")
     row["cess_amount"] = itd.get("csamt")
     row["tax_rate"] = itd.get("rt")
-    row_list.append(row.copy())
-    return row_list
+    return row
 
 
 def get_party_from_gstin(ptype, gstin):
