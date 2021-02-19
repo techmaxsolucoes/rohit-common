@@ -156,7 +156,7 @@ def update_gstin_data(row, gstin_resp):
         row["party_gstin"] = gstin_resp.get("portcd")
         row["supplier_invoice_no"] = gstin_resp.get("benum")
         row["note_type"] = "Bill of Entry"
-        row["supplier_invoice_date"] = datetime.strptime(gstin_resp.get("bedt"), '%d-%M-%Y').date()
+        row["supplier_invoice_date"] = datetime.strptime(gstin_resp.get("bedt"), '%d-%m-%Y').date()
         row["taxable_value"] = gstin_resp.get("txval")
         row["igst_amount"] = gstin_resp.get("iamt")
         row["cess_amount"] = gstin_resp.get("csamt")
@@ -194,9 +194,9 @@ def update_invoice_data(row, inv):
         row["note_type"] = "Credit Note" if inv.get("ntty") == "C" else "Debit Note"
         row["supplier_invoice_no"] = inv.get("nt_num")
     if inv.get("idt"):
-        row["supplier_invoice_date"] = datetime.strptime(inv.get("idt"), '%d-%M-%Y').date()
+        row["supplier_invoice_date"] = datetime.strptime(inv.get("idt"), '%d-%m-%Y').date()
     elif inv.get("nt_dt"):
-        row["supplier_invoice_date"] = datetime.strptime(inv.get("nt_dt"), '%d-%M-%Y').date()
+        row["supplier_invoice_date"] = datetime.strptime(inv.get("nt_dt"), '%d-%m-%Y').date()
     row["grand_total"] = inv.get("val")
     row["reverse_charge_applicable"] = 1 if inv.get("rchrg") == 'Y' else 0
     row["invoice_type"] = get_invoice_type(inv.get("inv_typ"))
@@ -204,7 +204,7 @@ def update_invoice_data(row, inv):
     row["return_period_amendment"] = inv.get("aspd")
     row["irn_number"] = inv.get("irn")
     if inv.get("irngendate"):
-        row["irn_generation_date"] = datetime.strptime(inv.get("irngendate", "01-01-1900"), '%d-%M-%Y').date()
+        row["irn_generation_date"] = datetime.strptime(inv.get("irngendate", "01-01-1900"), '%d-%m-%Y').date()
     row["differential_percentage"] = inv.get("diff_percent")
     items = inv.get("itms")
     item_row = update_item_data(row, items)
