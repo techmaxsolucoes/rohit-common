@@ -13,7 +13,7 @@ from frappe.utils.background_jobs import enqueue
 
 
 def enqueue_deletion():
-    enqueue(execute, method="long", timeout=3600)
+    enqueue(execute, queue="long", timeout=3600)
 
 
 def execute():
