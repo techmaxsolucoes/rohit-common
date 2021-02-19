@@ -77,12 +77,16 @@ def authenticate_gst_otp(gstin, otp, row_id):
 
 def check_for_refresh_token(row):
     if row.authorization_token and row.api_access_authorized == 1:
-        if row.validity_of_token <= datetime.datetime.now() + datetime.timedelta(minutes=-10):
+        if datetime.datetime.now() + datetime.timedelta(minutes=10) >= row.validity_of_token > datetime.datetime.now():
             new_auth_token = refresh_auth_token(row.gst_registration_number, row.authorization_token)
             if new_auth_token != "":
+                print(f"Auto Updated Auth Token for {row.gst_registration_number}")
                 update_auth_token(row_name=row.name, auth_token=new_auth_token)
             else:
+                print(f"Auto Auth Token Update Failed for {row.gst_registration_number}")
                 update_auth_token(row_name=row.name, auth_token="", failed=1)
+        else:
+            update_auth_token(row_name=row.name, auth_token="", failed=1)
 
 
 def refresh_auth_token(gstin, auth_token):
