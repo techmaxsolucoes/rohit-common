@@ -1,19 +1,21 @@
+#  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
+#  For license information, please see license.txt
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020, Rohit Industries Group Private Limited and contributors
-# For license information, please see license.txt
 import frappe
-import json
 from .common import get_gsp_details
-# from erpnext.accounts.utils import get_fiscal_year
 import requests
+timeout = 5
 
 
 def search_gstin(gstin=None):
-    gsp_link, asp_id, asp_pass, caller_gstin = get_gsp_details(api_type="common", action='TP', api='search')
+    gsp_link, asp_id, asp_pass, caller_gstin, sandbox = get_gsp_details(api_type="common", action='TP', api='search')
     if not gstin:
         gstin = caller_gstin
     full_url = gsp_link + '&Gstin=' + caller_gstin + '&SearchGstin=' + gstin
-    response = requests.get(full_url)
+    try:
+        response = requests.get(url=full_url, timeout=timeout)
+    except Exception as e:
+        frappe.throw(f"Some Error Occurred while Searching for GSTIN {gstin} and the Error is {e}")
     json_response = response.json()
     return json_response
 
@@ -21,9 +23,10 @@ def search_gstin(gstin=None):
 def track_return(gstin, fiscal_year):
     # (fiscal_year, start_date, end_date) = get_fiscal_year(for_date)
     fy_format = fiscal_year[:5] + fiscal_year[7:]
-    gsp_link, asp_id, asp_pass, caller_gstin = get_gsp_details(api_type="common", action='RETTRACK', api="returns")
+    gsp_link, asp_id, asp_pass, caller_gstin, sandbox = get_gsp_details(api_type="common", action='RETTRACK',
+                                                                        api="returns")
     full_url = gsp_link + '&Gstin=' + gstin + '&FY=' + fy_format
-    response = requests.get(full_url)
+    response = requests.get(url=full_url, timeout=timeout)
     # frappe.throw(str(response.text))
     json_response = response.json()
     # frappe.throw(str(json_response))

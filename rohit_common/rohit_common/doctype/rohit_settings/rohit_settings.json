@@ -20,10 +20,12 @@
   "access_token",
   "access_token_time",
   "sb1",
+  "gst_registration_details",
+  "sb2",
   "roles_allow_pub_att",
   "docs_with_pub_att",
   "auto_deletion_policy_for_files",
-  "sb2",
+  "sb3",
   "max_days_to_keep_version",
   "auto_delete_from_version"
  ],
@@ -98,7 +100,7 @@
    "collapsible": 1,
    "fieldname": "sb1",
    "fieldtype": "Section Break",
-   "label": "File Attachment Settings"
+   "label": "GST Registration Details"
   },
   {
    "fieldname": "roles_allow_pub_att",
@@ -122,7 +124,7 @@
    "collapsible": 1,
    "fieldname": "sb2",
    "fieldtype": "Section Break",
-   "label": "Auto Delete Version"
+   "label": "File Attachment Settings"
   },
   {
    "default": "365",
@@ -153,10 +155,22 @@
    "in_list_view": 1,
    "label": "Stale GSTIN Validation Days",
    "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb3",
+   "fieldtype": "Section Break",
+   "label": "Auto Delete Version"
+  },
+  {
+   "fieldname": "gst_registration_details",
+   "fieldtype": "Table",
+   "label": "GST Registration Details",
+   "options": "GST Registration Details"
   }
  ],
  "issingle": 1,
- "modified": "2021-02-10 08:23:53.446096",
+ "modified": "2021-02-11 17:02:06.464285",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",

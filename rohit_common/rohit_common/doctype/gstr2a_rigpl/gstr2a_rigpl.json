@@ -1,0 +1,256 @@
+{
+ "allow_copy": 1,
+ "autoname": "format:{gstin}-{return_period}",
+ "creation": "2021-02-11 22:24:22.009630",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb0",
+  "company_address",
+  "return_period",
+  "reset_matching",
+  "cb0",
+  "gstin",
+  "disable_gst_update",
+  "get_gstr2a_data",
+  "analyse_data",
+  "sb1",
+  "filed_taxable_value",
+  "filed_tax_amount",
+  "matched_taxable_value",
+  "total_taxable_value",
+  "cb1",
+  "unfiled_taxable_value",
+  "unfiled_tax_amount",
+  "unmatched_taxable_value",
+  "sb2",
+  "clear_table",
+  "invoices",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb0",
+   "fieldtype": "Section Break",
+   "label": "Main Details"
+  },
+  {
+   "fetch_from": "company_address.gstin",
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "GSTIN",
+   "length": 15,
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "return_period",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Return Period",
+   "length": 6,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "cb0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "GSTR2A Analysis"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "GSTR2A RIGPL",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoices",
+   "fieldtype": "Table",
+   "label": "Invoices",
+   "options": "GSTR2 Return Invoices"
+  },
+  {
+   "fieldname": "clear_table",
+   "fieldtype": "Button",
+   "label": "Clear Table",
+   "options": "clear_table",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "company_address",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company Address",
+   "options": "Address",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "Invoice Details"
+  },
+  {
+   "fieldname": "filed_tax_amount",
+   "fieldtype": "Currency",
+   "label": "Filed Tax Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unfiled_tax_amount",
+   "fieldtype": "Currency",
+   "label": "Unfiled Tax Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "filed_taxable_value",
+   "fieldtype": "Currency",
+   "label": "Filed Taxable Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unfiled_taxable_value",
+   "fieldtype": "Currency",
+   "label": "Unfiled Taxable Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "matched_taxable_value",
+   "fieldtype": "Currency",
+   "label": "Matched Taxable Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unmatched_taxable_value",
+   "fieldtype": "Currency",
+   "label": "Unmatched Taxable Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_taxable_value",
+   "fieldtype": "Currency",
+   "label": "Total Taxable Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.__is_local !== 1",
+   "fieldname": "get_gstr2a_data",
+   "fieldtype": "Button",
+   "label": "Update from GST Network",
+   "options": "get_gstr2a_data"
+  },
+  {
+   "fieldname": "analyse_data",
+   "fieldtype": "Button",
+   "label": "Analyse Data",
+   "options": "analyse_data"
+  },
+  {
+   "default": "0",
+   "fieldname": "disable_gst_update",
+   "fieldtype": "Check",
+   "label": "Disable GST Update",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "reset_matching",
+   "fieldtype": "Button",
+   "label": "Reset Matching",
+   "options": "reset_matching"
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2021-02-19 05:03:10.878619",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "GSTR2A RIGPL",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

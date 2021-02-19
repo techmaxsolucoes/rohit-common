@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2020, Rohit Industries Group Private Limited and contributors
-# For license information, please see license.txt
+#  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
+#  For license information, please see license.txt
 import frappe
 from datetime import datetime
 from .common import get_gsp_details, get_api_url
 from frappe.utils import get_datetime, getdate
 from frappe.utils.file_manager import save_file
 import requests
-
+timeout = 5
 api = 'eway'
 
 
@@ -82,10 +81,10 @@ def get_ewb_detailed_print(ewbdoc, json_data):
 
 
 def process_print_request(ewbdoc, api, action, json):
-    gsp_link, aspid, asppass, gstin = get_gsp_details(api=api, action=action)
-    api_url = get_api_url(api, action)
+    gsp_link, aspid, asppass, gstin, sandbox = get_gsp_details(api=api, action=action)
+    api_url = get_api_url(api)
     full_url = gsp_link + api_url + action + '?aspid=' + aspid + '&password=' + asppass + '&Gstin=' + gstin
-    response = requests.post(full_url, json=json)
+    response = requests.post(url=full_url, json=json, timeout=timeout)
     image_data = response.content
     save_file('{}.pdf'.format(ewbdoc.eway_bill_no), image_data, ewbdoc.doctype, ewbdoc.name, is_private=1)
     return response
@@ -93,7 +92,7 @@ def process_print_request(ewbdoc, api, action, json):
 
 def process_ewb_post_request(api, action, json_data):
     full_url = get_ewb_url(api, action)
-    response = requests.post(full_url, json=json_data)
+    response = requests.post(url=full_url, json=json_data, timeout=timeout)
     res_json = response.json()
     ewb_no = res_json.get('ewayBillNo', "")
     if ewb_no == "":
@@ -113,7 +112,7 @@ def process_ewb_get_request(api, action, parm_name, parm_val, parm_name2=None, p
         full_url = get_ewb_url(api, action) + '&' + parm_name + '=' + parm_val + '&' + parm_name2 + '=' + parm_val2
     else:
         full_url = get_ewb_url(api, action) + '&' + parm_name + '=' + str(parm_val)
-    response = requests.get(full_url)
+    response = requests.get(url=full_url, timeout=timeout)
     if raw_resp == 1:
         res_json = response
     else:
@@ -123,9 +122,9 @@ def process_ewb_get_request(api, action, parm_name, parm_val, parm_name2=None, p
 
 
 def get_ewb_url(api, action):
-    gsp_link, aspid, asppass, gstin = get_gsp_details(api=api, action=action)
+    gsp_link, aspid, asppass, gstin, sandbox = get_gsp_details(api=api, action=action)
     auth_token = get_ewb_access_token()
-    api_url = get_api_url(api, action)
+    api_url = get_api_url(api)
     url = gsp_link + api_url + api + 'api?action=' + action + '&aspid=' + aspid + '&password=' + asppass + \
                '&gstin=' + gstin + '&authtoken=' + auth_token
     return url
@@ -161,8 +160,8 @@ def get_eway_auth_token():
     rset = frappe.get_single('Rohit Settings')
     api = 'eway'
     action = 'ACCESSTOKEN'
-    gsp_link, aspid, asppass, gstin = get_gsp_details(api=api, action=action)
-    api_url = get_api_url(api=api, action=action)
+    gsp_link, aspid, asppass, gstin, sandbox = get_gsp_details(api=api, action=action)
+    api_url = get_api_url(api=api)
     if rset.sandbox_mode == 1:
         gstin = '05AAACG1539P1ZH'
         ewb_uname = '05AAACG1539P1ZH'
@@ -172,7 +171,7 @@ def get_eway_auth_token():
         ewb_pass = rset.eway_bill_password
     full_url = gsp_link + api_url + 'authenticate?action=' + action + '&aspid=' + aspid + '&password=' + asppass + \
                '&gstin=' + gstin + '&username=' + ewb_uname + '&ewbpwd=' + ewb_pass
-    response = requests.get(full_url)
+    response = requests.get(url=full_url, timeout=timeout)
     return response.json()
 
 
