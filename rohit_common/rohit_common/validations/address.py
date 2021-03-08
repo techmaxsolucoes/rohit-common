@@ -11,10 +11,11 @@ from frappe.utils import flt, getdate
 from difflib import SequenceMatcher as sm
 from .google_maps import geocoding, render_gmap_json
 from ..india_gst_api.gst_public_api import search_gstin
-from rohit_common.utils.rohit_common_utils import replace_java_chars, validate_email_addresses
+from rohit_common.utils.rohit_common_utils import replace_java_chars, validate_email_addresses, check_system_manager
 
 
 def validate(doc, method):
+    validate_dynamic_links(doc)
     if not doc.flags.ignore_mandatory:
         country_validation(doc)
         gstin_validation(doc)
@@ -125,6 +126,25 @@ def verify_state_country(state, country):
     if state_doc.country != country:
         frappe.throw("State {} belongs to Country {} hence choose correct State or Change Country to {}".
                      format(state, state_doc.country, state_doc.country))
+
+
+def validate_dynamic_links(doc):
+    """Only System Admins can make the Address for Company and Is Your Company Address Check Box should be checked"""
+    if doc.is_your_company_address == 1:
+        # Check if the Dynamic Link has Link Doctype as Company and only System admins can edit such addresses
+        user = frappe.get_user()
+        is_sys_mgr = check_system_manager(user.name)
+        if is_sys_mgr != 1:
+            frappe.throw(f"Only System Admins are Allowed to Create Company Addresses")
+    else:
+        if doc.links:
+            for d in doc.links:
+                if d.link_doctype == "Company":
+                    frappe.throw(f"{frappe.get_desk_link(doc.doctype, doc.name)} is Not Company Address hence cannot "
+                                 f"have Dynamic Link for Company")
+        else:
+            frappe.throw(f"{frappe.get_desk_link(doc.doctype, doc.name)} Cannot be Orphaned and hence needs "
+                         f"Dynamic Link Table to be Populated")
 
 
 def validate_primary_address(doc, method):
