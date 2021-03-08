@@ -5,6 +5,15 @@ from validate_email import validate_email
 from frappe.utils import get_files_path
 
 
+def check_system_manager(user):
+    sys_list = frappe.db.sql("""SELECT name FROM `tabHas Role` WHERE parenttype = 'User' AND parent = '%s' 
+        AND role = 'System Manager'""" % user, as_list=1)
+    if sys_list:
+        return 1
+    else:
+        return 0
+
+
 def rebuild_tree(doctype, parent_field, group_field):
     # call rebuild_node for all root nodes
     # get all roots
