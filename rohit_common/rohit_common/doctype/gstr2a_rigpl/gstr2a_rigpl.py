@@ -10,6 +10,7 @@ from ...india_gst_api.common import gst_return_period_validation, validate_gstin
 from ...india_gst_api.gst_api import get_invoice_type, get_type_of_amend, get_gstr2a
 from frappe.model.document import Document
 
+
 gstr2a_actions = [{"action": "B2B", "name": "B2B"}, {"action": "B2BA", "name": "B2B Amendments"},
                   {"action": "CDN", "name": "Credit or Debit Notes"},
                   {"action": "CDNA", "name": "Credit or Debit Note Amendments"},
@@ -17,6 +18,9 @@ gstr2a_actions = [{"action": "B2B", "name": "B2B"}, {"action": "B2BA", "name": "
                   {"action": "ISD", "name": "Input Service Distributer"},
                   {"action": "TCS", "name": "Tax Collected at Source"},
                   {"action": "TDS", "name": "Tax Deducted at Source"}]
+"""
+gstr2a_actions = [{"action": "TCS", "name": "Tax Collected at Source"}]
+"""
 
 
 class GSTR2ARIGPL(Document):
@@ -55,9 +59,8 @@ class GSTR2ARIGPL(Document):
         self.flags.ignore_permissions = True
         self.clear_table()
         for action in gstr2a_actions:
-            # resp = None
-            # if action.get("action") == "TDS":
             resp = get_gstr2a(gstin=self.gstin, ret_period=self.return_period, action=action.get("action"))
+            # frappe.msgprint(f"{resp}")
             # resp = json.loads(self.json_reply.replace("'", '"'))
             if not resp:
                 frappe.msgprint(f"<b>{action.get('name')}</b> there is Some Error or No Data for {self.return_period}")
@@ -146,10 +149,6 @@ class GSTR2ARIGPL(Document):
 
 
 def update_gstin_data(row, gstin_resp):
-    # d == Dictionary from GST response for a GSTIN number with all invoices
-    # row == row dict for Invoices
-    # row = row.__dict__
-    # row = frappe._dict(row)
     row_list = []
     if gstin_resp.get("portcd"):
         row["filing_status_gstr1"] = 1
@@ -170,6 +169,16 @@ def update_gstin_data(row, gstin_resp):
         row["cess_amount"] = gstin_resp.get("csamt")
         row["filing_period_gstr1"] = gstin_resp.get("month")
         row["party_name"] = gstin_resp.get("deductor_name")
+        row_list.append(row.copy())
+    elif gstin_resp.get("sup_gstin"):
+        row["filing_status_gstr1"] = 1
+        row["party_gstin"] = gstin_resp.get("sup_gstin")
+        row["note_type"] = "TCS"
+        row["taxable_value"] = gstin_resp.get("amt")
+        row["igst_amount"] = gstin_resp.get("iamt")
+        row["cess_amount"] = gstin_resp.get("csamt")
+        row["filing_period_gstr1"] = gstin_resp.get("month")
+        row["party_name"] = gstin_resp.get("sup_name")
         row_list.append(row.copy())
     else:
         row["filing_status_gstr1"] = 1 if gstin_resp.get("cfs") == 'Y' else 0

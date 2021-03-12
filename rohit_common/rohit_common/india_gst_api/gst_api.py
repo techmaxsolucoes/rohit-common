@@ -25,26 +25,12 @@ def get_gstr2a(gstin, ret_period, action):
 
 
 def get_gst_response(gstin, url, type_of_req):
-    check_and_update_gst_auth(gstin)
     if type_of_req == "post":
         return requests.post(url=url, timeout=timeout).json()
     elif type_of_req == "get":
         return requests.get(url=url, timeout=timeout).json()
     else:
         frappe.throw(f"Type of Request {type_of_req} is Not Defined")
-
-
-def check_and_update_gst_auth(gstin):
-    r_set = frappe.get_doc("Rohit Settings", "Rohit Settings")
-    for d in r_set.gst_registration_details:
-        if d.gst_registration_number == gstin:
-            if d.api_access_authorized == 1:
-                if d.authorization_token:
-                    check_for_refresh_token(row=d)
-                else:
-                    frappe.throw(f"{gstin} is Not API Authorized. You need to do OTP Authorization Manually")
-            else:
-                frappe.throw(f"{gstin} is Not API Authorized. You need to do OTP Authorization Manually")
 
 
 @frappe.whitelist()
@@ -76,8 +62,9 @@ def authenticate_gst_otp(gstin, otp, row_id):
 
 
 def check_for_refresh_token(row):
+    now_time = datetime.datetime.now()
     if row.authorization_token and row.api_access_authorized == 1:
-        if datetime.datetime.now() + datetime.timedelta(minutes=10) >= row.validity_of_token > datetime.datetime.now():
+        if now_time + datetime.timedelta(minutes=10) >= row.validity_of_token > now_time:
             new_auth_token = refresh_auth_token(row.gst_registration_number, row.authorization_token)
             if new_auth_token != "":
                 print(f"Auto Updated Auth Token for {row.gst_registration_number}")
@@ -105,13 +92,14 @@ def refresh_auth_token(gstin, auth_token):
 def get_auth_token(gstin):
     found = 0
     r_set = frappe.get_doc("Rohit Settings", "Rohit Settings")
+    now_time = datetime.datetime.now()
     for d in r_set.gst_registration_details:
         if d.gst_registration_number == gstin:
             found = 1
             if d.authorization_token and d.api_access_authorized == 1:
-                if d.validity_of_token > datetime.datetime.now() + datetime.timedelta(minutes=20):
+                if d.validity_of_token > now_time + datetime.timedelta(minutes=10):
                     return d.authorization_token
-                elif d.validity_of_token >= datetime.datetime.now():
+                elif now_time < d.validity_of_token <= now_time + datetime.time(minutes=10):
                     new_auth_token = refresh_auth_token(gstin=gstin, auth_token=d.authorization_token)
                     if new_auth_token != "":
                         update_auth_token(row_name=d.name, auth_token=new_auth_token)
