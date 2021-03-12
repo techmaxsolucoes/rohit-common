@@ -7,14 +7,11 @@ import re
 import frappe
 from datetime import date
 from frappe.utils import getdate, flt
-from ...utils.accounts_utils import set_advances
 from rohit_common.utils.rohit_common_utils import replace_java_chars, check_dynamic_link, \
     check_sales_taxes_integrity
 
 
 def validate(doc, method):
-    if not doc.advances:
-        set_advances(doc)
     template_doc = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
     check_customs_tariff(doc)
     check_all_dynamic_links(doc)
