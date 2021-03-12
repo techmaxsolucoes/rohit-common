@@ -13,7 +13,7 @@ def get_gstr2a(gstin, ret_period, action):
     api = "gstr2a"
     auth_token = get_auth_token(gstin)
     url = get_gst_url(api, action, gstin) + "&authtoken=" + auth_token + "&ret_period=" + ret_period
-    resp = get_gst_response(gstin=gstin, url=url, type_of_req="get")
+    resp = get_gst_response(url=url, type_of_req="get")
     if flt(resp.get("status_cd")) == 1:
         return resp
     elif resp.get(action.lower(), None) is not None:
@@ -24,7 +24,7 @@ def get_gstr2a(gstin, ret_period, action):
         frappe.throw(f"Some Error in Response with Error Message = {resp} URL Used= {url}")
 
 
-def get_gst_response(gstin, url, type_of_req):
+def get_gst_response(url, type_of_req):
     if type_of_req == "post":
         return requests.post(url=url, timeout=timeout).json()
     elif type_of_req == "get":
@@ -72,15 +72,23 @@ def check_for_refresh_token(row):
             else:
                 print(f"Auto Auth Token Update Failed for {row.gst_registration_number}")
                 update_auth_token(row_name=row.name, auth_token="", failed=1)
+        elif now_time + datetime.timedelta(minutes=10) < row.validity_of_token:
+            print(f"No Need to Update the Auth Token for {row.gst_registration_number}")
         else:
+            print(f"Auth Token is Expired and hence Need to Generate OTP Again for {row.gst_registration_number}")
             update_auth_token(row_name=row.name, auth_token="", failed=1)
+    elif row.api_access_authorized != 1:
+        print(f"API Authorization is Unchecked for {row.gst_registration_number}")
+    else:
+        print(f"No API Authorization Token for {row.gst_registration_number}")
 
 
 def refresh_auth_token(gstin, auth_token):
     api = "otp"
     action = "REFRESHTOKEN"
-    ref_url = get_gst_url(api=api, action=action, gstin=gstin) + "&auth_token=" + auth_token
-    ref_resp = requests.get(url=ref_url, timeout=timeout).json()
+    ref_url = get_gst_url(api=api, action=action, gstin=gstin) + "&authtoken=" + auth_token
+    ref_resp = get_gst_response(url=ref_url, type_of_req="post")
+    print(ref_resp)
     if flt(ref_resp.get("status_cd")) == 1:
         return ref_resp.get("auth_token")
     else:
