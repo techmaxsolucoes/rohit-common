@@ -128,14 +128,16 @@ class GSTR1ReturnRIGPL(Document):
             # If the GSTR1 is not filed then SAVE the data after validation of the data on GSTN Portal
         else:
             # If GSTR1 arn is there then verify the data with generated GSTR1
-            # resp = get_gstr1(gstin=self.gstin, ret_period=self.return_period, action="B2B")
-            act_dict = {"action": "B2B", "name": "B2B", "tbl": "b2b_invoices"}
-            resp = json.loads(self.json_reply.replace("'", '"'))
-            if not resp:
-                frappe.msgprint(f"<b>{act_dict.get('name')}</b> there is Some Error or No Data for {self.return_period}")
-            else:
-                frappe.msgprint(f"<b>{act_dict.get('name')}</b> for Period {self.return_period} is Fetched")
-                self.process_gstr1(response=resp, act_dict=act_dict)
+            # gstr1_actions = [{"action": "B2B", "name": "B2B", "tbl": "b2b_invoices"}]
+            for act_dict in gstr1_actions:
+                resp = get_gstr1(gstin=self.gstin, ret_period=self.return_period, action="B2B")
+                # resp = json.loads(self.json_reply.replace("'", '"'))
+                if not resp:
+                    frappe.msgprint(f"<b>{act_dict.get('name')}</b> there is Some Error or No Data "
+                                    f"for {self.return_period}")
+                else:
+                    frappe.msgprint(f"<b>{act_dict.get('name')}</b> for Period {self.return_period} is Fetched")
+                    self.process_gstr1(response=resp, act_dict=act_dict)
 
     def process_gstr1(self, response, act_dict):
         action = act_dict.get("action")
