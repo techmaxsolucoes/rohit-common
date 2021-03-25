@@ -1,0 +1,277 @@
+{
+ "creation": "2021-02-11 14:51:10.441029",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb0",
+  "invoice_type",
+  "supply_attract_reverse_charge",
+  "cb0",
+  "export_sales",
+  "intra_state_supplies_attracting_igst",
+  "differential_percentage",
+  "is_credit_debit",
+  "applicable_percentage_of_tax_rate",
+  "sb1",
+  "receiver_address",
+  "receiver_gstin",
+  "receiver_name",
+  "place_of_supply",
+  "note_type",
+  "gst_payment",
+  "shipping_bill_no",
+  "shipping_bill_date",
+  "port_code",
+  "cb1",
+  "document_type",
+  "document_number",
+  "invoice_number",
+  "invoice_date",
+  "total_invoice_value",
+  "supply_type",
+  "sb2",
+  "rate",
+  "taxable_value",
+  "cb2",
+  "igst",
+  "cgst",
+  "sgst",
+  "cess"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "supply_attract_reverse_charge",
+   "fieldtype": "Check",
+   "label": "Supply Attract Reverse Charge",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "intra_state_supplies_attracting_igst",
+   "fieldtype": "Check",
+   "label": "Intra-State Supplies Attracting IGST",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "differential_percentage",
+   "fieldtype": "Check",
+   "label": "Differential Percentage",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.differential_percentage === 1",
+   "fieldname": "applicable_percentage_of_tax_rate",
+   "fieldtype": "Percent",
+   "label": "Applicable Percentage of Tax Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receiver_gstin",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Receiver GSTIN/UIN",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receiver_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Receiver Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Data",
+   "label": "Invoice Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Invoice Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_invoice_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Invoice Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supply_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Supply Type",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb0",
+   "fieldtype": "Section Break",
+   "label": "Main Details"
+  },
+  {
+   "fieldname": "cb0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb1",
+   "fieldtype": "Section Break",
+   "label": "Receiver Details"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb2",
+   "fieldtype": "Section Break",
+   "label": "Item Details"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Rate (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "taxable_value",
+   "fieldtype": "Currency",
+   "label": "Taxable Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "igst",
+   "fieldtype": "Currency",
+   "label": "IGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cgst",
+   "fieldtype": "Currency",
+   "label": "CGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sgst",
+   "fieldtype": "Currency",
+   "label": "SGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cess",
+   "fieldtype": "Currency",
+   "label": "Cess",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "export_sales",
+   "fieldtype": "Check",
+   "label": "Export Sales",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.export_sales === 1",
+   "fieldname": "gst_payment",
+   "fieldtype": "Select",
+   "label": "GST Payment",
+   "options": "\nWith Payment of Tax\nWithout Payment of Tax",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.export_sales === 1",
+   "fieldname": "shipping_bill_no",
+   "fieldtype": "Data",
+   "label": "Shipping Bill No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "place_of_supply",
+   "fieldtype": "Link",
+   "label": "Place of Supply (POS)",
+   "options": "State",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.export_sales === 1",
+   "fieldname": "shipping_bill_date",
+   "fieldtype": "Date",
+   "label": "Shipping Bill Date",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.export_sales === 1",
+   "fieldname": "port_code",
+   "fieldtype": "Data",
+   "label": "Port Code",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_credit_debit",
+   "fieldtype": "Check",
+   "label": "Is Credit Debit",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.is_credit_debit === 1",
+   "fieldname": "note_type",
+   "fieldtype": "Select",
+   "label": "Note Type",
+   "options": "\nCredit\nDebit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receiver_address",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Receiver Address",
+   "options": "Address",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Link",
+   "label": "Document Type",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "document_number",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Document Number",
+   "options": "document_type"
+  },
+  {
+   "fieldname": "invoice_type",
+   "fieldtype": "Select",
+   "label": "Invoice Type",
+   "options": "\nR-Regular B2B Invoices\nDE-Deemed Exports\nSEWP-SEZ Exports with payment\nSEWOP-SEZ exports without payment",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2021-03-19 06:19:03.753602",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "GSTR1 Return Invoices",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

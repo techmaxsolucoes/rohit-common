@@ -1,0 +1,111 @@
+{
+ "creation": "2021-03-24 20:09:51.250938",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "hsn",
+  "description",
+  "total_quantity",
+  "uom",
+  "total_value",
+  "total_taxable_value",
+  "igst",
+  "cgst",
+  "sgst",
+  "cess"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "hsn",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "HSN",
+   "options": "GST HSN Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UoM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "total_quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Total Quantity",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "total_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Value",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "total_taxable_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Taxable Value",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "igst",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "IGST",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "cgst",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "CGST",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "sgst",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "SGST",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "cess",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cess",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2021-03-24 20:16:58.994968",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "GSTR1 HSN Summary",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

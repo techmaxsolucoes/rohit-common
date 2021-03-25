@@ -59,6 +59,7 @@ def check_series(doc, tx_doc):
 
 
 def on_update(doc, method):
+    validate_export_bill_fields(doc)
     it_list = get_item_synopsis(doc)
     if not doc.items_synopsis:
         for d in it_list:
@@ -82,16 +83,19 @@ def check_local_natl_tax_rules(doc, template_doc):
     ship_country = frappe.db.get_value("Address", doc.shipping_address_name, "country")
 
     if bill_state == template_doc.state and template_doc.is_export == 0 and template_doc.is_sample != 1:
+        doc.place_of_supply = template_doc.state
         if template_doc.is_local_sales != 1:
             frappe.throw("Selected Tax {0} is NOT LOCAL Tax but Billing Address is in Same State {1}, "
                          "hence either change Billing Address or Change the Selected Tax".
                          format(doc.taxes_and_charges, bill_state))
     elif ship_country == 'India' and bill_state != template_doc.state and template_doc.is_sample != 1:
+        doc.place_of_supply = bill_state
         if template_doc.is_local_sales == 1:
             frappe.throw("Selected Tax {0} is LOCAL Tax but Billing Address is in Different State {1}, "
                          "hence either change Billing Address or Change the Selected Tax".
                          format(doc.taxes_and_charges, bill_state))
     elif ship_country != 'India':  # Case of EXPORTS
+        doc.place_of_supply = "Exempted"
         if template_doc.is_export != 1:
             frappe.throw("Selected Tax {0} is for Indian Sales but Billing Address is in Different Country {1}, "
                          "hence either change Billing Address or Change the Selected Tax".
@@ -246,6 +250,8 @@ def validate_export_bill_fields(doc):
         if not trans_doc.port_code:
             frappe.throw("{} does not have Port Code Mentioned".
                          format(frappe.get_desk_link(trans_doc.doctype, trans_doc.name)))
+        else:
+            doc.port_code = trans_doc.port_code[:6]
         if not doc.payment_terms_template:
             frappe.throw("For Export {} Payment Terms Template is Mandatory".
                          format(frappe.get_desk_link(doc.doctype, doc.name)))

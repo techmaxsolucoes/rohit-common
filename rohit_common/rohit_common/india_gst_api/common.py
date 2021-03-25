@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 import frappe
 from datetime import datetime
-from frappe.utils import flt
+from frappe.utils import flt, get_last_day, getdate
 
 
 def get_api_version(api):
@@ -12,6 +12,8 @@ def get_api_version(api):
         {"api": "asp", "version": "v1.0", "action": "TP"}, {"api": "eway", "version": "v1.03", "action": "TP"},
         {"api": "search", "version": "v1.1", "action": "TP"},
         {"api": "otp", "version": "v1.0", "action": "authenticate"},
+        {"api": "gstr1_ret_status", "version": "v0.2", "action": "returns/gstr1"},
+        {"api": "gstr1", "version": "v2.1", "action": "returns/gstr1"},
         {"api": "gstr2a", "version": "v2.0", "action": "returns/gstr2a"}
     ]
     for d in api_version_list:
@@ -79,6 +81,15 @@ def gst_return_period_validation(return_period):
     elif year == now.year:
         if month >= now.month:
             frappe.throw("Return Period Can only be for Past Months")
+
+
+def get_dates_from_return_period(monthly_ret_pd):
+    rt_year = monthly_ret_pd[2:]
+    rt_month = monthly_ret_pd[:2]
+    rt_fst_date = rt_year + "-" + rt_month + "-01"
+    first_day = getdate(rt_fst_date)
+    last_day = get_last_day(dt=first_day)
+    return first_day, last_day
 
 
 def validate_gstin(gstin):

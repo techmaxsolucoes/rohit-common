@@ -6,13 +6,31 @@ import datetime
 import requests
 from frappe.utils import flt, getdate
 from .common import get_gsp_details, get_api_version
-timeout = 5
+timeout = 7
+
+
+def get_gstr1(gstin, ret_period, action):
+    api = "gstr1"
+    auth_token = get_auth_token(gstin)
+    url = get_gst_url(api, action, gstin) + "&authtoken=" + auth_token + "&ret_period=" + ret_period
+    frappe.msgprint(url)
+    resp = get_gst_response(url=url, type_of_req="get")
+    frappe.msgprint(str(resp))
+    if flt(resp.get("status_cd")) == 1:
+        return resp
+    elif resp.get(action.lower(), None) is not None:
+        return resp
+    elif flt(resp.get("status_cd")) == 0:
+        return []
+    else:
+        frappe.throw(f"Some Error in Response with Error Message = {resp} URL Used= {url}")
 
 
 def get_gstr2a(gstin, ret_period, action):
     api = "gstr2a"
     auth_token = get_auth_token(gstin)
     url = get_gst_url(api, action, gstin) + "&authtoken=" + auth_token + "&ret_period=" + ret_period
+    frappe.throw(url)
     resp = get_gst_response(url=url, type_of_req="get")
     if flt(resp.get("status_cd")) == 1:
         return resp
@@ -87,8 +105,7 @@ def refresh_auth_token(gstin, auth_token):
     api = "otp"
     action = "REFRESHTOKEN"
     ref_url = get_gst_url(api=api, action=action, gstin=gstin) + "&authtoken=" + auth_token
-    ref_resp = get_gst_response(url=ref_url, type_of_req="post")
-    print(ref_resp)
+    ref_resp = get_gst_response(url=ref_url, type_of_req="get")
     if flt(ref_resp.get("status_cd")) == 1:
         return ref_resp.get("auth_token")
     else:

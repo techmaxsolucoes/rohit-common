@@ -1,0 +1,332 @@
+{
+ "autoname": "format:{gstin}-{return_period}",
+ "creation": "2021-02-11 14:01:59.992351",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb00",
+  "address",
+  "gstin",
+  "arn_number",
+  "filing_date",
+  "filing_status",
+  "mode_of_filing",
+  "cb00",
+  "return_period",
+  "get_details",
+  "get_gstr1_details",
+  "sb01",
+  "synopsis_text",
+  "sb02",
+  "b2b_invoices",
+  "sb03",
+  "b2cl_invoices",
+  "sb04",
+  "cdn_b2b",
+  "sb05",
+  "cdn_b2c",
+  "sb06",
+  "export_invoices",
+  "sb07",
+  "sb08",
+  "sb09",
+  "sb10",
+  "sb11",
+  "sb12",
+  "b2c_invoices",
+  "sb13",
+  "sb14",
+  "sb15",
+  "sb16",
+  "hsn_summary",
+  "sb17",
+  "sb18",
+  "sb19",
+  "sb20",
+  "amended_from",
+  "json_reply"
+ ],
+ "fields": [
+  {
+   "collapsible": 1,
+   "fieldname": "sb10",
+   "fieldtype": "Section Break",
+   "label": "Amended Credit/Debit Notes (Registered) (9C)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb11",
+   "fieldtype": "Section Break",
+   "label": "Amended Credit/Debit Notes (Unregistered) (9C)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb12",
+   "fieldtype": "Section Break",
+   "label": "B2C Others (7)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb13",
+   "fieldtype": "Section Break",
+   "label": "Nil Rated Supplies (8A, 8B, 8C, 8D)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb14",
+   "fieldtype": "Section Break",
+   "label": "Tax Liability Advances Received (11A(1), 11A(2))"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb15",
+   "fieldtype": "Section Break",
+   "label": "Adjustment of Advances (11B(1), 11B(2))"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb16",
+   "fieldtype": "Section Break",
+   "label": "HSN-wise Summary of Outward Supplies (12)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb17",
+   "fieldtype": "Section Break",
+   "label": "Documents Issued (13)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb18",
+   "fieldtype": "Section Break",
+   "label": "Amended Tax Liability Advance Received (11A)"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "GSTR1 Return RIGPL",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb00",
+   "fieldtype": "Section Break",
+   "label": "Main Details"
+  },
+  {
+   "fetch_from": "address.gstin",
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "GSTIN",
+   "length": 15,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb00",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "return_period",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Return Period",
+   "length": 6,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "arn_number",
+   "fieldtype": "Data",
+   "label": "ARN Number",
+   "length": 15,
+   "read_only": 1
+  },
+  {
+   "fieldname": "b2b_invoices",
+   "fieldtype": "Table",
+   "label": "B2B Invoices",
+   "options": "GSTR1 Return Invoices"
+  },
+  {
+   "fieldname": "get_details",
+   "fieldtype": "Button",
+   "label": "Get Details",
+   "options": "get_details"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb02",
+   "fieldtype": "Section Break",
+   "label": "B2B Invoices (4A, 4B, 4C, 6B, 6C)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb03",
+   "fieldtype": "Section Break",
+   "label": "B2C Large Invoices (5A, 5B)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb04",
+   "fieldtype": "Section Break",
+   "label": "Credit / Debit Notes (Registered) (9B)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb05",
+   "fieldtype": "Section Break",
+   "label": "Credit / Debit Notes (Unregistered) (9B)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb06",
+   "fieldtype": "Section Break",
+   "label": "Export Invoices (6A)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb07",
+   "fieldtype": "Section Break",
+   "label": "Amended B2B Invoices (9A)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb08",
+   "fieldtype": "Section Break",
+   "label": "Amended B2C (Large) Invoices (9A)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb09",
+   "fieldtype": "Section Break",
+   "label": "Amended Export Invoices (9A)"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Link",
+   "label": "Address",
+   "options": "Address",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "b2cl_invoices",
+   "fieldtype": "Table",
+   "label": "B2CL Invoices",
+   "options": "GSTR1 Return Invoices"
+  },
+  {
+   "fieldname": "export_invoices",
+   "fieldtype": "Table",
+   "label": "Export Invoices",
+   "options": "GSTR1 Return Invoices"
+  },
+  {
+   "fieldname": "b2c_invoices",
+   "fieldtype": "Table",
+   "label": "B2C Invoices",
+   "options": "GSTR1 Return Invoices"
+  },
+  {
+   "fieldname": "cdn_b2b",
+   "fieldtype": "Table",
+   "label": "Registered Credit or Debit Notes ",
+   "options": "GSTR1 Return Invoices"
+  },
+  {
+   "fieldname": "cdn_b2c",
+   "fieldtype": "Table",
+   "label": "Un-Registered Credit or Debit Notes",
+   "options": "GSTR1 Return Invoices"
+  },
+  {
+   "fieldname": "get_gstr1_details",
+   "fieldtype": "Button",
+   "label": "Get GSTR1 Details",
+   "options": "get_gstr1_details"
+  },
+  {
+   "fieldname": "json_reply",
+   "fieldtype": "Long Text",
+   "label": "JSON Reply"
+  },
+  {
+   "fieldname": "mode_of_filing",
+   "fieldtype": "Data",
+   "label": "Mode of Filing",
+   "read_only": 1
+  },
+  {
+   "fieldname": "filing_date",
+   "fieldtype": "Date",
+   "label": "Filing Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "filing_status",
+   "fieldtype": "Data",
+   "label": "Filing Status",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb19",
+   "fieldtype": "Section Break",
+   "label": "Amendment of Adjustment of Advances (11B)"
+  },
+  {
+   "fieldname": "sb01",
+   "fieldtype": "Section Break",
+   "label": "Synopsis "
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb20",
+   "fieldtype": "Section Break",
+   "label": "Amended B2C Others (12)"
+  },
+  {
+   "fieldname": "synopsis_text",
+   "fieldtype": "Text",
+   "label": "Synopsis Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hsn_summary",
+   "fieldtype": "Table",
+   "label": "HSN Summary",
+   "options": "GSTR1 HSN Summary"
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2021-03-24 20:10:20.901756",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "GSTR1 Return RIGPL",
+ "name_case": "Title Case",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

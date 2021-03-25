@@ -4,6 +4,189 @@ import frappe
 from frappe.utils import flt
 
 
+def get_hsn_sum_frm_si(si_name):
+    sid = frappe.get_doc("Sales Invoice", si_name)
+    hsn_sum = []
+    for row in sid.items:
+        if not hsn_sum:
+            hsn_dict = make_hsn_sum_dict(sid, row)
+            hsn_sum.append(hsn_dict.copy())
+        else:
+            found = 0
+            for hsn in hsn_sum:
+                if hsn.hsn == row.gst_hsn_code:
+                    if hsn.uom == row.stock_uom:
+                        found = 1
+                        tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt = get_taxes_from_sid(sid)
+                        row_igst = round((igst_amt * row.base_net_amount / sid.base_net_total), 2)
+                        row_sgst = round((sgst_amt * row.base_net_amount / sid.base_net_total), 2)
+                        row_cgst = round((cgst_amt * row.base_net_amount / sid.base_net_total), 2)
+                        row_cess = round((cess_amt * row.base_net_amount / sid.base_net_total), 2)
+                        row_tot_val = row.base_net_amount + row_igst + row_cgst + row_sgst + row_cess
+                        hsn.total_quantity += row.qty
+                        hsn.total_taxable_value += row.base_net_amount
+                        hsn.igst += row_igst
+                        hsn.cgst += row_cgst
+                        hsn.sgst += row_sgst
+                        hsn.cess += row_cess
+                        hsn.total_value += row_tot_val
+            if found != 1:
+                hsn_dict = make_hsn_sum_dict(sid, row)
+                hsn_sum.append(hsn_dict.copy())
+    return hsn_sum
+
+
+def make_hsn_sum_dict(sid, row):
+    tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt = get_taxes_from_sid(sid)
+    row_igst = round((igst_amt * row.base_net_amount / sid.base_net_total), 2)
+    row_sgst = round((sgst_amt * row.base_net_amount / sid.base_net_total), 2)
+    row_cgst = round((cgst_amt * row.base_net_amount / sid.base_net_total), 2)
+    row_cess = round((cess_amt * row.base_net_amount / sid.base_net_total), 2)
+    row_tot_val = row.base_net_amount + row_igst + row_cgst + row_sgst + row_cess
+    hsn_dict = frappe._dict({})
+    hsn_dict["hsn"] = row.gst_hsn_code
+    hsn_dict["total_quantity"] = row.qty
+    hsn_dict["uom"] = row.stock_uom
+    hsn_dict["total_taxable_value"] = row.base_net_amount
+    hsn_dict["igst"] = row_igst
+    hsn_dict["sgst"] = row_sgst
+    hsn_dict["cgst"] = row_cgst
+    hsn_dict["cess"] = row_cess
+    hsn_dict["total_value"] = row_tot_val
+    return hsn_dict
+
+
+def get_linked_type_from_jv(jv_name):
+    linked_dt, linked_dn = "", ""
+    jvd = frappe.get_doc("Journal Entry", jv_name)
+    for row in jvd.accounts:
+        if row.party_type:
+            linked_dt = row.party_type
+            linked_dn = row.party
+            break
+    return linked_dt, linked_dn
+
+
+def get_gst_export_fields(si_doc):
+    shb, shd_date, tax_payment, port_code = "", "", "", ""
+    tax_doc = frappe.get_doc("Sales Taxes and Charges Template", si_doc.taxes_and_charges)
+    if tax_doc.is_export == 1:
+        shb = si_doc.shipping_bill_number
+        shb_date = si_doc.shipping_bill_date
+        tax_payment = tax_doc.export_type
+        port_code = si_doc.port_code
+    return shb, shb_date, tax_payment, port_code
+
+
+def get_gst_jv_type(jv_doc):
+    jv_type = ""
+    for acc in jv_doc.accounts:
+        if acc.party_type:
+            if acc.credit_in_account_currency > 0:
+                return "credit"
+            elif acc.debit_in_account_currency > 0:
+                return "debit"
+
+
+def get_gst_si_type(si_doc):
+    tax_doc = frappe.get_doc("Sales Taxes and Charges Template", si_doc.taxes_and_charges)
+    if si_doc.is_return != 1:
+        if tax_doc.is_export == 1:
+            return "export"
+        elif si_doc.billing_address_gstin == "NA":
+            if si_doc.base_grand_total >= 250000:
+                return "b2cl"
+            else:
+                return "b2c"
+        else:
+            return "b2b"
+    else:
+        if si_doc.billing_address_gstin == "NA":
+            return "cdn_b2c"
+        else:
+            return "cdn_b2b"
+
+
+def get_taxes_from_jvd(jvd, jv_type):
+    tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt, net_amt = 0, 0, 0, 0, 0, 0
+    gst_set = frappe.get_doc("GST Settings", "GST Setting")
+    gst_taxes = []
+    if jv_type == "credit":
+        acc_type = "debit"
+    elif jv_type == "debit":
+        acc_type = "credit"
+    else:
+        acc_type = ""
+    if gst_set.gst_accounts:
+        for d in gst_set.gst_accounts:
+            gst_dict = frappe._dict({})
+            gst_dict["cgst"] = d.cgst_account
+            gst_dict["sgst"] = d.sgst_account
+            gst_dict["igst"] = d.igst_account
+            gst_dict["cess"] = d.cess_account
+            gst_taxes.append(gst_dict.copy())
+    else:
+        frappe.throw("No GST Accounts Setup in GST Settings")
+    for acc in jvd.accounts:
+        if acc.account not in gst_taxes[0].values():
+            net_amt += acc.get(acc_type + "_in_account_currency", 0)
+        for gst in gst_taxes:
+            found = 0
+            row_amt = acc.get(acc_type + "_in_account_currency", 0)
+            if acc.account == gst.cgst:
+                cgst_amt += row_amt
+                found = 1
+            elif acc.account == gst.sgst:
+                sgst_amt += row_amt
+                found = 1
+            elif acc.account == gst.igst:
+                igst_amt += row_amt
+                found = 1
+            elif acc.account == gst.cess:
+                cess_amt += row_amt
+    tax_rate = round((((sgst_amt + cgst_amt + igst_amt) / net_amt) * 100), 0)
+
+    return tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt, net_amt
+
+
+def get_taxes_from_sid(sid):
+    tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt = 0, 0 ,0 ,0, 0
+    gst_set = frappe.get_doc("GST Settings", "GST Setting")
+    gst_taxes = []
+    for d in gst_set.gst_accounts:
+        gst_dict = frappe._dict({})
+        gst_dict["cgst"] = d.cgst_account
+        gst_dict["sgst"] = d.sgst_account
+        gst_dict["igst"] = d.igst_account
+        gst_dict["cess"] = d.cess_account
+        gst_taxes.append(gst_dict.copy())
+    for acc in sid.taxes:
+        for gst in gst_taxes:
+            found = 0
+            if acc.account_head == gst.cgst:
+                cgst_amt += acc.base_tax_amount
+                found = 1
+            elif acc.account_head == gst.sgst:
+                sgst_amt += acc.base_tax_amount
+                found = 1
+            elif acc.account_head == gst.igst:
+                igst_amt += acc.base_tax_amount
+                found = 1
+            elif acc.account_head == gst.cess:
+                cess_amt += acc.base_tax_amount
+            if found == 1:
+                tax_rate += acc.rate
+    return tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt
+
+
+def get_base_doc_no(sid):
+    if sid.amended_from:
+        si_base_doc = frappe.get_doc(sid.doctype, sid.amended_from)
+        return get_base_doc_no(si_base_doc)
+    else:
+        return sid.name
+
+
 def set_advances(self):
     """
     Returns list of advances against Account, Party, Reference.
