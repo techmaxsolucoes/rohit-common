@@ -4,6 +4,30 @@ import frappe
 from frappe.utils import flt
 
 
+def get_inv_status(inv_status):
+    if inv_status == "A":
+        return "A-Accepted"
+    elif inv_status == "R":
+        return "R-Rejected"
+    elif inv_status == "N":
+        return "N-No Action"
+    elif inv_status == "U":
+        return "U-Uploaded"
+    elif inv_status == "P":
+        return "P-Pending"
+    else:
+        frappe.throw(f"{inv_status} is Not Yet Supported")
+
+
+def get_invoice_uploader(upload_short):
+    if upload_short == "R":
+        return "R-Receiver"
+    elif upload_short == "S":
+        return "S-Supplier"
+    else:
+        frappe.throw(f"{upload_short} is Not Valid Type of Invoice Uploader Type")
+
+
 def get_hsn_sum_frm_si(si_name):
     sid = frappe.get_doc("Sales Invoice", si_name)
     hsn_sum = []

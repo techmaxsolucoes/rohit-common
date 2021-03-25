@@ -12,7 +12,8 @@ from erpnext.accounts.utils import get_fiscal_year
 from ....utils.common import update_child_table
 from ....utils.rohit_common_utils import check_dynamic_link
 from ....utils.accounts_utils import get_base_doc_no, get_taxes_from_sid, get_gst_si_type, get_gst_export_fields, \
-    get_gst_jv_type, get_taxes_from_jvd, get_linked_type_from_jv, get_hsn_sum_frm_si
+    get_gst_jv_type, get_taxes_from_jvd, get_linked_type_from_jv, get_hsn_sum_frm_si, get_inv_status, \
+    get_invoice_uploader
 from ...india_gst_api.common import gst_return_period_validation, get_dates_from_return_period
 from ...india_gst_api.gst_api import get_gstr1
 from ...india_gst_api.gst_public_api import track_return, get_arn_status
@@ -76,7 +77,7 @@ class GSTR1ReturnRIGPL(Document):
         self.synopsis_text = syn_txt
 
     def generate_hsn_summary(self):
-        self.hsn_summary = []
+        self.set("hsn_summary", [])
         si_tables = ["b2b_invoices", "b2cl_invoices", "cdn_b2c", "cdn_b2b", "export_invoices", "b2c_invoices"]
         hsn_list = []
         for tbl in si_tables:
@@ -102,8 +103,16 @@ class GSTR1ReturnRIGPL(Document):
                         else:
                             for hsn in hsn_sum:
                                 hsn_list.append(hsn.copy())
+        # frappe.msgprint(str(hsn_list))
         hsn_list = sorted(hsn_list, key=lambda i: i["hsn"], reverse=0)
         update_child_table(doc=self, table_name="hsn_summary", row_list=hsn_list)
+
+    def clear_all_tables(self):
+        si_tables = ["b2b_invoices", "b2cl_invoices", "cdn_b2c", "cdn_b2b", "export_invoices", "b2c_invoices",
+                     "hsn_summary"]
+        self.synopsis_text = ""
+        for si in si_tables:
+            self.set(si, [])
 
     def get_gstr1_details(self):
         if self.is_new() == 1:
@@ -141,31 +150,7 @@ class GSTR1ReturnRIGPL(Document):
             else:
                 for d in response.get(action.lower()):
                     d = frappe._dict(d)
-                    # frappe.msgprint(f"Checking for GSTIN {d.ctin}")
-                    for row in self.get(act_dict.get("tbl")):
-                        gst_found = 0
-                        if row.receiver_gstin == d.ctin:
-                            # frappe.msgprint(f"{d.ctin} Found in Row# {row.idx}")
-                            gst_found = 1
-                            inv_found = 0
-                            for inv in d.inv:
-                                if inv.get("inum") == row.document_number or inv.get("inum") == row.invoice_number:
-                                    # frappe.msgprint(f"Found {inv.get('inum')} in Row# {row.idx}")
-                                    inv_found = 1
-                                    gst_inv_date = datetime.strptime(inv.get("idt"), "%d-%m-%Y").date()
-                                    if inv.get("val") != row.total_invoice_value:
-                                        frappe.throw(f"For Row# {row.idx} Total Invoice Value does "
-                                                     f"not Match with GST Network Inv Value <b>{inv.get('val')}</b>")
-                                    elif gst_inv_date != getdate(row.invoice_date):
-                                        frappe.throw(f"For Row# {row.idx} Invoice Date does not Match with GST Network "
-                                                     f"Inv Date <b>{gst_inv_date}</b>")
-                                    else:
-                                        break
-                            if inv_found == 0:
-                                frappe.throw(f"{inv.get('inum')} Not Found in {act_desc}")
-                            break
-                    if gst_found == 0:
-                        frappe.throw(f"{d.ctin} Not Found in {act_desc}")
+                    match_and_update_details_from_gstin(d, self, act_dict)
 
     def validate(self):
         gst_return_period_validation(return_period=self.return_period)
@@ -175,12 +160,25 @@ class GSTR1ReturnRIGPL(Document):
 
     def on_submit(self):
         self.validate_export_invoices()
+        self.validate_si_tables(submit=1)
         frappe.throw("Submission is Not Allowed for the Time Being")
 
-    def validate_si_tables(self):
+    def validate_si_tables(self, submit=0):
         si_tables = ["b2b_invoices", "b2cl_invoices", "cdn_b2c", "cdn_b2b", "export_invoices", "b2c_invoices"]
+        if self.filing_status == "Filed":
+            filed = 1
+        else:
+            filed = 0
         for tbl in si_tables:
             for d in self.get(tbl):
+                if filed == 1:
+                    if not d.invoice_checksum:
+                        message = f"For Row# {d.idx} the Invoice Checksum is Not Mentioned but Return is Filed so " \
+                                  f"you wont be able to Submit the Document. Pull the Data from GSTIN Network to Submit"
+                        if submit == 1:
+                            frappe.throw(message)
+                        else:
+                            frappe.msgprint(message)
                 if d.document_type == "Sales Invoice":
                     d.receiver_address = frappe.get_value(d.document_type, d.document_number, "customer_address")
                     d.receiver_gstin = frappe.get_value(d.document_type, d.document_number, "billing_address_gstin")
@@ -200,17 +198,11 @@ class GSTR1ReturnRIGPL(Document):
                              f"are not mentioned.")
 
     def get_details(self):
+        self.clear_all_tables()
         self.generate_gstr1()
 
     def generate_gstr1(self):
         frm_dt, to_dt = get_dates_from_return_period(self.return_period)
-        self.b2b_invoices = []
-        self.b2c_invoices = []
-        self.b2cl_invoices = []
-        self.export_invoices = []
-        self.cdn_b2b = []
-        self.cdn_b2c = []
-
         self.get_invoices(start_date=frm_dt, end_date=to_dt)
         self.get_jv_entries(start_date=frm_dt, end_date=to_dt)
         frappe.msgprint("Updated All Tables")
@@ -262,24 +254,63 @@ class GSTR1ReturnRIGPL(Document):
         for inv in inv_list:
             row = get_row_from_inv_name(inv.name)
             if row:
-                if row["invoice_type"] == "b2b":
+                if row["invoice_type_2"] == "b2b":
                     b2b_list.append(row.copy())
-                elif row["invoice_type"] == "b2cl":
+                elif row["invoice_type_2"] == "b2cl":
                     b2cl_list.append(row.copy())
-                elif row["invoice_type"] == "b2c":
+                elif row["invoice_type_2"] == "b2c":
                     b2c_list.append(row.copy())
-                elif row["invoice_type"] == "export":
+                elif row["invoice_type_2"] == "export":
                     exp_list.append(row.copy())
-                elif row["invoice_type"] == "cdn_b2c":
+                elif row["invoice_type_2"] == "cdn_b2c":
                     cdn_b2c_list.append(row.copy())
-                elif row["invoice_type"] == "cdn_b2b":
+                elif row["invoice_type_2"] == "cdn_b2b":
                     cdn_b2b_list.append(row.copy())
+                else:
+                    frappe.throw(f"Unknown Invoice Type for {row.document_number}")
         update_child_table(doc=self, table_name="b2b_invoices", row_list=b2b_list)
         update_child_table(doc=self, table_name="b2cl_invoices", row_list=b2cl_list)
         update_child_table(doc=self, table_name="b2c_invoices", row_list=b2c_list)
         update_child_table(doc=self, table_name="export_invoices", row_list=exp_list)
         update_child_table(doc=self, table_name="cdn_b2b", row_list=cdn_b2b_list)
         update_child_table(doc=self, table_name="cdn_b2c", row_list=cdn_b2c_list)
+
+
+def match_and_update_details_from_gstin(gstin_resp, gstr1_doc, act_dict):
+    # frappe.msgprint(f"Checking for GSTIN: {gstin_resp.ctin}")
+    si_gstin = frappe.db.sql("""SELECT * FROM `tabGSTR1 Return Invoices` WHERE parent = '%s' AND parenttype = '%s'
+    AND parentfield = '%s' AND receiver_gstin = '%s' ORDER BY idx""" %
+                             (gstr1_doc.name, gstr1_doc.doctype, act_dict.get("tbl"), gstin_resp.ctin), as_dict=1)
+    if len(si_gstin) > 0:
+        if len(si_gstin) != len(gstin_resp.inv):
+            frappe.throw(f"For GSTIN: {gstin_resp.ctin} Total Invoices in GST= {len(gstin_resp.inv)} Whereas in "
+                         f"System the Total Invoices = {len(si_gstin)}.<br>Please Correct the Error to Proceed")
+        for inv in gstin_resp.inv:
+            # frappe.msgprint(f"Checking for Invoice # {inv.get('inum')}")
+            inv_found = 0
+            for row in si_gstin:
+                if inv.get("inum") == row.document_number or inv.get("inum") == row.invoice_number:
+                    inv_found = 1
+                    gst_inv_date = datetime.strptime(inv.get("idt"), "%d-%m-%Y").date()
+                    if inv.get("val") != row.total_invoice_value:
+                        frappe.throw(f"For Row# {row.idx} Total Invoice Value does "
+                                     f"not Match with GST Network Inv Value <b>{inv.get('val')}</b>")
+                    elif gst_inv_date != getdate(row.invoice_date):
+                        frappe.throw(f"For Row# {row.idx} Invoice Date does not Match with GST Network "
+                                     f"Inv Date <b>{gst_inv_date}</b>")
+                    else:
+                        frappe.db.set_value("GSTR1 Return Invoices", row.name, "invoice_status",
+                                            get_inv_status(inv.get('flag')))
+                        frappe.db.set_value("GSTR1 Return Invoices", row.name, "uploaded_by",
+                                            get_invoice_uploader(inv.get('updby')))
+                        frappe.db.set_value("GSTR1 Return Invoices", row.name, "invoice_checksum", inv.get("chksum"))
+                        # row.invoice_status = get_inv_status(inv.get('flag'))
+                        # row.uploaded_by = get_invoice_uploader(inv.get('updby'))
+                        # row.invoice_checksum = inv.get("chksum")
+        if inv_found != 1:
+            frappe.throw(f"For GSTIN: {gstin_resp.ctin} and Inv# {row.document_number} is Not Found")
+    else:
+        frappe.throw(f"GSTIN:{gstin_resp.ctin} is Not Found in Table for {act_dict}")
 
 
 def get_row_from_jv_name(jv_name):
@@ -323,7 +354,8 @@ def get_row_from_inv_name(inv_name):
     bad_doc = frappe.get_doc("Address", sid.customer_address)
     base_inv_no = get_base_doc_no(sid)
     tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt = get_taxes_from_sid(sid)
-    row["invoice_type"] = inv_type
+    row["invoice_type_2"] = inv_type
+    row["invoice_type"] = "R-Regular B2B Invoices" # TODO make invoice Type dynamic instead of static
     row["receiver_address"] = sid.customer_address
     row["receiver_gstin"] = sid.billing_address_gstin
     row["document_type"] = "Sales Invoice"

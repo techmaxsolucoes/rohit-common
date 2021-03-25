@@ -6,8 +6,11 @@
  "field_order": [
   "sb0",
   "invoice_type",
-  "supply_attract_reverse_charge",
+  "invoice_status",
+  "uploaded_by",
+  "invoice_checksum",
   "cb0",
+  "supply_attract_reverse_charge",
   "export_sales",
   "intra_state_supplies_attracting_igst",
   "differential_percentage",
@@ -261,10 +264,31 @@
    "label": "Invoice Type",
    "options": "\nR-Regular B2B Invoices\nDE-Deemed Exports\nSEWP-SEZ Exports with payment\nSEWOP-SEZ exports without payment",
    "read_only": 1
+  },
+  {
+   "fieldname": "invoice_status",
+   "fieldtype": "Select",
+   "label": "Invoice Status",
+   "options": "\nA-Accepted\nR-Rejected\nN-No Action\nU-Uploaded\nP-Pending",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Select",
+   "label": "Uploaded By",
+   "options": "\nS-Supplier\nR-Receiver",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_checksum",
+   "fieldtype": "Data",
+   "label": "Invoice Checksum",
+   "length": 64,
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2021-03-19 06:19:03.753602",
+ "modified": "2021-03-25 11:32:15.102599",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "GSTR1 Return Invoices",
