@@ -16,6 +16,11 @@ def get_data():
             "items": [
                 {
                     "type": "doctype",
+                    "name": _("GSTR1 Return RIGPL"),
+                    "label": _("GSTR1 Returns"),
+                },
+                {
+                    "type": "doctype",
                     "name": _("GSTR2A RIGPL"),
                     "label": _("GSTR2A Returns"),
                 },
