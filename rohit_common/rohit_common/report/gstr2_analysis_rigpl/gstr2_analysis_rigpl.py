@@ -76,7 +76,7 @@ def get_gstr2_details(gl):
 		self_add = frappe.get_value(gl.voucher_type, gl.voucher_no, "shipping_address")
 		self_gstin = frappe.get_value("Address", self_add, "gstin")
 		cond += f" AND gstr.gstin = '{self_gstin}'"
-		cond += f" AND gstri.party_gstin = '{gl.party_gstin}'"
+		cond += f" AND gstri.party = '{gl.party}' AND gstri.party_type = '{gl.party_type}'"
 	else:
 		cond += f" AND gstri.linked_document_type = '{gl.voucher_type}' AND " \
 				f"gstri.linked_document_name = '{gl.voucher_no}'"
