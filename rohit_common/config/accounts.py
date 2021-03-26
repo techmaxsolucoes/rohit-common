@@ -18,7 +18,14 @@ def get_data():
                     "type": "doctype",
                     "name": _("GSTR2A RIGPL"),
                     "label": _("GSTR2A Returns"),
-                }
+                },
+                {
+                    "type": "report",
+                    "is_query_report": True,
+                    "name": _("GSTR2 Analysis RIGPL"),
+                    "label": _("GSTR2A Analysis"),
+                    "doctype": "Purchase Invoice",
+                },
             ]
         },
         {
