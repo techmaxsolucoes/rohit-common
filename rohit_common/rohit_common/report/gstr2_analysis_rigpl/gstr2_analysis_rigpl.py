@@ -26,6 +26,7 @@ def get_data(filters):
 			gst_taxes.append(d.igst_account)
 		if d.get("cess_account", "") and "Input" in d.get("cess_account", "No"):
 			gst_taxes.append(d.cess_account)
+	main_gl = []
 	for tax in gst_taxes:
 		gl_entries = get_gl_entries(tax, cond)
 		for gl in gl_entries:
@@ -55,15 +56,35 @@ def get_data(filters):
 			gstr2_tot_tax = gl.get("gstr2_igst", 0) + gl.get("gstr2_cgst", 0) + gl.get("gstr2_sgst", 0) + \
 							gl.get("gstr2_cess", 0)
 			doc_tot_tax = igst + cgst + sgst + cess
-			row = [gl.posting_date, gl.voucher_no, gl.get("party", ""),
-				   gl.get("gstr1_stat", 0), gl.get("gstr1_fil_date", "1900-01-01"),
-				   gl.get("period_gstr1", ""), gl.get("gstr3b_stat", 0),
-				   gl.get("party_gstin", ""), gl.get("note_type", "X"), gl.get("sup_inv_no", ""),
-				   gl.get("sup_inv_date", "1900-01-01"),
-				   gl.get("gstr2_gt", 0), gl.get("gstr2_nt", 0), gl.get("gstr2_igst", 0), gl.get("gstr2_cgst", 0),
-				   gl.get("gstr2_sgst", 0), gl.get("gstr2_cess", 0), gstr2_tot_tax, gl.get("doc_gt", 0),
-				   gl.get("doc_nt", 0), igst, cgst, sgst, cess, doc_tot_tax, gl.voucher_type, gl.get("party_type", "")]
-			data.append(row)
+			gl["gstr2_tot_tax"] = gstr2_tot_tax
+			gl["doc_tot_tax"] = doc_tot_tax
+			gl["doc_igst"] = igst
+			gl["doc_sgst"] = sgst
+			gl["doc_cgst"] = cgst
+			gl["doc_cess"] = cess
+			found = 0
+			for d in main_gl:
+				if d.get("voucher_type") == gl.get("voucher_type") and d.get("voucher_no") == gl.get("voucher_no"):
+					d["doc_tot_tax"] += gl.get("doc_tot_tax")
+					d["doc_igst"] += gl.get("doc_igst")
+					d["doc_sgst"] += gl.get("doc_sgst")
+					d["doc_cgst"] += gl.get("doc_cgst")
+					d["doc_cess"] += gl.get("doc_cess")
+					found = 1
+			if found != 1:
+				main_gl.append(gl.copy())
+	for gl in main_gl:
+		row = [gl.posting_date, gl.voucher_no, gl.get("party", ""),
+			   gl.get("gstr1_stat", 0), gl.get("gstr1_fil_date", "1900-01-01"),
+			   gl.get("period_gstr1", ""), gl.get("gstr2b_date", "1900-01-01"),
+			   gl.get("gstr2b_period", "X"), gl.get("gstr3b_stat", 0),
+			   gl.get("party_gstin", ""), gl.get("note_type", "X"), gl.get("sup_inv_no", ""),
+			   gl.get("sup_inv_date", "1900-01-01"),
+			   gl.get("gstr2_gt", 0), gl.get("gstr2_nt", 0), gl.get("gstr2_igst", 0), gl.get("gstr2_cgst", 0),
+			   gl.get("gstr2_sgst", 0), gl.get("gstr2_cess", 0), gl.get("gstr2_tot_tax", 0), gl.get("doc_gt", 0),
+			   gl.get("doc_nt", 0), gl.get("doc_igst", 0), gl.get("doc_cgst", 0), gl.get("doc_sgst", 0),
+			   gl.get("doc_cess", 0), gl.get("doc_tot_tax", 0), gl.voucher_type, gl.get("party_type", "")]
+		data.append(row)
 	return data
 
 
@@ -84,7 +105,7 @@ def get_gstr2_details(gl):
 	query = """SELECT gstr.name, gstri.filing_status_gstr1, gstri.filing_date_gstr1, gstri.filing_status_gstr3b,
 	gstri.filing_period_gstr1, gstri.note_type, gstri.grand_total, gstri.taxable_value, gstri.cgst_amount, 
 	gstri.sgst_amount, gstri.igst_amount, gstri.cess_amount, gstri.supplier_invoice_no, gstri.supplier_invoice_date,
-	gstri.party_gstin
+	gstri.party_gstin, gstri.gstr2b_date, gstri.gstr2b_period
 	FROM `tabGSTR2A RIGPL` gstr, `tabGSTR2 Return Invoices` gstri
 	WHERE gstr.docstatus != 2 AND gstri.parent = gstr.name %s %s""" % (cond, cond_or)
 	gstr2a_list = frappe.db.sql(query, as_dict=1)
@@ -100,6 +121,8 @@ def get_gstr2_details(gl):
 			gl["gstr3b_stat"] = gstr2a_list[0].filing_status_gstr3b
 			gl["gstr1_fil_date"] = gstr2a_list[0].filing_date_gstr1
 
+		gl["gstr2b_date"] = gstr2a_list[0].gstr2b_date
+		gl["gstr2b_period"] = gstr2a_list[0].gstr2b_period
 		gl["period_gstr1"] = gstr2a_list[0].filing_period_gstr1
 		gl["note_type"] = gstr2a_list[0].note_type
 		gl["gstr2_gt"] = gstr2a_list[0].grand_total
@@ -151,7 +174,8 @@ def get_columns(filters):
 			"options": "party_type",
 			"width": 250
 		},
-		"GSTR1 Status:Int:30", "GSTR1 Filing Date:Date:80", "GSTR1 Period::80",
+		"GSTR1 Status:Int:30", "GSTR1 Filing Date:Date:80", "GSTR1 Period::80", "GSTR2B Date:Date:80",
+		"GSTR2B Period::80",
 		"GSTR3B Status:Int:30", "Party GSTIN::180", "Type::80",
 		"Supplier Inv#::120", "Supplier Inv Date:Date:80", "GSTR2-GT:Currency:120", "GSTR2-NT:Currency:120",
 		"GSTR2-IGST:Currency:120", "GSTR2-CGST:Currency:120", "GSTR2-SGST:Currency:120", "GSTR2-Cess:Currency:120",

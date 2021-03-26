@@ -7,9 +7,11 @@
   "sb0",
   "filing_status_gstr1",
   "filing_date_gstr1",
+  "gstr2b_date",
   "cb0",
   "filing_status_gstr3b",
   "filing_period_gstr1",
+  "gstr2b_period",
   "sb1",
   "party_type",
   "party",
@@ -380,10 +382,22 @@
    "in_list_view": 1,
    "label": "Fully Matched",
    "permlevel": 1
+  },
+  {
+   "fieldname": "gstr2b_date",
+   "fieldtype": "Date",
+   "label": "GSTR2B Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gstr2b_period",
+   "fieldtype": "Data",
+   "label": "GSTR2B Period",
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2021-03-12 08:14:28.230176",
+ "modified": "2021-03-26 12:20:24.281776",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "GSTR2 Return Invoices",

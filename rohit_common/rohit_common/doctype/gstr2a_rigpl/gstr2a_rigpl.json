@@ -13,18 +13,21 @@
   "cb0",
   "gstin",
   "disable_gst_update",
+  "get_gstr2b",
   "get_gstr2a_data",
   "analyse_data",
   "sb1",
+  "gstr2b_gen_date",
+  "sb2",
   "filed_taxable_value",
   "filed_tax_amount",
   "matched_taxable_value",
   "total_taxable_value",
-  "cb1",
+  "cb2",
   "unfiled_taxable_value",
   "unfiled_tax_amount",
   "unmatched_taxable_value",
-  "sb2",
+  "sb3",
   "clear_table",
   "invoices",
   "amended_from"
@@ -63,7 +66,7 @@
   {
    "fieldname": "sb1",
    "fieldtype": "Section Break",
-   "label": "GSTR2A Analysis"
+   "label": "GSTR2B Details"
   },
   {
    "fieldname": "amended_from",
@@ -100,7 +103,7 @@
   {
    "fieldname": "sb2",
    "fieldtype": "Section Break",
-   "label": "Invoice Details"
+   "label": "GSTR2A Analysis"
   },
   {
    "fieldname": "filed_tax_amount",
@@ -145,10 +148,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "cb1",
-   "fieldtype": "Column Break"
-  },
-  {
    "depends_on": "eval: doc.__is_local !== 1",
    "fieldname": "get_gstr2a_data",
    "fieldtype": "Button",
@@ -173,10 +172,31 @@
    "fieldtype": "Button",
    "label": "Reset Matching",
    "options": "reset_matching"
+  },
+  {
+   "fieldname": "get_gstr2b",
+   "fieldtype": "Button",
+   "label": "Get GSTR2B",
+   "options": "get_gstr2b_data"
+  },
+  {
+   "fieldname": "gstr2b_gen_date",
+   "fieldtype": "Date",
+   "label": "GSTR2B Gen Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb3",
+   "fieldtype": "Section Break",
+   "label": "Invoice Details"
   }
  ],
  "is_submittable": 1,
- "modified": "2021-02-19 05:03:10.878619",
+ "modified": "2021-03-26 16:02:31.482629",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "GSTR2A RIGPL",

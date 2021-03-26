@@ -41,6 +41,24 @@ def get_gstr2a(gstin, ret_period, action):
         frappe.throw(f"Some Error in Response with Error Message = {resp} URL Used= {url}")
 
 
+def get_gstr2b(gstin, ret_period, action, file_num=None):
+    if file_num:
+        file_num_link = "&file_num" + file_num
+    else:
+        file_num_link = ""
+    api = "gstr2b"
+    auth_token = get_auth_token(gstin)
+    url = get_gst_url(api, action, gstin) + "&authtoken=" + auth_token + "&rtnprd=" + ret_period + "&ret_period=" + \
+          ret_period + file_num_link
+    # frappe.throw(url)
+    resp = get_gst_response(url=url, type_of_req="get")
+    # frappe.msgprint(f"{resp}")
+    if resp.get("chksum"):
+        return resp
+    else:
+        frappe.throw(f"Some Error in Response with Error Message = {resp} URL Used= {url}")
+
+
 def get_gst_response(url, type_of_req):
     if type_of_req == "post":
         return requests.post(url=url, timeout=timeout).json()

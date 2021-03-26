@@ -5,12 +5,12 @@ from __future__ import unicode_literals
 import frappe
 import json
 from datetime import datetime
-from frappe.utils import flt
+from frappe.utils import flt, getdate
 from ...india_gst_api.common import gst_return_period_validation, validate_gstin
-from ...india_gst_api.gst_api import get_invoice_type, get_type_of_amend, get_gstr2a
+from ...india_gst_api.gst_api import get_invoice_type, get_type_of_amend, get_gstr2a, get_gstr2b
 from frappe.model.document import Document
 
-
+gstr2b_actions = [{"action": "GET2B", "name": "GSTR2B"}]
 gstr2a_actions = [{"action": "B2B", "name": "B2B"}, {"action": "B2BA", "name": "B2B Amendments"},
                   {"action": "CDN", "name": "Credit or Debit Notes"},
                   {"action": "CDNA", "name": "Credit or Debit Note Amendments"},
@@ -42,6 +42,7 @@ class GSTR2ARIGPL(Document):
 
     def clear_table(self):
         self.invoices = []
+        self.gstr2b_gen_date = ""
         self.filed_taxable_value = 0
         self.filed_tax_amount = 0
         self.matched_taxable_value = 0
@@ -67,7 +68,58 @@ class GSTR2ARIGPL(Document):
             else:
                 frappe.msgprint(f"<b>{action.get('name')}</b> for Period {self.return_period} is Updated")
                 self.process_gstr2a_response(response=resp, action=action.get("action"))
-        # self.analyse_data()
+
+    def get_gstr2b_data(self):
+        if not self.gstr2b_gen_date:
+            for action in gstr2b_actions:
+                resp = get_gstr2b(gstin=self.gstin, ret_period=self.return_period, action=action.get("action"))
+                # resp = json.loads(self.json_reply.replace("'", '"'))
+                if not resp:
+                    frappe.msgprint(f"<b>{action.get('name')}</b> there is Some Error or No Data for {self.return_period}")
+                else:
+                    self.process_gstr2b_response(response=resp)
+        else:
+            frappe.throw(f"GSTR2B Already Generated on {self.gstr2b_gen_date}")
+
+    def process_gstr2b_response(self, response):
+        data = response.get("data")
+        gstr2b_date = datetime.strptime(data.get("gendt"), "%d-%m-%Y").date()
+        frappe.db.set_value(self.doctype, self.name, "gstr2b_gen_date", gstr2b_date)
+        data_lists = ["b2b", "b2ba", "cdnr", "cdnra", "isd", "isda", "impg", "impgsez"]
+        docs = data.get("docdata")
+        for dt in data_lists:
+            frappe.msgprint(f"Processing {dt}")
+            if docs.get(dt, "") != "":
+                for row in docs.get(dt):
+                    self.update_gstr2b_for_gstin(row, dt, gstr2b_date)
+
+    def update_gstr2b_for_gstin(self, row, dt, gstr2b_date):
+        sup_cond = ""
+        if dt != "impg":
+            sup_cond += f" AND gi.party_gstin = '{row.get('ctin')}' AND g2.return_period = '{row.get('supprd')}'"
+        if dt == "cdnr":
+            invoices = row.get("nt")
+        elif dt == "impg":
+            invoices = [row]
+        else:
+            invoices = row.get("inv")
+        for inv in invoices:
+            if dt == "cdnr":
+                inv_no = inv.get("ntnum")
+            elif dt == "impg":
+                inv_no = inv.get("boenum")
+            else:
+                inv_no = inv.get("inum")
+            query = """SELECT g2.name, gi.name as row_name, gi.idx
+            FROM `tabGSTR2A RIGPL` g2, `tabGSTR2 Return Invoices` gi 
+            WHERE gi.parent = g2.name AND gi.supplier_invoice_no = '%s' %s""" % (inv_no, sup_cond)
+            gstr2_row = frappe.db.sql(query, as_dict=1)
+            if len(gstr2_row) < 1:
+                frappe.throw(f"No GSTR2 Data found for GSTIN: {row} and {dt}")
+            else:
+                for row in gstr2_row:
+                    frappe.db.set_value("GSTR2 Return Invoices", row.row_name, "gstr2b_date", gstr2b_date)
+                    frappe.db.set_value("GSTR2 Return Invoices", row.row_name, "gstr2b_period", self.return_period)
 
     def analyse_data(self, dont_save=0):
         self.link_docs()
@@ -196,12 +248,12 @@ def update_gstin_data(row, gstin_resp):
 
 def update_invoice_data(row, inv):
     row_list = []
-    if inv.get("inum"):
-        row["supplier_invoice_no"] = inv.get("inum")
-        row["note_type"] = "Invoice"
-    elif inv.get("nt_num"):
+    if inv.get("nt_num"):
         row["note_type"] = "Credit Note" if inv.get("ntty") == "C" else "Debit Note"
         row["supplier_invoice_no"] = inv.get("nt_num")
+    elif inv.get("inum"):
+        row["supplier_invoice_no"] = inv.get("inum")
+        row["note_type"] = "Invoice"
     if inv.get("idt"):
         row["supplier_invoice_date"] = datetime.strptime(inv.get("idt"), '%d-%m-%Y').date()
     elif inv.get("nt_dt"):

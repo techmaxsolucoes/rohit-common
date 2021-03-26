@@ -14,7 +14,8 @@ def get_api_version(api):
         {"api": "otp", "version": "v1.0", "action": "authenticate"},
         {"api": "gstr1_ret_status", "version": "v0.2", "action": "returns/gstr1"},
         {"api": "gstr1", "version": "v2.1", "action": "returns/gstr1"},
-        {"api": "gstr2a", "version": "v2.0", "action": "returns/gstr2a"}
+        {"api": "gstr2a", "version": "v2.0", "action": "returns/gstr2a"},
+        {"api": "gstr2b", "version": "v1.0", "action": "returns/gstr2b"}
     ]
     for d in api_version_list:
         if d["api"] == api:
