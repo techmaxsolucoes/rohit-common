@@ -30,7 +30,6 @@ def get_gstr2a(gstin, ret_period, action):
     api = "gstr2a"
     auth_token = get_auth_token(gstin)
     url = get_gst_url(api, action, gstin) + "&authtoken=" + auth_token + "&ret_period=" + ret_period
-    frappe.throw(url)
     resp = get_gst_response(url=url, type_of_req="get")
     if flt(resp.get("status_cd")) == 1:
         return resp
