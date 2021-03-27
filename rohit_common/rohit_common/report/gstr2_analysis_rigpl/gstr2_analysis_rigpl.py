@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.utils import getdate
+from datetime import datetime
 
 
 def execute(filters=None):
@@ -14,78 +15,125 @@ def execute(filters=None):
 
 def get_data(filters):
 	data = []
-	cond = get_conditions(filters)
-	gst_set = frappe.get_doc("GST Settings", "GST Setting")
-	gst_taxes = []
-	for d in gst_set.gst_accounts:
-		if d.get("cgst_account", "") and "Input" in d.get("cgst_account", "No"):
-			gst_taxes.append(d.cgst_account)
-		if d.get("sgst_account", "") and  "Input" in d.get("sgst_account", "No"):
-			gst_taxes.append(d.sgst_account)
-		if d.get("igst_account", "") and "Input" in d.get("igst_account", "No"):
-			gst_taxes.append(d.igst_account)
-		if d.get("cess_account", "") and "Input" in d.get("cess_account", "No"):
-			gst_taxes.append(d.cess_account)
-	main_gl = []
-	for tax in gst_taxes:
-		gl_entries = get_gl_entries(tax, cond)
-		for gl in gl_entries:
-			gl = get_party_details(gl)
-			gl = get_gstr2_details(gl)
-			cgst, sgst, igst, cess = 0, 0, 0, 0
-			if "CGST" in tax:
-				if gl.debit > 0:
-					cgst = gl.debit
-				else:
-					cgst = -1 * gl.credit
-			if "IGST" in tax:
-				if gl.debit > 0:
-					igst = gl.debit
-				else:
-					igst = -1 * gl.credit
-			if "SGST" in tax:
-				if gl.debit > 0:
-					sgst = gl.debit
-				else:
-					sgst = -1 * gl.credit
-			if "CESS" in tax:
-				if gl.debit > 0:
-					cess = gl.debit
-				else:
-					cess = -1 * gl.credit
-			gstr2_tot_tax = gl.get("gstr2_igst", 0) + gl.get("gstr2_cgst", 0) + gl.get("gstr2_sgst", 0) + \
-							gl.get("gstr2_cess", 0)
-			doc_tot_tax = igst + cgst + sgst + cess
-			gl["gstr2_tot_tax"] = gstr2_tot_tax
-			gl["doc_tot_tax"] = doc_tot_tax
-			gl["doc_igst"] = igst
-			gl["doc_sgst"] = sgst
-			gl["doc_cgst"] = cgst
-			gl["doc_cess"] = cess
-			found = 0
-			for d in main_gl:
-				if d.get("voucher_type") == gl.get("voucher_type") and d.get("voucher_no") == gl.get("voucher_no"):
-					d["doc_tot_tax"] += gl.get("doc_tot_tax")
-					d["doc_igst"] += gl.get("doc_igst")
-					d["doc_sgst"] += gl.get("doc_sgst")
-					d["doc_cgst"] += gl.get("doc_cgst")
-					d["doc_cess"] += gl.get("doc_cess")
-					found = 1
-			if found != 1:
-				main_gl.append(gl.copy())
-	for gl in main_gl:
-		row = [gl.posting_date, gl.voucher_no, gl.get("party", ""),
-			   gl.get("gstr1_stat", 0), gl.get("gstr1_fil_date", "1900-01-01"),
-			   gl.get("period_gstr1", ""), gl.get("gstr2b_date", "1900-01-01"),
-			   gl.get("gstr2b_period", "X"), gl.get("gstr3b_stat", 0),
-			   gl.get("party_gstin", ""), gl.get("note_type", "X"), gl.get("sup_inv_no", ""),
-			   gl.get("sup_inv_date", "1900-01-01"),
-			   gl.get("gstr2_gt", 0), gl.get("gstr2_nt", 0), gl.get("gstr2_igst", 0), gl.get("gstr2_cgst", 0),
-			   gl.get("gstr2_sgst", 0), gl.get("gstr2_cess", 0), gl.get("gstr2_tot_tax", 0), gl.get("doc_gt", 0),
-			   gl.get("doc_nt", 0), gl.get("doc_igst", 0), gl.get("doc_cgst", 0), gl.get("doc_sgst", 0),
-			   gl.get("doc_cess", 0), gl.get("doc_tot_tax", 0), gl.voucher_type, gl.get("party_type", "")]
-		data.append(row)
+	if filters.get("as_per_gstin") != 1:
+		cond = get_conditions(filters)
+		gst_set = frappe.get_doc("GST Settings", "GST Setting")
+		gst_taxes = []
+		for d in gst_set.gst_accounts:
+			if d.get("cgst_account", "") and "Input" in d.get("cgst_account", "No"):
+				gst_taxes.append(d.cgst_account)
+			if d.get("sgst_account", "") and  "Input" in d.get("sgst_account", "No"):
+				gst_taxes.append(d.sgst_account)
+			if d.get("igst_account", "") and "Input" in d.get("igst_account", "No"):
+				gst_taxes.append(d.igst_account)
+			if d.get("cess_account", "") and "Input" in d.get("cess_account", "No"):
+				gst_taxes.append(d.cess_account)
+		main_gl = []
+		for tax in gst_taxes:
+			gl_entries = get_gl_entries(tax, cond)
+			for gl in gl_entries:
+				gl = get_party_details(gl)
+				gl = get_gstr2_details(gl)
+				cgst, sgst, igst, cess = 0, 0, 0, 0
+				if "CGST" in tax:
+					if gl.debit > 0:
+						cgst = gl.debit
+					else:
+						cgst = -1 * gl.credit
+				if "IGST" in tax:
+					if gl.debit > 0:
+						igst = gl.debit
+					else:
+						igst = -1 * gl.credit
+				if "SGST" in tax:
+					if gl.debit > 0:
+						sgst = gl.debit
+					else:
+						sgst = -1 * gl.credit
+				if "CESS" in tax:
+					if gl.debit > 0:
+						cess = gl.debit
+					else:
+						cess = -1 * gl.credit
+				gstr2_tot_tax = gl.get("gstr2_igst", 0) + gl.get("gstr2_cgst", 0) + gl.get("gstr2_sgst", 0) + \
+								gl.get("gstr2_cess", 0)
+				doc_tot_tax = igst + cgst + sgst + cess
+				gl["gstr2_tot_tax"] = gstr2_tot_tax
+				gl["doc_tot_tax"] = doc_tot_tax
+				gl["doc_igst"] = igst
+				gl["doc_sgst"] = sgst
+				gl["doc_cgst"] = cgst
+				gl["doc_cess"] = cess
+				found = 0
+				for d in main_gl:
+					if d.get("voucher_type") == gl.get("voucher_type") and d.get("voucher_no") == gl.get("voucher_no"):
+						d["doc_tot_tax"] += gl.get("doc_tot_tax")
+						d["doc_igst"] += gl.get("doc_igst")
+						d["doc_sgst"] += gl.get("doc_sgst")
+						d["doc_cgst"] += gl.get("doc_cgst")
+						d["doc_cess"] += gl.get("doc_cess")
+						found = 1
+				if found != 1:
+					main_gl.append(gl.copy())
+		for gl in main_gl:
+			row = [gl.posting_date, gl.voucher_no, gl.get("party", ""),
+				   gl.get("gstr1_stat", 0), gl.get("gstr1_fil_date", "1900-01-01"),
+				   gl.get("period_gstr1", ""), gl.get("gstr2b_date", "1900-01-01"),
+				   gl.get("gstr2b_period", "X"), gl.get("gstr3b_stat", 0),
+				   gl.get("party_gstin", ""), gl.get("note_type", "X"), gl.get("sup_inv_no", ""),
+				   gl.get("sup_inv_date", "1900-01-01"),
+				   gl.get("gstr2_gt", 0), gl.get("gstr2_nt", 0), gl.get("gstr2_igst", 0), gl.get("gstr2_cgst", 0),
+				   gl.get("gstr2_sgst", 0), gl.get("gstr2_cess", 0), gl.get("gstr2_tot_tax", 0), gl.get("doc_gt", 0),
+				   gl.get("doc_nt", 0), gl.get("doc_igst", 0), gl.get("doc_cgst", 0), gl.get("doc_sgst", 0),
+				   gl.get("doc_cess", 0), gl.get("doc_tot_tax", 0), gl.voucher_type, gl.get("party_type", ""),
+				   gl.get("gstr2a_name", "")]
+			data.append(row)
+	else:
+		ret_period = get_ret_period(filters)
+		if getdate(filters.get("from_date")) < datetime.strptime("01-07-2020", "%d-%m-%Y").date():
+			cond = f" AND gri.filing_period_gstr1 = '{ret_period}' AND gri.gstr2b_period IS NULL"
+		else:
+			cond = f" AND gri.gstr2b_period = '{ret_period}'"
+		query = """SELECT gr.name, gri.gstr2b_period, gri.party_type, gri.party, gri.party_gstin, gri.note_type, 
+		gri.supplier_invoice_no, gri.supplier_invoice_date, gri.linked_document_type, gri.linked_document_name,
+		gri.posting_date, gri.grand_total, gri.taxable_value, gri.igst_amount, gri.cgst_amount, gri.sgst_amount, 
+		gri.cess_amount, gri.filing_date_gstr1, gri.gstr2b_date, gri.filing_status_gstr3b, gri.filing_period_gstr1
+		FROM `tabGSTR2A RIGPL` gr, `tabGSTR2 Return Invoices` gri
+		WHERE gri.parent = gr.name AND gr.docstatus < 2 %s
+		ORDER BY gri.party, gri.posting_date""" % cond
+		gstr2ab = frappe.db.sql(query, as_dict=1)
+		for d in gstr2ab:
+			if d.note_type == "Credit Note":
+				mf = -1
+			else:
+				mf = 1
+			row = [d.posting_date, d.linked_document_name, d.party, 1, d.filing_date_gstr1, d.filing_period_gstr1,
+				   d.gstr2b_date, d.gstr2b_period, d.filing_status_gstr3b, d.party_gstin, d.note_type,
+				   d.supplier_invoice_no, d.supplier_invoice_date, d.grand_total*mf, d.taxable_value*mf,
+				   d.igst_amount*mf, d.cgst_amount*mf, d.sgst_amount*mf, d.cess_amount*mf,
+				   mf*(d.igst_amount + d.cgst_amount + d.sgst_amount + d.cess_amount), 0, 0, 0, 0, 0, 0, 0,
+				   d.linked_document_type, d.party_type, d.name]
+			data.append(row)
 	return data
+
+
+def get_ret_period(filters):
+	frm_date = getdate(filters.get("from_date"))
+	frm_mth = frm_date.month
+	to_mth = getdate(filters.get("to_date")).month
+	if frm_date.year != getdate(filters.get("to_date")).year:
+		frappe.throw("For GST Wise Input Months for Both From Date and To Date should be From Same Year")
+	if frm_mth != to_mth:
+		frappe.throw("For GST Wise Input Months for Both From Date and To Date should be From Same Month")
+	else:
+		if frm_date >= datetime.strptime("01-07-2020", "%d-%m-%Y").date():
+			ret_period = str(frm_mth) + str(getdate(filters.get("from_date")).year)
+			if frm_mth < 10:
+				return "0" + ret_period
+			else:
+				return ret_period
+		else:
+			return datetime.strftime(frm_date, "%b") + "-" + datetime.strftime(frm_date, "%y")
 
 
 def get_gstr2_details(gl):
@@ -112,12 +160,16 @@ def get_gstr2_details(gl):
 	if gstr2a_list:
 		gl["gstr1_stat"] = gstr2a_list[0].filing_status_gstr1
 		if gstr2a_list[0].note_type == "Bill of Entry":
+			mf = 1
 			gl["gstr3b_stat"] = 1
 			gl["gstr1_fil_date"] = gstr2a_list[0].supplier_invoice_date
 			gl["sup_inv_date"] = gstr2a_list[0].supplier_invoice_date
 			gl["sup_inv_no"] = gstr2a_list[0].supplier_invoice_no
 			gl["party_gstin"] = gstr2a_list[0].party_gstin
+		elif gstr2a_list[0].note_type == "Credit Note":
+			mf = -1
 		else:
+			mf = 1
 			gl["gstr3b_stat"] = gstr2a_list[0].filing_status_gstr3b
 			gl["gstr1_fil_date"] = gstr2a_list[0].filing_date_gstr1
 
@@ -125,12 +177,13 @@ def get_gstr2_details(gl):
 		gl["gstr2b_period"] = gstr2a_list[0].gstr2b_period
 		gl["period_gstr1"] = gstr2a_list[0].filing_period_gstr1
 		gl["note_type"] = gstr2a_list[0].note_type
-		gl["gstr2_gt"] = gstr2a_list[0].grand_total
-		gl["gstr2_nt"] = gstr2a_list[0].taxable_value
-		gl["gstr2_cgst"] = gstr2a_list[0].cgst_amount
-		gl["gstr2_sgst"] = gstr2a_list[0].sgst_amount
-		gl["gstr2_igst"] = gstr2a_list[0].igst_amount
-		gl["gstr2_cess"] = gstr2a_list[0].cess_amount
+		gl["gstr2_gt"] = gstr2a_list[0].grand_total * mf
+		gl["gstr2_nt"] = gstr2a_list[0].taxable_value * mf
+		gl["gstr2_cgst"] = gstr2a_list[0].cgst_amount * mf
+		gl["gstr2_sgst"] = gstr2a_list[0].sgst_amount * mf
+		gl["gstr2_igst"] = gstr2a_list[0].igst_amount * mf
+		gl["gstr2_cess"] = gstr2a_list[0].cess_amount * mf
+		gl["gstr2a_name"] = gstr2a_list[0].name
 	return gl
 
 
@@ -158,7 +211,7 @@ def get_gl_entries(tax, conditions):
 
 
 def get_columns(filters):
-	return [
+	columns = [
 		"Posting Date:Date:80",
 		{
 			"label": "Voucher No",
@@ -191,8 +244,9 @@ def get_columns(filters):
 			"label": "Party Type",
 			"fieldname": "party_type",
 			"width": 1
-		}
+		}, "GSTR2 Link:Link/GSTR2A RIGPL:250"
 	]
+	return columns
 
 
 def get_conditions(filters):

@@ -237,7 +237,6 @@
    "columns": 1,
    "fieldname": "tax_rate",
    "fieldtype": "Percent",
-   "in_list_view": 1,
    "label": "Tax Rate",
    "print_hide": 1,
    "read_only": 1
@@ -311,7 +310,7 @@
    "print_hide": 1
   },
   {
-   "columns": 1,
+   "columns": 2,
    "fieldname": "linked_document_name",
    "fieldtype": "Dynamic Link",
    "in_list_view": 1,
@@ -397,7 +396,7 @@
   }
  ],
  "istable": 1,
- "modified": "2021-03-26 12:20:24.281776",
+ "modified": "2021-03-27 07:19:45.439424",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "GSTR2 Return Invoices",
