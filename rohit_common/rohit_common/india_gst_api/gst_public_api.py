@@ -27,7 +27,7 @@ def track_return(gstin, fiscal_year, type_of_return=None):
     fy_format = fiscal_year[:5] + fiscal_year[7:]
     gsp_link, asp_id, asp_pass, caller_gstin, sandbox = get_gsp_details(api_type="common", action='RETTRACK',
                                                                         api="returns")
-    if not type_of_return:
+    if type_of_return:
         full_url = gsp_link + '&Gstin=' + gstin + '&FY=' + fy_format + '&type=' + type_of_return
     else:
         full_url = gsp_link + '&Gstin=' + gstin + '&FY=' + fy_format
