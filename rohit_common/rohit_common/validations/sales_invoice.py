@@ -7,8 +7,14 @@ import re
 import frappe
 from datetime import date
 from frappe.utils import getdate, flt
+from frappe.utils.background_jobs import enqueue
 from rohit_common.utils.rohit_common_utils import replace_java_chars, check_dynamic_link, \
     check_sales_taxes_integrity
+
+
+def on_submit(doc, method):
+    if len(doc.items) >= 10:
+        enqueue(doc.submit, timeout=600, is_async=False)
 
 
 def validate(doc, method):

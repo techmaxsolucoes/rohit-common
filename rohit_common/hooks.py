@@ -83,7 +83,8 @@ doc_events = {
     },
     "Sales Invoice": {
         "validate": "rohit_common.rohit_common.validations.sales_invoice.validate",
-        "on_update_after_submit": "rohit_common.rohit_common.validations.sales_invoice.on_update"
+        "on_update_after_submit": "rohit_common.rohit_common.validations.sales_invoice.on_update",
+        "on_submit": "rohit_common.rohit_common.validations.sales_invoice.on_submit"
     },
     "Sales Taxes and Charges Template": {
         "validate": "rohit_common.rohit_common.validations.stc_template.validate"
