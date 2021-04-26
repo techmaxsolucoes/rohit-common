@@ -14,6 +14,7 @@ from rohit_common.utils.rohit_common_utils import replace_java_chars, check_dyna
 
 def on_submit(doc, method):
     if len(doc.items) >= 10:
+        frappe.msgprint(f"{doc.name} has more than 10 items hence submission is Queued Check back later after 10 mins.")
         enqueue(doc.submit, timeout=600, is_async=True)
 
 
