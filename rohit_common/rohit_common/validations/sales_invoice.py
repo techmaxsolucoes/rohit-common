@@ -14,7 +14,7 @@ from rohit_common.utils.rohit_common_utils import replace_java_chars, check_dyna
 
 def on_submit(doc, method):
     if len(doc.items) >= 10:
-        enqueue(doc.submit, timeout=600, is_async=False)
+        enqueue(doc.submit, timeout=600, is_async=True)
 
 
 def validate(doc, method):
