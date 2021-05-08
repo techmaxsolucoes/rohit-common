@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
-from ....patches.backend_table_analysis import get_size_of_all_tables
+from ....patches.backend_table_analysis import get_size_of_all_tables, get_columns_of_all_tables
 
 
 def execute(filters=None):
@@ -21,7 +21,7 @@ def get_columns(filters):
 		]
 	else:
 		return[
-
+			"Database Name::200", "Table Name::400", "Total Columns:Int:150"
 		]
 
 
@@ -31,7 +31,14 @@ def get_data(filters):
 		data_dict = get_size_of_all_tables()
 		for d in data_dict:
 			row = [
-				d.db_name, d.tbl_name, d.size_mb, d.dl_mb, d.ind_mb, d.tbl_rows
+				d.db_name, d.tbl_name, d.size_mb, d.dl_mb, d.ind_mb, d.tbl_rows, d.no_of_cols
+			]
+			data.append(row)
+	else:
+		data_dict = get_columns_of_all_tables()
+		for d in data_dict:
+			row = [
+				d.db_name, d.tbl_name, d.no_of_cols
 			]
 			data.append(row)
 	return data
@@ -39,7 +46,6 @@ def get_data(filters):
 
 def get_conditions(filters):
 	cond = ""
-	if filters.get("all_tables") == 1 and filters.get("dt"):
-		frappe.throw("If you want the Details of Specific Table then Uncheck All Tables")
-
+	if filters.get("all_tables") == 1 and filters.get("col_nos") == 1:
+		frappe.throw("Only 1 Checkbox is Allowed at a Time")
 	return cond

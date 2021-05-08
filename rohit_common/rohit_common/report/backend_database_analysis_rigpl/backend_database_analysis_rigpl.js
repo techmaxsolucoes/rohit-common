@@ -11,11 +11,10 @@ frappe.query_reports["Backend Database Analysis RIGPL"] = {
 			"default": 1
 		},
 		{
-			"fieldname":"dt",
-			"label": "DocType",
-			"fieldtype": "Link",
-			"options": "DocType",
-			"get_query": function(){ return {'filters': [['DocType', 'issingle','=', 0]]}}
+			"fieldname":"col_nos",
+			"label": "No of Columns",
+			"fieldtype": "Check",
+			"default": 0
 		},
 	]
 };
