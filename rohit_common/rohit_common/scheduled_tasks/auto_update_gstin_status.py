@@ -19,29 +19,23 @@ def execute():
     st_time = time.time()
     validate = 0
     auto_days = flt(frappe.get_value("Rohit Settings", "Rohit Settings", "auto_validate_gstin_after"))
-    add_list = frappe.db.sql("""SELECT name, validated_gstin, gst_validation_date, gstin, gst_status
+    query = """SELECT name, validated_gstin, disabled,
+        IFNULL(gst_validation_date, '1900-01-01') as gst_validation_date, gstin, gst_status
     FROM `tabAddress`
-    WHERE gstin IS NOT NULL AND gstin != "NA" AND disabled=0
-    AND DATE_SUB(gst_validation_date, INTERVAL %s DAY)
-    ORDER BY gst_validation_date, name""" % auto_days, as_dict=1)
+    WHERE gstin IS NOT NULL AND gstin != "NA" AND disabled=0 AND country = 'India'
+    AND (validated_gstin IS NULL OR DATE_ADD(IFNULL(gst_validation_date, '1900-01-01'), INTERVAL %s DAY) < CURDATE())
+    ORDER BY gstin, name""" % auto_days
 
-    add_list2 = frappe.db.sql("""SELECT name, validated_gstin, gst_validation_date, gstin, gst_status
-    FROM `tabAddress`
-    WHERE (gstin IS NOT NULL OR gstin != "") AND gstin != "NA" AND disabled=0 AND validated_gstin IS NULL
-    ORDER BY gstin, name""", as_dict=1)
+    add_list = frappe.db.sql(query, as_dict=1)
 
-    print(len(add_list))
-    print(len(add_list2))
-
-
-    if add_list2:
-        for add in add_list2:
-            add_list.append(add)
-
-    for add in add_list2:
+    for add in add_list:
+        print(f"Checking Address with GSTIN {add.gstin} with Validation Date {add.gst_validation_date}")
         changes_made = 0
         if add.gst_validation_date:
-            days_since_validation = (date.today() - getdate(add.gst_validation_date)).days
+            if add.validated_gstin:
+                days_since_validation = (date.today() - getdate(add.gst_validation_date)).days
+            else:
+                days_since_validation = (date.today() - getdate('1900-01-01')).days
             if days_since_validation > auto_days:
                 # Now Validate the GSTIN
                 add_doc = frappe.get_doc("Address", add.name)
