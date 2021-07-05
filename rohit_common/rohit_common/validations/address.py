@@ -44,7 +44,7 @@ def gstin_validation(doc):
                     frappe.throw("Selected State is NOT Valid for {0}".format(doc.state_rigpl))
                 if doc.gstin[:2] != state.state_code_numeric:
                     # fetch and update the state automatically else throw error
-                    state_from_gst = frappe.db.sql("""SELECT name FROM `tabState` 
+                    state_from_gst = frappe.db.sql("""SELECT name FROM `tabState`
                     WHERE state_code_numeric = '%s'""" % (doc.gstin[:2]), as_list=1)
                     if state_from_gst:
                         doc.state_rigpl = state_from_gst[0][0]
@@ -171,7 +171,7 @@ def validate_shipping_address(doc, method):
 
 def unset_other(doc, method, is_address_type):
     for d in doc.links:
-        other_add = frappe.db.sql("""SELECT parent FROM `tabDynamic Link` 
+        other_add = frappe.db.sql("""SELECT parent FROM `tabDynamic Link`
         WHERE link_doctype = '%s' AND link_name = '%s' AND parent != '%s' AND parenttype = '%s'""" %
                                   (d.link_doctype, d.link_name, doc.name, doc.doctype), as_list=1)
     for add in other_add:
@@ -180,7 +180,7 @@ def unset_other(doc, method, is_address_type):
 
 def check_set(doc, method, is_address_type):
     for d in doc.links:
-        other_add = frappe.db.sql("""SELECT parent FROM `tabDynamic Link` 
+        other_add = frappe.db.sql("""SELECT parent FROM `tabDynamic Link`
         WHERE link_doctype = '%s' AND link_name = '%s' AND parent != '%s' AND parenttype = '%s'""" %
                                   (d.link_doctype, d.link_name, doc.name, doc.doctype), as_list=1)
         chk = 0
@@ -271,10 +271,14 @@ def validate_gstin_from_portal(doc):
     if doc.validated_gstin != doc.gstin or days_since_validation >= auto_days:
         # Validate GSTIN status after 30 days if done manually changes
         gstin_json = search_gstin(doc.gstin)
-        doc.gstin_json_reply = str(gstin_json)
-        doc.validated_gstin = gstin_json.get("gstin")
-        doc.gst_status = gstin_json.get("sts")
-        doc.gst_validation_date = date.today()
+        if not gstin_json.get("status_cd"):
+            doc.gstin_json_reply = str(gstin_json)
+            doc.validated_gstin = gstin_json.get("gstin")
+            doc.gst_status = gstin_json.get("sts")
+            doc.gst_validation_date = date.today()
+        else:
+            frappe.msgprint("Status Code Return is Zero Hence Exiting")
+            exit()
     if doc.gst_status in ('Inactive', 'Cancelled'):
         doc.disabled = 1
     elif doc.gst_status == 'Suspended':
