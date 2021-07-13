@@ -89,6 +89,8 @@ def authenticate_gst_otp(gstin, otp, row_id):
     auth_url = get_gst_url(api=api, action=action, gstin=gstin) + "&OTP=" + otp
     auth_resp = requests.get(url=auth_url, timeout=timeout).json()
     if flt(auth_resp.get("status_cd")) == 1:
+        frappe.db.set_value("GST Registration Details", row_id, "last_otp_sent",
+                datetime.datetime.now())
         update_auth_token(row_name=row_id, auth_token=auth_resp.get("auth_token"))
         frappe.msgprint(f"Updated the Auth Token. Now API access to {gstin} is Active")
     else:

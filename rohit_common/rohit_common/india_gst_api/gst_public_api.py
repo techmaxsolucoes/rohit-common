@@ -15,7 +15,7 @@ def search_gstin(gstin=None):
         gstin = caller_gstin
     full_url = gsp_link + '&Gstin=' + caller_gstin + '&SearchGstin=' + gstin
     try:
-        response = requests.get(url=full_url, timeout=timeout, verify=False)
+        response = requests.get(url=full_url, timeout=timeout)
     except Exception as e:
         frappe.throw(f"Some Error Occurred while Searching for GSTIN {gstin} and the Error is {e}")
     json_response = response.json()

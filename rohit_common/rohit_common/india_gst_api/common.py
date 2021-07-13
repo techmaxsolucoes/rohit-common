@@ -43,6 +43,13 @@ def get_gsp_details(api, action, gstin=None, api_type=None):
     gsp_link = rset.api_link
     asp_id = rset.tax_pro_asp_id
     asp_pass = rset.tax_pro_password
+
+    if api == 'eway':
+        gsp_link = gsp_link[:8] + "einvapi." + gsp_link[8:]
+    else:
+        gsp_link = gsp_link[:8] + "gstapi." + gsp_link[8:]
+
+
     if not gstin:
         if api_type == 'common':
             gstin = rset.gstin
