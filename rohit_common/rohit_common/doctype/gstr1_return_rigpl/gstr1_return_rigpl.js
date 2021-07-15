@@ -2,7 +2,14 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('GSTR1 Return RIGPL', {
-	// refresh: function(frm) {
+	onload: function(frm) {
+	    frm.set_query("address", function(doc){
+	        return{
+	            filters: {
+	                "is_your_company_address": 1
+	            }
+	        }
+	    });
 
-	// }
+	}
 });
