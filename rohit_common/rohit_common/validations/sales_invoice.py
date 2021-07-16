@@ -15,7 +15,7 @@ from rohit_common.utils.rohit_common_utils import replace_java_chars, check_dyna
 def on_submit(doc, method):
     if len(doc.items) >= 10:
         frappe.msgprint(f"{doc.name} has more than 10 items hence submission is Queued Check back later after 10 mins.")
-        enqueue(doc.submit, timeout=600, is_async=True)
+        doc.queue_action("submit", queue="long", timeout=600)
 
 
 def validate(doc, method):
@@ -117,7 +117,7 @@ def check_customs_tariff(doc):
                 items.gst_hsn_code = custom_tariff
             else:
                 frappe.throw(("Item Code {0} in line# {1} has a Custom Tariff {2} which not 8 digit, "
-                              "please get the Custom Tariff corrected"). \
+                              "please get the Custom Tariff corrected").
                              format(items.item_code, items.idx, custom_tariff))
         else:
             frappe.throw("Item Code {0} in line# {1} does not have linked Customs Tariff in Item Master".
@@ -175,11 +175,11 @@ def check_delivery_note_rule(doc, method):
         # With SO DN is mandatory
         if d.sales_order is not None and d.delivery_note is None:
             # Rule no.5 in the above description for disallow SO=>SI no skipping DN
-            frappe.throw(("""Error in Row# {0} has SO# {1} but there is no DN. 
+            frappe.throw(("""Error in Row# {0} has SO# {1} but there is no DN.
             Hence making of Invoice is DENIED""").format(d.idx, d.sales_order))
         # With DN SO is mandatory
         if d.delivery_note is not None and d.sales_order is None:
-            frappe.throw(("""Error in Row# {0} has DN# {1} but there is no SO. 
+            frappe.throw(("""Error in Row# {0} has DN# {1} but there is no SO.
             Hence making of Invoice is DENIED""").format(d.idx, d.delivery_note))
         # For DN items quantities should be same
         if d.delivery_note is not None:
@@ -239,9 +239,9 @@ def validate_export_bill_fields(doc):
                          format(frappe.get_desk_link('Sales Taxes and Charges Template', doc.taxes_and_charges),
                                 frappe.get_desk_link(doc.doctype, doc.name)))
         if not tx_tmp_doc.bank_ad_code:
-                frappe.throw('Bank AD Code is not Mentioned in {} for {}'.format(
-                    frappe.get_desk_link('Sales Taxes and Charges Template', doc.taxes_and_charges),
-                    frappe.get_desk_link(doc.doctype, doc.name)))
+            frappe.throw('Bank AD Code is not Mentioned in {} for {}'.format(
+                frappe.get_desk_link('Sales Taxes and Charges Template', doc.taxes_and_charges),
+                frappe.get_desk_link(doc.doctype, doc.name)))
         if not tx_tmp_doc.bank_ifsc_code:
             frappe.throw('Bank IFSC Code is not Mentioned in {} for {}'.
                          format(frappe.get_desk_link('Sales Taxes and Charges Template', doc.taxes_and_charges),
