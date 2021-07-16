@@ -27,7 +27,12 @@
   "auto_deletion_policy_for_files",
   "sb3",
   "max_days_to_keep_version",
-  "auto_delete_from_version"
+  "auto_delete_from_version",
+  "sb4",
+  "erpnext_app_base_link",
+  "cb4",
+  "api_key",
+  "api_secret"
  ],
  "fields": [
   {
@@ -167,10 +172,35 @@
    "fieldtype": "Table",
    "label": "GST Registration Details",
    "options": "GST Registration Details"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb4",
+   "fieldtype": "Section Break",
+   "label": "ERPNext API Section"
+  },
+  {
+   "fieldname": "erpnext_app_base_link",
+   "fieldtype": "Data",
+   "label": "ERPNext App Base Link"
+  },
+  {
+   "fieldname": "cb4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Data",
+   "label": "API Key"
+  },
+  {
+   "fieldname": "api_secret",
+   "fieldtype": "Data",
+   "label": "API Secret"
   }
  ],
  "issingle": 1,
- "modified": "2021-02-11 17:02:06.464285",
+ "modified": "2021-07-15 11:53:42.126345",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",
