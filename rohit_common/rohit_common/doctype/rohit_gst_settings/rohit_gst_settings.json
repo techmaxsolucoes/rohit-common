@@ -1,0 +1,45 @@
+{
+ "creation": "2021-07-21 01:47:09.673674",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb0",
+  "gst_registration_details"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb0",
+   "fieldtype": "Section Break",
+   "label": "GST Registration and OTP Details"
+  },
+  {
+   "fieldname": "gst_registration_details",
+   "fieldtype": "Table",
+   "label": "GST Registration Details",
+   "options": "GST Registration Details"
+  }
+ ],
+ "issingle": 1,
+ "modified": "2021-07-21 01:47:09.673674",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "Rohit GST Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

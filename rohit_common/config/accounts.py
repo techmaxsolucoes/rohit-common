@@ -25,6 +25,11 @@ def get_data():
                     "label": _("GSTR2A Returns"),
                 },
                 {
+                    "type": "doctype",
+                    "name": _("Rohit GST Settings"),
+                    "label": _("Rohit GST Settings for OTP"),
+                },
+                {
                     "type": "report",
                     "is_query_report": True,
                     "name": _("GSTR2 Analysis RIGPL"),
