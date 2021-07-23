@@ -14,6 +14,8 @@
   "mode_of_filing",
   "cb00",
   "return_period",
+  "changes_made",
+  "fully_validated",
   "clear_all_tables",
   "get_details",
   "get_gstr1_details",
@@ -45,7 +47,8 @@
   "sb18",
   "sb19",
   "sb20",
-  "amended_from"
+  "amended_from",
+  "json_reply"
  ],
  "fields": [
   {
@@ -153,6 +156,7 @@
    "options": "GSTR1 Return Invoices"
   },
   {
+   "depends_on": "eval:doc.fully_validated !== 1",
    "fieldname": "get_details",
    "fieldtype": "Button",
    "label": "Get Details",
@@ -245,6 +249,7 @@
    "options": "GSTR1 Return Invoices"
   },
   {
+   "depends_on": "eval:doc.fully_validated !== 1",
    "fieldname": "get_gstr1_details",
    "fieldtype": "Button",
    "label": "Get GSTR1 from GSTIN Network",
@@ -298,14 +303,33 @@
    "options": "GSTR1 HSN Summary"
   },
   {
+   "depends_on": "eval:doc.fully_validated !== 1",
    "fieldname": "clear_all_tables",
    "fieldtype": "Button",
    "label": "Clear All Tables",
    "options": "clear_all_tables"
+  },
+  {
+   "fieldname": "json_reply",
+   "fieldtype": "Long Text",
+   "label": "json_reply"
+  },
+  {
+   "default": "0",
+   "fieldname": "changes_made",
+   "fieldtype": "Check",
+   "label": "Changes Made"
+  },
+  {
+   "default": "0",
+   "fieldname": "fully_validated",
+   "fieldtype": "Check",
+   "label": "Fully Validated",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2021-03-26 03:49:44.992165",
+ "modified": "2021-07-17 08:25:47.451152",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "GSTR1 Return RIGPL",
