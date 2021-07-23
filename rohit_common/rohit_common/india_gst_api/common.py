@@ -12,6 +12,8 @@ def get_api_version(api):
         {"api": "asp", "version": "v1.0", "action": "TP"}, {"api": "eway", "version": "v1.03", "action": "TP"},
         {"api": "search", "version": "v1.1", "action": "TP"},
         {"api": "otp", "version": "v1.0", "action": "authenticate"},
+        {"api": "doc", "version": "v1.1", "action": "document"},
+        {"api": "doc_det", "version": "v1.1", "action": "returns"},
         {"api": "gstr1_ret_status", "version": "v0.2", "action": "returns/gstr1"},
         {"api": "gstr1", "version": "v2.1", "action": "returns/gstr1"},
         {"api": "gstr2a", "version": "v2.0", "action": "returns/gstr2a"},

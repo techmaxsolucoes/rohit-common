@@ -42,10 +42,13 @@ def get_hsn_sum_frm_si(si_name):
                     if hsn.uom == row.stock_uom:
                         found = 1
                         tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt = get_taxes_from_sid(sid)
-                        row_igst = round((igst_amt * row.base_net_amount / sid.base_net_total), 2)
-                        row_sgst = round((sgst_amt * row.base_net_amount / sid.base_net_total), 2)
-                        row_cgst = round((cgst_amt * row.base_net_amount / sid.base_net_total), 2)
-                        row_cess = round((cess_amt * row.base_net_amount / sid.base_net_total), 2)
+                        if sid.base_net_total > 0:
+                            row_igst = round((igst_amt * row.base_net_amount / sid.base_net_total), 2)
+                            row_sgst = round((sgst_amt * row.base_net_amount / sid.base_net_total), 2)
+                            row_cgst = round((cgst_amt * row.base_net_amount / sid.base_net_total), 2)
+                            row_cess = round((cess_amt * row.base_net_amount / sid.base_net_total), 2)
+                        else:
+                            row_igst, row_sgst, row_cgst, row_cess = 0, 0, 0, 0
                         row_tot_val = row.base_net_amount + row_igst + row_cgst + row_sgst + row_cess
                         hsn.total_quantity += row.qty
                         hsn.total_taxable_value += row.base_net_amount
@@ -62,10 +65,13 @@ def get_hsn_sum_frm_si(si_name):
 
 def make_hsn_sum_dict(sid, row):
     tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt = get_taxes_from_sid(sid)
-    row_igst = round((igst_amt * row.base_net_amount / sid.base_net_total), 2)
-    row_sgst = round((sgst_amt * row.base_net_amount / sid.base_net_total), 2)
-    row_cgst = round((cgst_amt * row.base_net_amount / sid.base_net_total), 2)
-    row_cess = round((cess_amt * row.base_net_amount / sid.base_net_total), 2)
+    if sid.base_net_total > 0:
+        row_igst = round((igst_amt * row.base_net_amount / sid.base_net_total), 2)
+        row_sgst = round((sgst_amt * row.base_net_amount / sid.base_net_total), 2)
+        row_cgst = round((cgst_amt * row.base_net_amount / sid.base_net_total), 2)
+        row_cess = round((cess_amt * row.base_net_amount / sid.base_net_total), 2)
+    else:
+        row_igst, row_sgst, row_cgst, row_cess = 0, 0, 0, 0
     row_tot_val = row.base_net_amount + row_igst + row_cgst + row_sgst + row_cess
     hsn_dict = frappe._dict({})
     hsn_dict["hsn"] = row.gst_hsn_code
@@ -89,6 +95,26 @@ def get_linked_type_from_jv(jv_name):
             linked_dn = row.party
             break
     return linked_dt, linked_dn
+
+
+def guess_correct_address(linked_dt, linked_dn):
+    all_addresses = frappe.db.sql("""SELECT a1.name, a1.gstin, a1.validated_gstin
+        FROM `tabAddress` a1, `tabDynamic Link` dl
+        WHERE dl.parent= a1.name AND dl.parenttype = 'Address' AND dl.link_doctype = '%s'
+        AND dl.link_name = '%s' GROUP BY a1.gstin ORDER BY a1.gstin""" % (linked_dt, linked_dn), as_dict=1)
+    if len(all_addresses) == 1:
+        return all_addresses[0].name
+    elif len(all_addresses) == 0:
+        frappe.throw(f"No Address in System for {linked_dt}: {linked_dn}")
+    else:
+        # Now we would need to guess if gstin is same on all address then use any
+        # If GSTIN is different and Valid then its a problem
+        # If only 1 GSTIN is valid then use valid GSTIN address
+        for a in all_addresses:
+            if a.validated_gstin == a.gstin:
+                return a.name
+        frappe.msgprint(f"There are {len(all_addresses)} Address for {linked_dt}: {linked_dn}")
+        return all_addresses[0].name
 
 
 def get_gst_export_fields(si_doc):
@@ -203,6 +229,15 @@ def get_taxes_from_sid(sid):
     return tax_rate, sgst_amt, cgst_amt, igst_amt, cess_amt
 
 
+def get_base_doc_frm_docname(dt, dn):
+    try:
+        doc = frappe.get_doc(dt, dn)
+    except:
+        return ""
+    base_doc_no = get_base_doc_no(doc)
+    return base_doc_no
+
+
 def get_base_doc_no(sid):
     if sid.amended_from:
         si_base_doc = frappe.get_doc(sid.doctype, sid.amended_from)
@@ -282,9 +317,9 @@ def get_advance_journal_entries(party_type, party, party_account, amount_field, 
     reference_condition = " AND (" + " OR ".join(conditions) + ")" if conditions else ""
 
     journal_entries = frappe.db.sql(f"""SELECT "Journal Entry" as reference_type, t1.name as reference_name,
-            t1.remark as remarks, t2.{0} as amount, t2.name as reference_row, t2.reference_name as against_order 
-            FROM `tabJournal Entry` t1, `tabJournal Entry Account` t2 WHERE t1.name = t2.parent and t2.account = %s 
-            AND t2.party_type = %s and t2.party = %s AND t2.is_advance = 'Yes' and t1.docstatus = 1 AND {1} > 0 {2} 
+            t1.remark as remarks, t2.{0} as amount, t2.name as reference_row, t2.reference_name as against_order
+            FROM `tabJournal Entry` t1, `tabJournal Entry Account` t2 WHERE t1.name = t2.parent and t2.account = %s
+            AND t2.party_type = %s and t2.party = %s AND t2.is_advance = 'Yes' and t1.docstatus = 1 AND {1} > 0 {2}
             ORDER BY t1.posting_date""".format(amount_field, dr_or_cr, reference_condition),
                                     [party_account, party_type, party] + order_list, as_dict=1)
     return list(journal_entries)
@@ -300,26 +335,25 @@ def get_advance_payment_entries(party_type, party, party_account, order_doctype,
 
     if order_list or against_all_orders:
         if order_list:
-            reference_condition = " AND t2.reference_name IN ({0})" \
-                .format(', '.join(['%s'] * len(order_list)))
+            reference_condition = f" AND t2.reference_name IN ({', '.join(['%s'] * len(order_list))})"
         else:
             reference_condition = ""
             order_list = []
 
-        payment_entries_against_order = frappe.db.sql("""SELECT "Payment Entry" as reference_type, 
-        t1.name as reference_name, t1.remarks, t2.allocated_amount as amount, t2.name as reference_row, 
-        t2.reference_name as against_order, t1.posting_date, t1.{0} as currency 
-        FROM `tabPayment Entry` t1, `tabPayment Entry Reference` t2 WHERE t1.name = t2.parent 
-        AND t1.{1} = %s AND t1.payment_type = %s AND t1.party_type = %s AND t1.party = %s AND t1.docstatus = 1 
-        AND t2.reference_doctype = %s {2} 
+        payment_entries_against_order = frappe.db.sql("""SELECT "Payment Entry" as reference_type,
+        t1.name as reference_name, t1.remarks, t2.allocated_amount as amount, t2.name as reference_row,
+        t2.reference_name as against_order, t1.posting_date, t1.{0} as currency
+        FROM `tabPayment Entry` t1, `tabPayment Entry Reference` t2 WHERE t1.name = t2.parent
+        AND t1.{1} = %s AND t1.payment_type = %s AND t1.party_type = %s AND t1.party = %s AND t1.docstatus = 1
+        AND t2.reference_doctype = %s {2}
         ORDER BY t1.posting_date {3}""".format(currency_field, party_account_field, reference_condition, limit_cond),
                                                       [party_account, payment_type, party_type, party,
                                                        order_doctype] + order_list, as_dict=1)
 
     if include_unallocated:
-        unallocated_payment_entries = frappe.db.sql("""SELECT "Payment Entry" as reference_type, name as reference_name, 
-        remarks, unallocated_amount as amount FROM `tabPayment Entry` WHERE {0} = %s AND party_type = %s AND party = %s 
-        AND payment_type = %s AND docstatus = 1 AND unallocated_amount > 0 
+        unallocated_payment_entries = frappe.db.sql("""SELECT "Payment Entry" as reference_type, name as reference_name,
+        remarks, unallocated_amount as amount FROM `tabPayment Entry` WHERE {0} = %s AND party_type = %s AND party = %s
+        AND payment_type = %s AND docstatus = 1 AND unallocated_amount > 0
         ORDER BY posting_date {1}""".format(party_account_field, limit_cond), (party_account, party_type, party,
                                                                                payment_type), as_dict=1)
 

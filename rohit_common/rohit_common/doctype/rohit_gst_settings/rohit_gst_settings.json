@@ -17,11 +17,12 @@
    "fieldname": "gst_registration_details",
    "fieldtype": "Table",
    "label": "GST Registration Details",
-   "options": "GST Registration Details"
+   "options": "GST Registration Details",
+   "permlevel": 1
   }
  ],
  "issingle": 1,
- "modified": "2021-07-21 01:47:09.673674",
+ "modified": "2021-07-22 10:37:18.868560",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit GST Settings",
@@ -36,6 +37,34 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1
   }
  ],
  "quick_entry": 1,

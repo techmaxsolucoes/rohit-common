@@ -20,17 +20,15 @@
   "access_token",
   "access_token_time",
   "sb1",
-  "gst_registration_details",
-  "sb2",
   "roles_allow_pub_att",
   "docs_with_pub_att",
   "auto_deletion_policy_for_files",
-  "sb3",
+  "sb2",
   "max_days_to_keep_version",
   "auto_delete_from_version",
-  "sb4",
+  "sb3",
   "erpnext_app_base_link",
-  "cb4",
+  "cb3",
   "api_key",
   "api_secret"
  ],
@@ -105,7 +103,7 @@
    "collapsible": 1,
    "fieldname": "sb1",
    "fieldtype": "Section Break",
-   "label": "GST Registration Details"
+   "label": "File Attachment Settings"
   },
   {
    "fieldname": "roles_allow_pub_att",
@@ -129,7 +127,7 @@
    "collapsible": 1,
    "fieldname": "sb2",
    "fieldtype": "Section Break",
-   "label": "File Attachment Settings"
+   "label": "Auto Delete Version"
   },
   {
    "default": "365",
@@ -165,28 +163,12 @@
    "collapsible": 1,
    "fieldname": "sb3",
    "fieldtype": "Section Break",
-   "label": "Auto Delete Version"
-  },
-  {
-   "fieldname": "gst_registration_details",
-   "fieldtype": "Table",
-   "label": "GST Registration Details",
-   "options": "GST Registration Details"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "sb4",
-   "fieldtype": "Section Break",
    "label": "ERPNext API Section"
   },
   {
    "fieldname": "erpnext_app_base_link",
    "fieldtype": "Data",
    "label": "ERPNext App Base Link"
-  },
-  {
-   "fieldname": "cb4",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "api_key",
@@ -197,10 +179,14 @@
    "fieldname": "api_secret",
    "fieldtype": "Data",
    "label": "API Secret"
+  },
+  {
+   "fieldname": "cb3",
+   "fieldtype": "Column Break"
   }
  ],
  "issingle": 1,
- "modified": "2021-07-15 11:53:42.126345",
+ "modified": "2021-07-21 01:57:38.675032",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",

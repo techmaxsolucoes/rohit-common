@@ -7,7 +7,7 @@ from ..india_gst_api.gst_api import check_for_refresh_token
 
 def execute():
     st_time = time.time()
-    r_set = frappe.get_doc("Rohit Settings", "Rohit Settings")
+    r_set = frappe.get_doc("Rohit GST Settings", "Rohit Settings")
     for d in r_set.gst_registration_details:
         check_for_refresh_token(row=d)
     r_set.reload()

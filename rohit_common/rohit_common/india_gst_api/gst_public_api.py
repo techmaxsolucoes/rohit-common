@@ -40,13 +40,19 @@ def track_return(gstin, fiscal_year, type_of_return=None):
 
 def get_arn_status(ret_status_json, type_of_return, ret_period):
     arn, status, dof, mof = "", "", "", ""
+    found = 0
     efiled_list = ret_status_json.get('EFiledlist')
     if efiled_list:
         for d in efiled_list:
             if type_of_return == d.get("rtntype") and ret_period == d.get("ret_prd"):
+                found = 1
                 arn = d.get("arn")
                 status = d.get("status")
                 dof = getdate(d.get("dof"))
                 mof = d.get("mof")
                 break
+        if found != 1:
+            frappe.msgprint(f"No Filing Data found for {type_of_return} for Period: {ret_period}")
+    else:
+        fraeppe.msgprint("No eFiling Data Received")
     return arn, status, dof, mof
