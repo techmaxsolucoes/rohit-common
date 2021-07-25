@@ -20,6 +20,23 @@ def validate(doc, method):
     check_public_allowed(doc)
     check_and_move_file(doc)
     get_size(doc)
+    validate_folder(doc)
+    folder_related_jobs(doc)
+
+
+def folder_related_jobs(doc):
+    fd_doc = frappe.get_doc('File', doc.folder)
+    if fd_doc.important_document_for_archive == 1:
+        doc.important_document_for_archive = 1
+    if fd_doc.mark_for_deletion == 1:
+        doc.mark_for_deletion = 1
+
+
+
+def validate_folder(doc):
+    # If the folder is empty then it would send to attachments folder
+    if not doc.is_home_folder and not doc.folder and not doc.flags.ignore_folder_validate:
+        doc.folder = frappe.db.get_value("File", {"is_attachments_folder": 1})
 
 
 def check_and_move_file(doc):
@@ -42,7 +59,7 @@ def check_and_move_file(doc):
                     dt_allowed = 1
                     break
             if dt_allowed == 1:
-                other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile` 
+                other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile`
                 WHERE file_name = '%s' AND name != '%s'""" % (doc.file_name, doc.name), as_dict=1)
                 # frappe.msgprint(f"Same File Name attached to {str(len(other_files))} more files")
                 for file in other_files:
@@ -67,7 +84,7 @@ def check_and_move_file(doc):
                 change_file_path(doc)
         else:
             # File attahcment not attached to any doctype so if its not there in any private file move else copy
-            other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile` 
+            other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile`
             WHERE file_name = '%s' AND name != '%s'""" % (doc.file_name, doc.name), as_dict=1)
             for file in other_files:
                 if file.is_private == 1:
@@ -88,7 +105,7 @@ def check_and_move_file(doc):
         file_url = "/public/files/" + doc.file_name
         old_full_path = get_site_base_path() + doc.file_url
         full_file_path = get_site_base_path() + file_url
-        other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile` WHERE file_name = '%s' 
+        other_files = frappe.db.sql("""SELECT name, is_private FROM `tabFile` WHERE file_name = '%s'
         AND name != '%s'""" % (doc.file_name, doc.name), as_dict=1)
         for file in other_files:
             if file.is_private == 0:
@@ -159,7 +176,7 @@ def get_size(doc):
     '''
     doc.flags.ignore_permissions = True
     if doc.is_folder == 1:
-        files = frappe.db.sql("""SELECT name, size FROM `tabFile` WHERE lft > %s 
+        files = frappe.db.sql("""SELECT name, size FROM `tabFile` WHERE lft > %s
         AND rgt < %s""" % (doc.lft, doc.rgt), as_dict=1)
         print(files)
     '''

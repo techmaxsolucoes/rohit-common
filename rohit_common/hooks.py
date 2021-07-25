@@ -32,7 +32,7 @@ hide_in_installer = True
 
 # website user home page (by Role)
 # role_home_page = {
-#	"Role": "home_page"
+#   "Role": "home_page"
 # }
 
 # Installation
@@ -52,11 +52,11 @@ hide_in_installer = True
 # Permissions evaluated in scripted ways
 
 # permission_query_conditions = {
-# 	"Event": "frappe.core.doctype.event.event.get_permission_query_conditions",
+#   "Event": "frappe.core.doctype.event.event.get_permission_query_conditions",
 # }
 #
 # has_permission = {
-# 	"Event": "frappe.core.doctype.event.event.has_permission",
+#   "Event": "frappe.core.doctype.event.event.has_permission",
 # }
 
 # Document Events
@@ -95,11 +95,11 @@ doc_events = {
     "User": {
         "validate": "rohit_common.rohit_common.validations.user.validate"
     },
-    # 	"*": {
-    # 		"on_update": "method",
-    # 		"on_cancel": "method",
-    # 		"on_trash": "method"
-    #	}
+    #   "*": {
+    #       "on_update": "method",
+    #       "on_cancel": "method",
+    #       "on_trash": "method"
+    #   }
 }
 
 # Scheduled Tasks
@@ -115,12 +115,12 @@ scheduler_events = {
     "all": [
         "rohit_common.rohit_common.scheduled_tasks.auto_refresh_gstin_auth_code.execute"
     ],
-    # 	"daily": [
-    # 		"rohit_common.tasks.daily"
-    # 	],
-    # 	"hourly": [
-    # 		"rohit_common.tasks.hourly"
-    # 	],
+    #   "daily": [
+    #       "rohit_common.tasks.daily"
+    #   ],
+    "hourly": [
+        "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.check_correct_folders"
+    ],
     "weekly_long": [
         "rohit_common.rohit_common.scheduled_tasks.auto_delete_version.enqueue_deletion",
         "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.execute"

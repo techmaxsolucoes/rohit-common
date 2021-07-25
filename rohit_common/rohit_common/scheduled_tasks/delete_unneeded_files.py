@@ -8,7 +8,9 @@
 from __future__ import unicode_literals
 import time
 import frappe
+from frappe.utils import flt
 from frappe.utils.fixtures import sync_fixtures
+from ...utils.rohit_common_utils import rebuild_tree
 from ..validations.file import check_file_availability, delete_file_dt, check_and_move_file, correct_file_name_url
 
 sync_fixtures()
@@ -18,20 +20,20 @@ def execute():
     st_time = time.time()
     # Check and delete files without File Name and File URL
     print("Deleting Files without File Name and File URL")
-    delete_files = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_name IS NULL 
+    delete_files = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_name IS NULL
     AND file_url IS NULL""", as_dict=1)
     for files in delete_files:
         fd = frappe.get_doc("File", files.name)
         delete_file_dt(fd)
     print(f"Total Files Deleted due to no File Name and File URL {len(delete_files)}")
     print("Converting the Incorrect File Names and File URL for Files")
-    incorrect_file_name = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_name IS NULL 
+    incorrect_file_name = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_name IS NULL
     AND is_folder=0""", as_dict=1)
     for file in incorrect_file_name:
         fd = frappe.get_doc("File", file.name)
         correct_file_name_url(fd)
     print(f"Total Files Corrected with File Names {len(incorrect_file_name)}")
-    null_file_url = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url IS NULL 
+    null_file_url = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url IS NULL
     AND is_folder=0""", as_dict=1)
     for file in null_file_url:
         fd = frappe.get_doc("File", file.name)
@@ -39,7 +41,7 @@ def execute():
     frappe.db.commit()
     print(f"Total Files Corrected with NULL File URL {len(null_file_url)}")
     print(f"Checking the Files with http URL and Trying to Correct it")
-    http_file_url = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url LIKE 'http%' 
+    http_file_url = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_url LIKE 'http%'
     AND is_folder=0""", as_dict=1)
     for file in http_file_url:
         fd = frappe.get_doc("File", file.name)
@@ -49,11 +51,11 @@ def execute():
     print("Checking for Archive Folders and Making All Files Under them Archive Files")
     time.sleep(2)
     archived = 0
-    arch_folders = frappe.db.sql("""SELECT name, lft, rgt FROM `tabFile` WHERE is_folder=1 
+    arch_folders = frappe.db.sql("""SELECT name, lft, rgt FROM `tabFile` WHERE is_folder=1
     AND important_document_for_archive=1 AND is_home_folder=0 AND is_attachments_folder=0""", as_dict=1)
     for folder in arch_folders:
         print(f"{folder.name} is a Archive Folder and Hence All files and Folders Under it Would be Archived")
-        files = frappe.db.sql("""SELECT name, file_name FROM `tabFile` WHERE rgt <= %s 
+        files = frappe.db.sql("""SELECT name, file_name FROM `tabFile` WHERE rgt <= %s
         AND lft >= %s AND important_document_for_archive = 0""" % (folder.rgt, folder.lft), as_dict=1)
         for file in files:
             print(f"{file.name} with File Name={file.file_name} is being made Archive File")
@@ -64,7 +66,7 @@ def execute():
     print("Checking for Files Marked to Delete")
     time.sleep(1)
     marked = 0
-    files_marked_to_delete = frappe.db.sql("""SELECT name, file_name, file_url, attached_to_doctype, attached_to_name 
+    files_marked_to_delete = frappe.db.sql("""SELECT name, file_name, file_url, attached_to_doctype, attached_to_name
     FROM `tabFile` WHERE mark_for_deletion = 1""", as_dict=1)
     for file in files_marked_to_delete:
         marked += 1
@@ -110,7 +112,7 @@ def execute():
     # Doctype where Public Files are not allowed
     print("Check for File Availability and Updating the Same")
     avail_count = 0
-    non_validated_files = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_available_on_server = 0 
+    non_validated_files = frappe.db.sql("""SELECT name FROM `tabFile` WHERE file_available_on_server = 0
     AND is_folder=0""", as_dict=1)
     print(f"Total Non Available Files = {len(non_validated_files)}")
     time.sleep(1)
@@ -172,3 +174,25 @@ def execute():
     print(f"Total No of Files Not Available on Server = {non_avail_files}")
     print(f"Total Time Take for Making Files Available = {avail_time - mark_time} seconds")
     print(f"Total Time Taken {tot_time} seconds")
+
+
+def check_correct_folders():
+    st_time = time.time()
+    rebuild_tree(doctype="File", parent_field="folder", group_field="is_folder")
+    frappe.db.commit()
+    tr_time = time.time()
+    folders = frappe.db.sql("""SELECT name, folder, file_size, lft, rgt, important_document_for_archive
+        FROM `tabFile` WHERE is_folder=1 ORDER BY lft DESC, rgt DESC""", as_dict=1)
+    for fd in folders:
+        if fd.folder:
+            pfd = frappe.get_doc("File", fd.folder)
+            if pfd.important_document_for_archive == 1:
+                if fd.important_document_for_archive != 1:
+                    frappe.db.set_value("File", fd.name, "important_document_for_archive", pfd.important_document_for_archive)
+        fd_file_size = frappe.db.sql("""SELECT SUM(file_size) as size FROM `tabFile`
+            WHERE folder='%s'""" % fd.name, as_dict=1)
+        if flt(fd_file_size[0].size) != fd.file_size:
+            frappe.db.set_value("File", fd.name, "file_size", fd_file_size[0].size)
+            print(f"Updating Folder: {fd.name} with Actual File Size = {fd_file_size[0].size} old size {fd.file_size}")
+    print(f"Time Taken for Tree Rebuild = {int(tr_time - st_time)} seconds")
+    print(f"Total Time Taken For Tree Build and File Size Checking = {int(time.time() - st_time)} seconds")
