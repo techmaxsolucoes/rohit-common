@@ -56,7 +56,7 @@ hide_in_installer = True
 # }
 #
 # has_permission = {
-#   "Event": "frappe.core.doctype.event.event.has_permission",
+#     "File": "rohit_common.rohit_common.validations.file.has_permission"
 # }
 
 # Document Events
@@ -77,7 +77,12 @@ doc_events = {
     "Contact": {
         "validate": "rohit_common.rohit_common.validations.contact.validate"
     },
+    "DocShare": {
+        "validate": "rohit_common.rohit_common.validations.docshare.validate",
+        "on_trash": "rohit_common.rohit_common.validations.docshare.on_trash"
+    },
     "File": {
+        "before_insert": "rohit_common.rohit_common.validations.file.before_insert",
         "validate": "rohit_common.rohit_common.validations.file.validate",
         "on_trash": "rohit_common.rohit_common.validations.file.on_trash"
     },

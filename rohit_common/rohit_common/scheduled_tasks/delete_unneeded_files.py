@@ -189,10 +189,14 @@ def check_correct_folders():
             if pfd.important_document_for_archive == 1:
                 if fd.important_document_for_archive != 1:
                     frappe.db.set_value("File", fd.name, "important_document_for_archive", pfd.important_document_for_archive)
-        fd_file_size = frappe.db.sql("""SELECT SUM(file_size) as size FROM `tabFile`
-            WHERE folder='%s'""" % fd.name, as_dict=1)
-        if flt(fd_file_size[0].size) != fd.file_size:
-            frappe.db.set_value("File", fd.name, "file_size", fd_file_size[0].size)
+            fd_file_size = frappe.db.sql("""SELECT DISTINCT file_name, file_size, folder
+                FROM `tabFile` WHERE folder = '%s'""" % fd.name, as_dict=1)
+            fd_size = 0
+            if fd_file_size:
+                for fl in fd_file_size:
+                    fd_size += fl.file_size
+        if fd_size != fd.file_size:
+            frappe.db.set_value("File", fd.name, "file_size", fd_size)
             print(f"Updating Folder: {fd.name} with Actual File Size = {fd_file_size[0].size} old size {fd.file_size}")
     print(f"Time Taken for Tree Rebuild = {int(tr_time - st_time)} seconds")
     print(f"Total Time Taken For Tree Build and File Size Checking = {int(time.time() - st_time)} seconds")

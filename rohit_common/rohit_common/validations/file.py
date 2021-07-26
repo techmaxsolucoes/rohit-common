@@ -5,7 +5,7 @@ import os
 import frappe
 from shutil import copyfile, move
 from frappe.utils import get_site_base_path
-from frappe.core.doctype.file.file import get_content_hash
+from frappe.core.doctype.file.file import File, get_content_hash
 from pathlib import Path
 
 
@@ -14,13 +14,16 @@ def on_trash(doc, method):
         frappe.throw(f"{doc.name} is Checked for Archive hence Cannot be Deleted")
 
 
+def before_insert(doc, method):
+    validate_folder(doc)
+    check_public_allowed(doc)
+
+
 def validate(doc, method):
     if doc.mark_for_deletion == 1 and doc.important_document_for_archive == 1:
         frappe.throw(f"{doc.name} Cannot be Marked for Deletion as its an Important Document")
-    check_public_allowed(doc)
     check_and_move_file(doc)
     get_size(doc)
-    validate_folder(doc)
     folder_related_jobs(doc)
 
 
@@ -35,8 +38,10 @@ def folder_related_jobs(doc):
 
 def validate_folder(doc):
     # If the folder is empty then it would send to attachments folder
-    if not doc.is_home_folder and not doc.folder and not doc.flags.ignore_folder_validate:
-        doc.folder = frappe.db.get_value("File", {"is_attachments_folder": 1})
+    home_folder = frappe.db.get_value("File", {"is_home_folder": 1})
+    att_folder = frappe.db.get_value("File", {"is_attachments_folder": 1})
+    if not doc.is_home_folder and (doc.folder == home_folder or not doc.folder) and not doc.flags.ignore_folder_validate:
+        doc.folder = att_folder
 
 
 def check_and_move_file(doc):
@@ -146,8 +151,8 @@ def check_public_allowed(doc):
                                  f"Mentioned in Rohit Settings.\nKindly Mention {doc.attached_to_doctype} to "
                                  f"Create a Public File with this Doctype or Make this File Private")
                 else:
-                    frappe.throw(f"{user.name} is Not Allowed to Create Public Files.\nKindly make this Attachment "
-                                 f"Private to Proceed.")
+                    doc.is_private = 1
+                    frappe.msgprint(f"{user.name} is Not Allowed to Create Public Files.\nHence Made the Attachment Private.")
         else:
             if role_allowed != 1:
                 frappe.throw(f"{doc.file_name} is Not Attached to Any Doctype and {user.name} is Not Allowed to Create "
@@ -164,8 +169,9 @@ def check_public_allowed(doc):
                                  f"Create a Public File with this Doctype or Make this File Private")
         else:
             if doc_allowed != 1:
-                frappe.throw(f"{doc.file_name} is a Public File and You are Not Allowed to Create Public Files. Kindly "
-                             f"make this file Private and Proceed")
+                doc.is_private = 1
+                frappe.msgprint(f"{doc.file_name} is a Public File and You are Not Allowed to Create Public Files.\n\
+                    File Automatically made Private")
 
 
 def get_size(doc):

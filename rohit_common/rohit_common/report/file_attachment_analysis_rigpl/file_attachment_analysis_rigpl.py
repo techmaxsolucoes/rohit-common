@@ -16,12 +16,12 @@ def get_columns(filters):
     if filters.get("summary_dt") == 1:
         return ["Attached to Doctype::300", "No of Files:Int:100", "Size (MB):Float:100"]
     elif filters.get("summary_fol") == 1:
-        return ["Folder Name:Link/File:300", "Parent Folder::300", "No of Files:Int:100",
+        return ["Folder Name:Link/File:300", "Parent Folder:Link/File:300", "No of Files:Int:100",
             "Actual Files Size (MB):Float:100", "Size Listed:Float:100", "Left:Int:80", "Right:Int:80"]
     else:
         if filters.get("is_folder") == 1:
             return [
-                "ID:Link/File:450", "File Name::200", "Parent Folder::350", "Size(MB):Float:100",
+                "ID:Link/File:450", "File Name::200", "Parent Folder:Link/File:350", "Size(MB):Float:100",
                 "Left:Int:80", "Right:Int:80", "Files:Int:80","Is Home:Int:40", "Is Attachment::40"
             ]
         else:
@@ -39,7 +39,7 @@ def get_columns(filters):
                     "options": "attached_to_dt",
                     "width": 100
                 },
-                "Available:Int:50", "Size(kB):Float:100", "Left:Int:80", "Right:Int:80", "Parent Folder::350",
+                "Available:Int:50", "Size(kB):Float:100", "Left:Int:80", "Right:Int:80", "Parent Folder:Link/File:350",
                 "Private:Int:40", "Imp:Int:40", "Del:Int:40", "Owner::150", "Created On:Datetime:150", "URL::300"
             ]
 
@@ -70,13 +70,18 @@ def get_data(filters):
                 is_home_folder, is_attachments_folder
                 FROM `tabFile` WHERE docstatus = 0 %s ORDER BY lft, rgt""" % (conditions), as_list=1)
         else:
-            query = """SELECT name, IFNULL(file_name, "NO NAME"), IFNULL(attached_to_doctype, "NO DOCTYPE"),
-                IFNULL(attached_to_name,"NO DOCNAME"), file_available_on_server,
-                ROUND(file_size/1024,2), lft, rgt, IFNULL(folder, "NO FOLDER"), is_private,
+            query = """SELECT name, IFNULL(file_name, "NO NAME") as file_name, IFNULL(attached_to_doctype, "NO DOCTYPE") as atd,
+                IFNULL(attached_to_name,"NO DOCNAME") as atn, file_available_on_server,
+                ROUND(file_size/1024,2) as size, lft, rgt, IFNULL(folder, "NO FOLDER") as folder, is_private,
                 important_document_for_archive, mark_for_deletion, owner, creation, file_url
                 FROM `tabFile` WHERE docstatus=0 %s ORDER BY creation""" % (conditions)
-            data = frappe.db.sql(query, as_list=1)
-
+            fd_data = frappe.db.sql(query, as_dict=1)
+            for d in fd_data:
+                file_download_name = """<a href="%s" target="_blank">%s</a>""" % (d.file_url, d.file_name)
+                file_download_url = """<a href="%s" target="_blank">%s</a>""" % (d.file_url, d.file_url)
+                row = [d.name, file_download_name, d.atd, d.atn, d.file_available_on_server, d.size, d.lft, d.rgt, d.folder,
+                    d.is_private, d.important_document_for_archive, d.mark_for_deletion, d.owner, d.creation, file_download_url]
+                data.append(row)
     return data
 
 
