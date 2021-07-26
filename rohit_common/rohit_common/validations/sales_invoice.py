@@ -8,9 +8,8 @@ import frappe
 from datetime import date
 from frappe.utils import getdate, flt
 from frappe.utils.background_jobs import enqueue
-from rohit_common.utils.rohit_common_utils import replace_java_chars, check_dynamic_link, \
-    check_sales_taxes_integrity
-
+from ...utils.rohit_common_utils import replace_java_chars, check_dynamic_link, \
+    check_sales_taxes_integrity, remove_html
 
 def on_submit(doc, method):
     if len(doc.items) >= 10:
@@ -111,6 +110,7 @@ def check_local_natl_tax_rules(doc, template_doc):
 
 def check_customs_tariff(doc):
     for items in doc.items:
+        items.description = remove_html(items.description)
         custom_tariff = frappe.db.get_value("Item", items.item_code, "customs_tariff_number")
         if custom_tariff:
             if len(custom_tariff) == 8:

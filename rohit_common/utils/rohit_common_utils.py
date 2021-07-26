@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import re
 import frappe
 from validate_email import validate_email
 from frappe.utils import get_files_path
 
 
+def remove_html(html_text):
+    cleanr = re.compile(r'<(?!br).*?>')
+    cleantext = cleanr.sub('', html_text)
+    return cleantext
+
+
 def check_system_manager(user):
-    sys_list = frappe.db.sql("""SELECT name FROM `tabHas Role` WHERE parenttype = 'User' AND parent = '%s' 
+    sys_list = frappe.db.sql("""SELECT name FROM `tabHas Role` WHERE parenttype = 'User' AND parent = '%s'
         AND role = 'System Manager'""" % user, as_list=1)
     if sys_list:
         return 1
@@ -30,13 +37,13 @@ def rebuild_tree(doctype, parent_field, group_field):
 
 def rebuild_group(doctype, parent_field, parent, group_field, left):
     right = left + 1
-    non_gp_query = """SELECT name, %s, lft, rgt FROM `tab%s` WHERE %s = '%s' 
+    non_gp_query = """SELECT name, %s, lft, rgt FROM `tab%s` WHERE %s = '%s'
     AND %s = 0""" % (group_field, doctype, parent_field, parent, group_field)
     non_grp_results = frappe.db.sql(non_gp_query, as_dict=1)
     for r in non_grp_results:
         frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (doctype, right, right+1, r.name))
         right += 2
-    grp_result = frappe.db.sql("""SELECT name, %s FROM `tab%s` WHERE %s = '%s' 
+    grp_result = frappe.db.sql("""SELECT name, %s FROM `tab%s` WHERE %s = '%s'
     AND %s = 1""" % (group_field, doctype, parent_field, parent, group_field), as_dict=1)
     for r in grp_result:
         print(f"Updating Groups for {r.name}")
@@ -50,8 +57,8 @@ def move_file_folder(file_name, old_folder, new_folder, is_folder=0):
 
 
 def get_folder_details(folder_name):
-    return frappe.db.sql("""SELECT name, parent, parentfield, parenttype, idx, file_name, attached_to_doctype, rgt, 
-    lft, (rgt-lft) as diff,is_home_folder, is_folder, folder, is_private, attached_to_field 
+    return frappe.db.sql("""SELECT name, parent, parentfield, parenttype, idx, file_name, attached_to_doctype, rgt,
+    lft, (rgt-lft) as diff,is_home_folder, is_folder, folder, is_private, attached_to_field
     FROM `tabFile` WHERE name = '%s'""" % folder_name, as_dict=1)
 
 
@@ -72,7 +79,7 @@ def get_email_id(email_id):
 
 
 def validate_email_addresses(comm_sep_email, backend=0):
-    email_domain = frappe.db.sql("""SELECT name, email_id FROM `tabEmail Domain` 
+    email_domain = frappe.db.sql("""SELECT name, email_id FROM `tabEmail Domain`
     WHERE use_domain_to_verify_email_addresses = 1 AND docstatus=0""", as_dict=1)
     if len(email_domain) > 1:
         frappe.throw("There are more than 1 Email Domains Defined to Check Email Addresses. Please make sure only "
@@ -124,7 +131,7 @@ def check_sales_taxes_integrity(document):
 
 
 def check_dynamic_link(parenttype, parent, link_doctype, link_name):
-    link_type = frappe.db.sql("""SELECT name FROM `tabDynamic Link` 
+    link_type = frappe.db.sql("""SELECT name FROM `tabDynamic Link`
         WHERE docstatus = 0 AND parenttype = '%s' AND parent = '%s'
         AND link_doctype = '%s' AND link_name = '%s'""" % (parenttype, parent, link_doctype, link_name), as_list=1)
     if not link_type:
@@ -154,7 +161,7 @@ def fn_check_digit(id_without_check):
     id_without_checkdigit = id_without_check.strip().upper()
 
     # this will be a running total
-    sum = 0;
+    sum = 0
 
     # loop through digits from right to left
     for n, char in enumerate(reversed(id_without_checkdigit)):
