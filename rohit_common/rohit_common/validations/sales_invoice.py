@@ -113,10 +113,10 @@ def check_customs_tariff(doc):
         items.description = remove_html(items.description)
         custom_tariff = frappe.db.get_value("Item", items.item_code, "customs_tariff_number")
         if custom_tariff:
-            if len(custom_tariff) == 8:
+            if len(custom_tariff) >= 6:
                 items.gst_hsn_code = custom_tariff
             else:
-                frappe.throw(("Item Code {0} in line# {1} has a Custom Tariff {2} which not 8 digit, "
+                frappe.throw(("Item Code {0} in line# {1} has a Custom Tariff {2} which is less than 6 digit, "
                               "please get the Custom Tariff corrected").
                              format(items.item_code, items.idx, custom_tariff))
         else:
