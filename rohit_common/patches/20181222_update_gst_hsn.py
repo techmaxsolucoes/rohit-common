@@ -1,35 +1,26 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import frappe
+import time
 
 def execute():
-	sid_no_cetsh = frappe.db.sql("""SELECT name, item_code ,gst_hsn_code, cetsh_number FROM `tabSales Invoice Item` 
-		WHERE cetsh_number IS NULL AND gst_hsn_code IS NULL 
-		ORDER BY creation""", as_list=1)
-	if sid_no_cetsh:
-		for sid in sid_no_cetsh:
-			sid_doc = frappe.get_doc("Sales Invoice Item", sid[0])
-			cetsh_number = frappe.get_value("Item", sid[1], "customs_tariff_number")
-			if cetsh_number:
-				frappe.db.set_value("Sales Invoice Item", sid[0], "cetsh_number", cetsh_number)
-				frappe.db.set_value("Sales Invoice Item", sid[0], "gst_hsn_code", cetsh_number)
-				print("Updated CETSH Number and GST HSN Code in Sales Invoice # " \
-					+ sid_doc.parent + " Item No: " + str(sid_doc.idx))
-			else:
-				print("SI# " + sid_doc.parent + " Item Code: " + sid[1] + \
-					" At Row No " + str(sid_doc.idx) + \
-					" Does Not Have CETSH Number Linked")
-	frappe.db.commit()
-	print("Committed Changes")
-
-	sid_list = frappe.db.sql("""SELECT name, gst_hsn_code, cetsh_number FROM `tabSales Invoice Item` 
-		WHERE cetsh_number IS NOT NULL AND gst_hsn_code IS NULL 
-		ORDER BY creation""", as_list=1)
-	if sid_list:
-		for sid in sid_list:
-			cetsh_number = frappe.get_value("Sales Invoice Item", sid[0], "cetsh_number")
-			sid_doc = frappe.get_doc("Sales Invoice Item", sid[0])
-			frappe.db.set_value("Sales Invoice Item", sid[0], "gst_hsn_code", cetsh_number)
-			print("Updated GST HSN Code in SI # " + sid_doc.parent + " Item No: " + str(sid_doc.idx))
-	frappe.db.commit()
-	print("Committed Changes")
+    st_time = time.time()
+    records_updated = 0
+    sid_wrong_gst_hsn = frappe.db.sql("""SELECT sid.name, sid.item_code ,sid.gst_hsn_code,
+        it.customs_tariff_number as correct_gst_hsn
+        FROM `tabSales Invoice Item` sid, `tabItem` it
+        WHERE sid.gst_hsn_code != it.customs_tariff_number AND it.name = sid.item_code
+        ORDER BY sid.creation""", as_dict=1)
+    if sid_wrong_gst_hsn:
+        for sid in sid_wrong_gst_hsn:
+            sid_doc = frappe.get_doc("Sales Invoice Item", sid.name)
+            if sid.correct_gst_hsn:
+                records_updated += 1
+                frappe.db.set_value("Sales Invoice Item", sid.name, "gst_hsn_code", sid.correct_gst_hsn)
+                # print("Updated CETSH Number and GST HSN Code in Sales Invoice # "
+                #        + sid_doc.parent + " Item No: " + str(sid_doc.idx))
+            else:
+                print("SI# " + sid_doc.parent + " Item Code: " + sid[1] +
+                        " At Row No " + str(sid_doc.idx) +
+                        " Does Not Have CETSH Number Linked")
+    print(f"Total Time Taken = {int(time.time() - st_time)} seconds for Updating GST HSN Codes in {records_updated} items")
