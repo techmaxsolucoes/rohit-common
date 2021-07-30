@@ -18,7 +18,7 @@ def update_export_invoices():
     exp_inv = frappe.db.sql("""SELECT si.name, si.shipping_bill_number, si.shipping_bill_date
         FROM `tabSales Invoice` si, `tabSales Taxes and Charges Template` st
         WHERE si.docstatus=1 AND si.base_net_total > 0 AND si.taxes_and_charges = st.name AND st.disabled = 0
-        AND st.is_export = 1 AND si.shipping_bill_number IS NULL""", as_dict=1)
+        AND st.is_export = 1 AND si.shipping_bill_number IS NULL ORDER BY si.creation""", as_dict=1)
     for inv in exp_inv:
         sid = frappe.get_doc("Sales Invoice", inv.name)
         base_si_no = get_base_doc_no(sid)

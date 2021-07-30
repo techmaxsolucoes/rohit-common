@@ -120,9 +120,9 @@ scheduler_events = {
     "all": [
         "rohit_common.rohit_common.scheduled_tasks.auto_refresh_gstin_auth_code.execute"
     ],
-    #   "daily": [
-    #       "rohit_common.tasks.daily"
-    #   ],
+    "daily": [
+        "rohit_common.rohit_common.scheduled_tasks.auto_update_from_erp.update_export_invoices"
+       ],
     "hourly": [
         "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.check_correct_folders"
     ],
