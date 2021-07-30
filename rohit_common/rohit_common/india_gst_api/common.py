@@ -89,8 +89,8 @@ def gst_return_period_validation(return_period):
         if month < 7:
             frappe.throw("Return Period Cannot be Before July-2017")
     elif year == now.year:
-        if month >= now.month:
-            frappe.throw("Return Period Can only be for Past Months")
+        if month > now.month:
+            frappe.throw("Return Period Can only be for Past or Current Months")
 
 
 def get_dates_from_return_period(monthly_ret_pd):
