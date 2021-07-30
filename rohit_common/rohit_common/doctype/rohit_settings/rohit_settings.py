@@ -11,7 +11,6 @@ from frappe.model.document import Document
 class RohitSettings(Document):
     def validate(self):
         min_days_to_keep = 30
-        self.sort_single_field_child("gst_registration_details", "gst_registration_number")
         self.sort_single_field_child("auto_deletion_policy_for_files", "document_type")
         self.sort_single_field_child("roles_allow_pub_att", "role")
         self.sort_single_field_child("docs_with_pub_att", "document_type")
