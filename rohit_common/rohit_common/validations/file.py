@@ -127,52 +127,53 @@ def check_and_move_file(doc):
 
 
 def check_public_allowed(doc):
-    # If File being created is Public then check if the Doctype its attached to is allowed or not.
-    # If Doctype is not allowed then check if the role is allowed to create Public Files or not.
-    if doc.is_folder != 1:
-        if doc.is_private != 1:
-            rset = frappe.get_doc("Rohit Settings")
-            user = frappe.get_user()
-            # Check if doctype is allowed in Settings if No then check if the User Role is allowed in Settings
-            doc_allowed = 0
-            role_allowed = 0
-            for role in rset.roles_allow_pub_att:
-                if role.role in user.roles:
-                    role_allowed = 1
-            if doc.attached_to_doctype:
-                for dt in rset.docs_with_pub_att:
-                    if doc.attached_to_doctype == dt.document_type:
-                        doc_allowed = 1
-                        break
-                if doc_allowed != 1:
-                    if role_allowed == 1:
-                        frappe.throw(f"{doc.file_name} that you are trying to Attached to "
-                                     f"{frappe.get_desk_link(doc.attached_to_doctype, doc.attached_to_name)} is Public "
-                                     f"File.\n You are allowed to create Public Files but {doc.attached_to_doctype} is Not "
-                                     f"Mentioned in Rohit Settings.\nKindly Mention {doc.attached_to_doctype} to "
-                                     f"Create a Public File with this Doctype or Make this File Private")
-                    else:
-                        doc.is_private = 1
-                        frappe.msgprint(f"{user.name} is Not Allowed to Create Public Files.\nHence Made the Attachment Private.")
-            else:
-                if role_allowed != 1:
-                    frappe.throw(f"{doc.file_name} is Not Attached to Any Doctype and {user.name} is Not Allowed to Create "
-                                 f"Public Attachments.\nKindly make this Attachment Private to Proceed.")
-            if role_allowed == 1:
-                if doc_allowed == 1:
-                    pass
-                else:
-                    if doc.attached_to_doctype:
-                        frappe.throw(f"{doc.file_name} that you are trying to Attached to "
-                                     f"{frappe.get_desk_link(doc.attached_to_doctype, doc.attached_to_name)} is Public File."
-                                     f"\n You are allowed to create Public Files but {doc.attached_to_doctype} is Not "
-                                     f"Mentioned in Rohit Settings.\nKindly Mention {doc.attached_to_doctype} to "
-                                     f"Create a Public File with this Doctype or Make this File Private")
-            else:
-                if doc_allowed != 1:
-                    doc.is_private = 1
-                    frappe.msgprint(f"{doc.file_name} is a Public File and You are Not Allowed to Create Public Files.\n\
-                        File Automatically made Private")
+    # Check if File is Private or Public Only incase of Public Check rules
+    # If Attached to Doctype then check 2 things if Role is Allowed and If Dt is Allowed
+    # If not attached to DT then check if role is allowed or not if not then TRHOW
+    doc_allowed, role_allowed = get_public_allowed(doc)
+    if doc_allowed == 1 and role_allowed == 1:
+        pass
+    else:
+        if role_allowed != 1:
+            # Convert the Public File to Private and Store in Private Folder
+            doc.is_private = 1
+            doc.file_url = "/private/files/" + doc.file_name
+            frappe.msgprint(f"Converted {doc.file_name} to Private Since {frappe.session.user} is "
+                f"Not Allowed to Create Public Files")
+        elif doc_allowed != 1:
+            doc.is_private = 1
+            doc.file_url = "/private/files/" + doc.file_name
+            frappe.msgprint(f"Converted {doc.file_name} to Private Since {doc.attached_to_doctype} "
+                f"is Not Allowed in Rohit Settings for Public Attachments.<br>To Create a Public "
+                f"first Add {doc.attached_to_doctype} in Rohit Settings and then Attach Again")
+        else:
+            frappe.throw(f"Condition Undefined for File Attachments")
+
+
+def get_public_allowed(doc):
+    rset = frappe.get_doc("Rohit Settings")
+    doc_allowed, role_allowed = 0, 0
+    user_roles = frappe.get_roles(frappe.session.user)
+    if doc.is_private == 1:
+        doc_allowed = 1
+        role_allowed = 1
+    else:
+        # Check if Role is allowed in Settings
+        for role in rset.roles_allow_pub_att:
+            if role.role in user_roles:
+                role_allowed = 1
+                break
+        # If file is attached to DT then check else return allowed=1
+        if doc.attached_to_doctype:
+            for dt in rset.docs_with_pub_att:
+                if doc.attached_to_doctype == dt.document_type:
+                    doc_allowed = 1
+                    break
+        else:
+            doc_allowed = 1
+    return doc_allowed, role_allowed
+
+
 
 
 def get_size(doc):
