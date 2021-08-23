@@ -86,6 +86,9 @@ doc_events = {
         "validate": "rohit_common.rohit_common.validations.file.validate",
         "on_trash": "rohit_common.rohit_common.validations.file.on_trash"
     },
+    "Payment Terms Template": {
+        "validate": "rohit_common.rohit_common.validations.payment_terms_template.validate"
+    },
     "Sales Invoice": {
         "validate": "rohit_common.rohit_common.validations.sales_invoice.validate",
         "on_update_after_submit": "rohit_common.rohit_common.validations.sales_invoice.on_update",
