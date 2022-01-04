@@ -121,7 +121,8 @@ scheduler_events = {
         ],
     },
     "all": [
-        "rohit_common.rohit_common.scheduled_tasks.auto_refresh_gstin_auth_code.execute"
+        "rohit_common.rohit_common.scheduled_tasks.auto_refresh_gstin_auth_code.execute",
+        "rohit_common.utils.background_doc_processing.process_bg_docs"
     ],
     "daily": [
         "rohit_common.rohit_common.scheduled_tasks.auto_update_from_erp.update_export_invoices"
