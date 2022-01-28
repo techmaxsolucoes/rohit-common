@@ -1,0 +1,84 @@
+{
+ "allow_copy": 1,
+ "autoname": "field:email_id",
+ "creation": "2022-01-15 06:24:47.816771",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "email_id",
+  "domain",
+  "is_accept_all",
+  "is_role",
+  "is_free"
+ ],
+ "fields": [
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "label": "Email ID",
+   "options": "Email",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "domain",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Domain",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_accept_all",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Accept All",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_role",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Role",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_free",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Free",
+   "read_only": 1
+  }
+ ],
+ "hide_toolbar": 1,
+ "in_create": 1,
+ "modified": "2022-01-28 18:27:32.188279",
+ "modified_by": "Administrator",
+ "module": "rohit_common",
+ "name": "Global Emails",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "read_only": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
