@@ -3,6 +3,34 @@
 
 from __future__ import unicode_literals
 import frappe
+from rohit_common.utils.email_utils import single_email_validations
+
+
+def validate_contact_emails(con_doc):
+    """
+    Validates the emails in a Contact document's Email Table
+    If row in table has multiple email IDs then it would separate the row in to multiple rows
+    Also it would remove the invalid emails and also would populate the email address field
+    """
+    remove_emails = []
+    for row in con_doc.email_ids:
+        emails = row.email_id.split(',')
+        for email in emails:
+            valid_email = single_email_validations(email, backend=0)
+            if valid_email:
+                # Valid Email if its 1st Email then replace the email in row else add a new row
+                if emails.index(email) == 0:
+                    row.email_id = valid_email
+                else:
+                    #Add row to the table with new email ID
+                    con_doc.append("email_ids", {"email_id": valid_email})
+            else:
+                remove_emails.append(email)
+    if remove_emails:
+        for rmv_eml in remove_emails:
+            [con_doc.email_ids.remove(eml) for eml in con_doc.get('email_ids')
+            if eml.email_id == rmv_eml]
+
 
 
 def get_contact_phones(con_name):
