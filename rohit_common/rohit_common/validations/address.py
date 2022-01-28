@@ -1,5 +1,5 @@
-#  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
-#  For license information, please see license.txt
+# Copyright (c) 2022 Rohit Industries Group Private Limited and Contributors.
+# For license information, please see license.txt
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
@@ -11,23 +11,29 @@ from frappe.utils import flt, getdate
 from difflib import SequenceMatcher as sm
 from .google_maps import geocoding, render_gmap_json
 from ..india_gst_api.gst_public_api import search_gstin
-from rohit_common.utils.rohit_common_utils import replace_java_chars, validate_email_addresses, check_system_manager
+from rohit_common.utils.email_utils import comma_email_validations
+from rohit_common.utils.rohit_common_utils import replace_java_chars, check_system_manager
 
 
 def validate(doc, method):
+    """
+    Contains various validations for an Address Doctype
+    """
     validate_dynamic_links(doc)
     if not doc.flags.ignore_mandatory:
         country_validation(doc)
         gstin_validation(doc)
-        geocode(doc, method)
-        if doc.email_address_validated != 1:
-            valid_email = validate_email_addresses(doc.email_id)
-            doc.email_address_validated = valid_email
-    validate_primary_address(doc, method)
-    validate_shipping_address(doc, method)
+        geocode(doc)
+        doc.email_id = comma_email_validations(doc.email_id, backend=0)
+    validate_primary_address(doc)
+    validate_shipping_address(doc)
 
 
 def gstin_validation(doc):
+    """
+    Validates the GST first for the syntax of GST and then if the syntax is OK it would
+    validate the GST from GSTIN portal
+    """
     if doc.gstin:
         if doc.gstin != "NA":
             if len(doc.gstin) != 15:
@@ -66,6 +72,9 @@ def gstin_validation(doc):
 
 
 def country_validation(doc):
+    """
+    Runs through various validations of a country specified as per the country doc
+    """
     doc.pincode = re.sub('[^A-Za-z0-9]+', '', str(doc.pincode))
     if doc.country:
         country_doc = frappe.get_doc("Country", doc.country)
@@ -76,10 +85,12 @@ def country_validation(doc):
 
         if country_doc.known_states == 1:
             # Country has known states means state doctype should have states for that country
-            state_list = frappe.db.sql("""SELECT name FROM `tabState` WHERE country = '%s'""" % doc.country, as_dict=1)
+            state_list = frappe.db.sql(f"""SELECT name FROM `tabState`
+                WHERE country = '{doc.country}'""", as_dict=1)
             if state_list:
                 if doc.state_rigpl is None or not doc.state_rigpl or doc.state_rigpl == "":
-                    frappe.throw('State RIGPL for Country {} is Mandatory in Address {}'.format(doc.country, doc.name))
+                    frappe.throw(f"State RIGPL for Country {doc.country} is Mandatory in \
+                        Address {doc.name}")
                 if country_doc.pincode_length:
                     pincode_length = replace_java_chars(country_doc.pincode_length)
                     if 'or' in pincode_length:
@@ -91,8 +102,8 @@ def country_validation(doc):
                         if len(doc.pincode) == flt(d):
                             pincode_pass = 1
                     if pincode_pass != 1:
-                        frappe.throw("For Address {}: Pincode should be {} Digits Long".format(doc.name,
-                                                                                               pincode_length))
+                        frappe.throw(f"For Address {doc.name}: Pincode should be {pincode_length} \
+                            Digits Long")
                 if country_doc.pincode_regular_expression:
                     pincode_regex = replace_java_chars(country_doc.pincode_regular_expression)
                     if 'or' in pincode_regex:
@@ -100,14 +111,15 @@ def country_validation(doc):
                     else:
                         pc_regex = [pincode_regex]
                     pc_regex_pass = 0
-                    for d in pc_regex:
-                        p = re.compile(d.strip())
-                        if not p.match(doc.pincode):
+                    for alp in pc_regex:
+                        comp_alp = re.compile(alp.strip())
+                        if not comp_alp.match(doc.pincode):
                             pass
                         else:
                             pc_regex_pass = 1
                     if pc_regex_pass != 1:
-                        frappe.throw("Country {}: Pin Code Should be of Format {}".format(doc.country, pincode_regex))
+                        frappe.throw(f"Country {doc.country}: Pin Code Should be of Format \
+                            {pincode_regex}")
             else:
                 frappe.throw("For Country {} no states exists in State Table".format(doc.country))
         else:
@@ -122,16 +134,23 @@ def country_validation(doc):
 
 
 def verify_state_country(state, country):
+    """
+    Verifies if the state mentioned belongs to a country or not
+    """
     state_doc = frappe.get_doc("State", state)
     if state_doc.country != country:
-        frappe.throw("State {} belongs to Country {} hence choose correct State or Change Country to {}".
-                     format(state, state_doc.country, state_doc.country))
+        frappe.throw(f"State {state} belongs to Country {state_doc.country} hence choose correct \
+            State or Change Country to {state_doc.country}")
 
 
 def validate_dynamic_links(doc):
-    """Only System Admins can make the Address for Company and Is Your Company Address Check Box should be checked"""
+    """
+    Only System Admins can make the Address for Company and Is Your Company Address Check Box
+    should be checked
+    """
     if doc.is_your_company_address == 1:
-        # Check if the Dynamic Link has Link Doctype as Company and only System admins can edit such addresses
+        # Check if the Dynamic Link has Link Doctype as Company & only Sys Admin can
+        # edit such addresses
         user = frappe.get_user()
         is_sys_mgr = check_system_manager(user.name)
         if is_sys_mgr != 1:
@@ -140,63 +159,79 @@ def validate_dynamic_links(doc):
         if doc.links:
             for d in doc.links:
                 if d.link_doctype == "Company":
-                    frappe.throw(f"{frappe.get_desk_link(doc.doctype, doc.name)} is Not Company Address hence cannot "
-                                 f"have Dynamic Link for Company")
+                    frappe.throw(f"{frappe.get_desk_link(doc.doctype, doc.name)} is Not Company \
+                        Address hence cannot have Dynamic Link for Company")
         else:
-            frappe.throw(f"{frappe.get_desk_link(doc.doctype, doc.name)} Cannot be Orphaned and hence needs "
-                         f"Dynamic Link Table to be Populated")
+            frappe.throw(f"{frappe.get_desk_link(doc.doctype, doc.name)} Cannot be Orphaned and \
+                hence needs Dynamic Link Table to be Populated")
 
 
-def validate_primary_address(doc, method):
-    """Validate that there can only be one primary address for particular customer, supplier"""
+def validate_primary_address(doc):
+    """
+    Validate that there can only be one primary address for particular customer, supplier
+    """
     if doc.is_primary_address == 1:
-        unset_other(doc, method, "is_primary_address")
+        unset_other(doc, "is_primary_address")
     else:
-        # This would check if there is any Primary Address if not then would make current as Primary address
-        check = check_set(doc, method, "is_primary_address")
+        # This would check if there is any Primary Address if not then would make current as
+        # Primary address
+        check = check_set(doc, "is_primary_address")
         if check == 0:
             doc.is_primary_address = 1
 
 
-def validate_shipping_address(doc, method):
-    """Validate that there can only be one shipping address for particular customer, supplier"""
+def validate_shipping_address(doc):
+    """
+    Validate that there can only be one shipping address for particular customer, supplier
+    """
     if doc.is_shipping_address == 1:
-        unset_other(doc, method, "is_shipping_address")
+        unset_other(doc, "is_shipping_address")
     else:
         # This would check if there is any Shipping Address if not then would make current as Shipping address
-        check = check_set(doc, method, "is_shipping_address")
+        check = check_set(doc, "is_shipping_address")
         if check == 0:
             doc.is_shipping_address = 1
 
 
-def unset_other(doc, method, is_address_type):
-    for d in doc.links:
-        other_add = frappe.db.sql("""SELECT parent FROM `tabDynamic Link`
-        WHERE link_doctype = '%s' AND link_name = '%s' AND parent != '%s' AND parenttype = '%s'""" %
-                                  (d.link_doctype, d.link_name, doc.name, doc.doctype), as_list=1)
+def unset_other(doc, is_address_type):
+    """
+    If current address is Primary then other is unset
+    """
+    for link in doc.links:
+        other_add = frappe.db.sql(f"""SELECT parent FROM `tabDynamic Link`
+        WHERE link_doctype = '{link.link_doctype}' AND link_name = '{link.link_name}'
+        AND parent != '{doc.name}' AND parenttype = '{doc.doctype}'""", as_list=1)
     for add in other_add:
         frappe.db.set_value(doc.doctype, add[0], is_address_type, 0)
 
 
-def check_set(doc, method, is_address_type):
-    for d in doc.links:
-        other_add = frappe.db.sql("""SELECT parent FROM `tabDynamic Link`
-        WHERE link_doctype = '%s' AND link_name = '%s' AND parent != '%s' AND parenttype = '%s'""" %
-                                  (d.link_doctype, d.link_name, doc.name, doc.doctype), as_list=1)
+def check_set(doc, is_address_type):
+    """
+    Returns Boolean for checking whether Primary is Set or not
+    """
+    for lnk in doc.links:
+        other_add = frappe.db.sql(f"""SELECT parent FROM `tabDynamic Link`
+        WHERE link_doctype = '{lnk.link_doctype}' AND link_name = '{lnk.link_name}'
+        AND parent != '{doc.name}' AND parenttype = '{doc.doctype}'""", as_list=1)
         chk = 0
         for add in other_add:
             chk = chk + flt(frappe.db.get_value(doc.doctype, add[0], is_address_type))
     return chk
 
 
-def check_id(doc, method):
-    # Disallow Special Characters in Customer ID
+def check_id(doc):
+    """
+    Disallow Special Characters in Customer ID
+    """
     new_name = re.sub('[^A-Za-z0-9\\-]+', ' ', doc.name)
     entered_name = doc.name
     return new_name, entered_name
 
 
-def geocode(doc, method):
+def geocode(doc):
+    """
+    Gets Google Geocoding as per the checkboxes direction
+    """
     if doc.dont_update_from_google == 1:
         remove_google_updates(doc)
     else:
@@ -216,6 +251,9 @@ def geocode(doc, method):
 
 
 def remove_google_updates(doc):
+    """
+    Removes google updates from Address document
+    """
     doc.json_reply = ""
     doc.latitude = ""
     doc.longitude = ""
@@ -224,6 +262,9 @@ def remove_google_updates(doc):
 
 
 def update_fields_from_gmaps(doc, address_dict):
+    """
+    Updates the common fields from Geocoded Address
+    """
     if doc.country == address_dict["country"]:
         if address_dict.get("global_code"):
             doc.global_google_code = address_dict.get("global_code")
@@ -263,7 +304,11 @@ def update_fields_from_gmaps(doc, address_dict):
 
 
 def validate_gstin_from_portal(doc):
-    auto_days = flt(frappe.get_value("Rohit Settings", "Rohit Settings", "auto_validate_gstin_after"))
+    """
+    Validates GSTIN from GST Portal
+    """
+    auto_days = flt(frappe.get_value("Rohit Settings", "Rohit Settings",
+        "auto_validate_gstin_after"))
     if doc.gst_validation_date:
         days_since_validation = (date.today() - getdate(doc.gst_validation_date)).days
     else:
@@ -283,8 +328,8 @@ def validate_gstin_from_portal(doc):
         doc.disabled = 1
     elif doc.gst_status == 'Suspended':
         # Disable the address for Supplier or unlinked address
-        dl_list = frappe.db.sql("""SELECT name, link_doctype FROM `tabDynamic Link` WHERE parenttype = 'Address'
-        AND parent = '%s'""" % doc.name, as_dict=1)
+        dl_list = frappe.db.sql(f"""SELECT name, link_doctype FROM `tabDynamic Link`
+            WHERE parenttype = 'Address'  AND parent = '{doc.name}'""", as_dict=1)
         if dl_list:
             for dt in dl_list:
                 if dt.link_doctype == 'Supplier':
@@ -295,6 +340,9 @@ def validate_gstin_from_portal(doc):
 
 
 def update_address_title_from_gstin_json(doc):
+    """
+    Checks the legal name or Trade Name and if its within 60% match then copies that in Addres Title
+    """
     if doc.validated_gstin:
         if doc.validated_gstin == doc.gstin:
             gst_json = ast.literal_eval(doc.gstin_json_reply)
@@ -309,8 +357,10 @@ def update_address_title_from_gstin_json(doc):
                 if lgl_ratio > 0.6:
                     # Update Address Title from Legal Name
                     doc.address_title = lgl_name
-                    frappe.msgprint("Updated Address Title from Legal Name on GST Website for {}".format(doc.name))
+                    frappe.msgprint(f"Updated Address Title from Legal Name on GST Website for \
+                        {doc.name}")
                 elif trd_ratio > 0.6:
                     # Update Address Title from Legal Name
                     doc.address_title = trd_name
-                    frappe.msgprint("Updated Address Title from Trade Name on GST Website for {}".format(doc.name))
+                    frappe.msgprint(f"Updated Address Title from Trade Name on GST Website for \
+                        {doc.name}")
