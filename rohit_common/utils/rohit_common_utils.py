@@ -2,19 +2,24 @@
 from __future__ import unicode_literals
 import re
 import frappe
-from validate_email import validate_email
 from frappe.utils import get_files_path
 
 
 def remove_html(html_text):
+    """
+    Cleans html tags from html text and return plain text
+    """
     cleanr = re.compile(r'<(?!br).*?>')
     cleantext = cleanr.sub('', html_text)
     return cleantext
 
 
 def check_system_manager(user):
-    sys_list = frappe.db.sql("""SELECT name FROM `tabHas Role` WHERE parenttype = 'User' AND parent = '%s'
-        AND role = 'System Manager'""" % user, as_list=1)
+    """
+    Returns boolean for a system manager user
+    """
+    sys_list = frappe.db.sql(f"""SELECT name FROM `tabHas Role` WHERE parenttype = 'User'
+        AND parent = '{user}' AND role = 'System Manager'""", as_list=1)
     if sys_list:
         return 1
     else:
@@ -76,39 +81,6 @@ def get_email_id(email_id):
             return email_id
         else:
             return ""
-
-
-def validate_email_addresses(comm_sep_email, backend=0):
-    email_domain = frappe.db.sql("""SELECT name, email_id FROM `tabEmail Domain`
-    WHERE use_domain_to_verify_email_addresses = 1 AND docstatus=0""", as_dict=1)
-    if len(email_domain) > 1:
-        frappe.throw("There are more than 1 Email Domains Defined to Check Email Addresses. Please make sure only "
-                     "1 Email Domain is Checked to Check the Email Addresses")
-    elif len(email_domain) != 1:
-        frappe.throw("There are NO Email Domains Defined to Check Email Addresses. Please make sure EXACTLY "
-                     "1 Email Domain is Checked to Check the Email Addresses")
-    else:
-        em_domain = email_domain[0].name
-        test_email = email_domain[0].email_id
-    is_valid = 0
-    if comm_sep_email:
-        emails = comm_sep_email.split(',')
-        for email_id in emails:
-            if email_id:
-                is_valid = validate_email(email_id, check_regex=True, check_mx=True, from_address=test_email,
-                                          helo_host=em_domain, smtp_timeout=10, dns_timeout=10,
-                                          use_blacklist=True, debug=True)
-                if is_valid != 1:
-                    if email_id != "NA":
-                        if backend == 0:
-                            frappe.msgprint(f"{email_id} is Not Valid Email Address either enter Valid Email ID or NA")
-                        else:
-                            return 0
-                    else:
-                        return 0
-            else:
-                frappe.msgprint("Email ID is Empty, either enter Valid Email or NA")
-        return is_valid
 
 
 def check_sales_taxes_integrity(document):
