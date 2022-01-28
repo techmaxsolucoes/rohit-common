@@ -32,7 +32,12 @@
   "api_key",
   "api_secret",
   "sb4",
-  "bg_submit_cancel_docs"
+  "bg_submit_cancel_docs",
+  "sb5",
+  "email_base_link",
+  "cb5",
+  "email_api_key",
+  "minimum_credits"
  ],
  "fields": [
   {
@@ -198,10 +203,35 @@
    "fieldtype": "Table",
    "label": "Docs Enabled for Background Submit and Cancel",
    "options": "Global Search DocType"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb5",
+   "fieldtype": "Section Break",
+   "label": "Email Validation API"
+  },
+  {
+   "fieldname": "email_base_link",
+   "fieldtype": "Data",
+   "label": "Base Link"
+  },
+  {
+   "fieldname": "cb5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "email_api_key",
+   "fieldtype": "Data",
+   "label": "API Key"
+  },
+  {
+   "fieldname": "minimum_credits",
+   "fieldtype": "Int",
+   "label": "Minimum Credits"
   }
  ],
  "issingle": 1,
- "modified": "2022-01-03 12:04:27.507147",
+ "modified": "2022-01-16 14:31:40.654686",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",
