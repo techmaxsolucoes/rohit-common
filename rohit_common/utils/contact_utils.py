@@ -6,7 +6,7 @@ import frappe
 from rohit_common.utils.email_utils import single_email_validations
 
 
-def validate_contact_emails(con_doc):
+def validate_contact_emails(con_doc, backend=True):
     """
     Validates the emails in a Contact document's Email Table
     If row in table has multiple email IDs then it would separate the row in to multiple rows
@@ -16,7 +16,7 @@ def validate_contact_emails(con_doc):
     for row in con_doc.email_ids:
         emails = row.email_id.split(',')
         for email in emails:
-            valid_email = single_email_validations(email, backend=0)
+            valid_email = single_email_validations(email, backend=backend)
             if valid_email:
                 # Valid Email if its 1st Email then replace the email in row else add a new row
                 if emails.index(email) == 0:

@@ -10,4 +10,4 @@ def validate(doc, method):
     """
     Validate the Email and Would move Multiple Emails in Single Row in Multiple Rows
     """
-    validate_contact_emails(doc)
+    validate_contact_emails(doc, backend=0)
