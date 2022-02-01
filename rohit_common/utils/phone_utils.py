@@ -5,23 +5,24 @@ import frappe
 import phonenumbers as pnos
 
 
-def comma_phone_validations(csv_phones, country_code):
+def comma_phone_validations(csv_phones, country_code, backend=True):
     """
     Returns comma separated validated phone numbers
     """
     val_csv_ph = ""
-    ph_list = val_csv_ph.split(",")
+    ph_list = csv_phones.split(",")
     for phone in ph_list:
-        val_phone = single_phone_validations(phone, country_code)
-        if val_phone:
-            if val_csv_ph:
-                val_csv_ph += f", {val_phone.phone}"
-            else:
-                val_csv_ph = val_phone.phone
+        if phone != "":
+            val_phone = single_phone_validations(phone, country_code, backend)
+            if val_phone:
+                if val_csv_ph:
+                    val_csv_ph += f", {val_phone.phone}"
+                else:
+                    val_csv_ph = val_phone.phone
     return val_csv_ph
 
 
-def single_phone_validations(phone_txt, country_code):
+def single_phone_validations(phone_txt, country_code, backend=True):
     """
     Returns Validated Phone Dictionary. The dictionary has following keys
     phone:{fomatted_phone}, phone_type:{phone_type_int}, phone_validation:{ph_val_int}
@@ -33,6 +34,12 @@ def single_phone_validations(phone_txt, country_code):
         val_ph_dict["phone"] = format_phone(parsed_ph)
         val_ph_dict["phone_validation"] = validate_no(parsed_ph)
         val_ph_dict["phone_type"] = get_phone_type(parsed_ph)
+    else:
+        message = f"Phone No: {phone_txt} for Country Code= {country_code} could not be Parsed"
+        if backend == 1:
+            print(message)
+        else:
+            frappe.msgprint(message)
     return val_ph_dict
 
 

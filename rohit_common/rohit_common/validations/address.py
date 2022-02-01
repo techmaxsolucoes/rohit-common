@@ -12,6 +12,8 @@ from difflib import SequenceMatcher as sm
 from .google_maps import geocoding, render_gmap_json
 from ..india_gst_api.gst_public_api import search_gstin
 from rohit_common.utils.email_utils import comma_email_validations
+from ...utils.phone_utils import comma_phone_validations
+from ...utils.rohit_common_utils import get_country_code
 from rohit_common.utils.rohit_common_utils import replace_java_chars, check_system_manager
 
 
@@ -20,11 +22,16 @@ def validate(doc, method):
     Contains various validations for an Address Doctype
     """
     validate_dynamic_links(doc)
+    backend = 1
     if not doc.flags.ignore_mandatory:
+        backend = 0
         country_validation(doc)
         gstin_validation(doc)
         geocode(doc)
-        doc.email_id = comma_email_validations(doc.email_id, backend=0)
+    ccode = get_country_code(country=doc.country, all_caps=1, backend=backend)
+    doc.phone = comma_phone_validations(doc.phone, ccode, backend)
+    doc.fax = comma_phone_validations(doc.fax, ccode, backend)
+    doc.email_id = comma_email_validations(doc.email_id, backend=backend)
     validate_primary_address(doc)
     validate_shipping_address(doc)
 

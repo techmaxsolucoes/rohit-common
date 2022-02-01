@@ -183,7 +183,7 @@ def validate_contact_phones(con_doc, backend=True):
         for row in con_doc.phone_nos:
             ctr_code = get_country_code(country=row.country, all_caps=1, backend=backend)
             if ctr_code:
-                val_ph_dict = single_phone_validations(row.phone, ctr_code)
+                val_ph_dict = single_phone_validations(row.phone, ctr_code, backend)
                 remove_phones = update_phone_row_with_validation(ph_row=row,
                     valid_ph_dict=val_ph_dict, rmv_ph_list=remove_phones)
             else:
