@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import re
+import ast
+import json
 import frappe
 import requests
-import json
-import ast
-import re
+import urllib.parse
 
+file_format = "json"
 
 def get_distance_matrix(origin, dest, mode='driving', units='metric'):
     key = get_google_maps_api_key()
@@ -35,23 +37,34 @@ def get_approx_dist_frm_matrix(dist_matrix, unit="km"):
         return dist_mts
 
 
-def geocoding(doc):
-    key = get_google_maps_api_key()
-    url = get_google_maps_url() + 'geocode/json?'
-    address_data = "address=" + str(doc.address_title) + " " + str(doc.address_line1) + str(doc.address_line2) + \
-                   " " + str(doc.city) + " " + str(doc.state) + " " + str(doc.country) + " " + str(doc.pincode)
-    full_url = url + address_data + "&key=" + key
-    characters = [" ", "#"]
-    for ch in characters:
-        full_url = full_url.replace(ch, "+")
-    response = requests.get(url=full_url)
-    response_json = json.loads(response.content)
-    doc.json_reply = str(response_json)
+def get_geocoded_address_dict(adr_doc):
+    """
+    Returns a geocoded dictionary for an Address Doc
+    """
+    action = "geocode"
+    adr_string_params = generate_address_string(adr_doc)
+    json_reply = get_gmaps_json(action, adr_string_params)
+    adr_dict = render_gmap_json(json_reply)
+
+    return adr_dict
 
 
-def render_gmap_json(json_txt):
-    json_dict = ast.literal_eval(json_txt)
-    add_dict = dict()
+def get_geocoded_address_json(adr_doc):
+    """
+    Returns a geocoded JSON Reply for an Address Doc
+    """
+    action = "geocode"
+    adr_string_params = generate_address_string(adr_doc)
+    json_reply = get_gmaps_json(action, adr_string_params)
+    return json_reply
+
+
+
+def render_gmap_json(json_dict):
+    """
+    Returns a readable dictionary from Google Json Reply
+    """
+    add_dict = frappe._dict({})
     if json_dict.get("status") == "OK":
         address_comps = json_dict.get("results")[0].get("address_components")
         geometry = json_dict.get("results")[0].get("geometry")
@@ -67,50 +80,42 @@ def render_gmap_json(json_txt):
             add_dict["poi_type"] = type_of_poi[0]
         add_dict["lat"] = geometry.get("location").get("lat")
         add_dict["lng"] = geometry.get("location").get("lng")
-        postal_code = ""
-        country_long = ""
-        country_short = ""
-        state_long = ""
-        city_long = ""
-        locality = ""
-        sublocal1 = ""
-        sublocal2 = ""
-        # frappe.msgprint(str(address_comps))
-        for d in address_comps:
-            if d.get("types"):
-                if d.get("types")[0] == 'postal_code':
-                    postal_code = d.get("long_name")
+        postal_code, country_long, country_short, state_long, city_long, locality, sublocal1, \
+            sublocal2 = "", "", "", "", "", "", "", ""
+        for comp in address_comps:
+            if comp.get("types"):
+                if comp.get("types")[0] == 'postal_code':
+                    postal_code = comp.get("long_name")
             else:
                 postal_code = ""
-            if d.get("types"):
-                if d.get("types")[0] == 'country':
-                    country_long = d.get("long_name")
-                    country_short = d.get("short_name")
+            if comp.get("types"):
+                if comp.get("types")[0] == 'country':
+                    country_long = comp.get("long_name")
+                    country_short = comp.get("short_name")
             else:
-                country_long = ""
                 country_short = ""
-            if d.get("types"):
-                if d.get("types")[0] == 'administrative_area_level_1':
-                    state_long = d.get("long_name")
+            if comp.get("types"):
+                if comp.get("types")[0] == 'administrative_area_level_1':
+                    state_long = comp.get("long_name")
             else:
                 state_long = ""
-            if d.get("types"):
-                if d.get("types")[0] == 'administrative_area_level_2':
-                    city_long = d.get("long_name")
+            if comp.get("types"):
+                if comp.get("types")[0] == 'administrative_area_level_2':
+                    city_long = comp.get("long_name")
             else:
                 city_long = ""
-            if d.get("types"):
-                if d.get("types")[0] == 'locality':
-                    locality = d.get("long_name")
+            if comp.get("types"):
+                if comp.get("types")[0] == 'locality':
+                    locality = comp.get("long_name")
             else:
                 locality = ""
-            if d.get("types"):
-                if d.get("types")[0] == 'political':
-                    if d.get("types")[1] == 'sublocality':
-                        if d.get("types")[2] == 'sublocality_level_1':
-                            sublocal1 = d.get("long_name")
-                        elif d.get("types")[2] == 'sublocality_level_2':
-                            sublocal2 = d.get("long_name")
+            if comp.get("types"):
+                if comp.get("types")[0] == 'political':
+                    if comp.get("types")[1] == 'sublocality':
+                        if comp.get("types")[2] == 'sublocality_level_1':
+                            sublocal1 = comp.get("long_name")
+                        elif comp.get("types")[2] == 'sublocality_level_2':
+                            sublocal2 = comp.get("long_name")
             else:
                 sublocal1 = ""
                 sublocal2 = ""
@@ -140,13 +145,74 @@ def render_gmap_json(json_txt):
     return add_dict
 
 
+def generate_address_string(adr_doc):
+    """
+    Generates the address string for a Address doc based on fields defined
+    """
+    adr_fields = ["address_line1", "address_line2", "city", "county", "pincode", "state",
+    "country"]
+    adr_string = "address="
+    for fld in adr_fields:
+        if adr_doc.get(fld) and adr_doc.get(fld).strip() and adr_doc.get(fld).strip() !="None":
+            adr_string += f"+{adr_doc.get(fld).strip()}"
+    return adr_string
+
+
+def update_doc_json_from_geocode(add_doc):
+    """
+    Updates address document Google JSON from Geocoding Reply
+    """
+    action = "geocode"
+    adr_params = generate_address_string(add_doc)
+    json_reply = get_gmaps_json(action, adr_params)
+    add_doc.json_reply = str(json_reply)
+
+
+def render_gmap_json_text(json_txt):
+    """
+    Returns a readable dictionary from Text of JSON reply saved in ERP
+    """
+    json_dict = ast.literal_eval(json_txt)
+    add_dict = render_gmap_json(json_dict)
+
+    return add_dict
+
+
+def get_gmaps_json(action, parameters):
+    """
+    Returns the json reply for GMAP action and file Format
+    """
+    api_key, base_url = get_google_maps_key_url()
+    full_url = f"{base_url}{action}/{file_format}?{parameters}&key={api_key}"
+    replace_chars = [" ", "#"]
+    for char in replace_chars:
+        full_url = full_url.replace(char, "+")
+
+    response = requests.get(url=full_url)
+    response_json = json.loads(response.content)
+
+    return response_json
+
+
+def get_google_maps_key_url():
+    """
+    Returns google api_key and base_url
+    """
+    key = get_google_maps_api_key()
+    base_url = get_google_maps_url()
+    return key, base_url
+
+
 def get_google_maps_api_key():
+    """
+    Returns google maps api key
+    """
     gmapset = frappe.get_single("Google Settings")
-    if gmapset.enable == 1:
-        return gmapset.api_key
-    else:
-        frappe.throw('Google Settings is not Enabled')
+    return gmapset.api_key
 
 
 def get_google_maps_url():
+    """
+    Static returns the Google Maps API base URL
+    """
     return "https://maps.googleapis.com/maps/api/"

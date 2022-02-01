@@ -9,12 +9,13 @@ import ast
 from datetime import date
 from frappe.utils import flt, getdate
 from difflib import SequenceMatcher as sm
-from .google_maps import geocoding, render_gmap_json
+from .google_maps import update_doc_json_from_geocode, render_gmap_json_text
 from ..india_gst_api.gst_public_api import search_gstin
-from rohit_common.utils.email_utils import comma_email_validations
+from ...utils.email_utils import comma_email_validations
+from ...utils.address_utils import all_address_text_validations
 from ...utils.phone_utils import comma_phone_validations
 from ...utils.rohit_common_utils import get_country_code
-from rohit_common.utils.rohit_common_utils import replace_java_chars, check_system_manager
+from ...utils.rohit_common_utils import replace_java_chars, check_system_manager
 
 
 def validate(doc, method):
@@ -22,12 +23,13 @@ def validate(doc, method):
     Contains various validations for an Address Doctype
     """
     validate_dynamic_links(doc)
+    all_address_text_validations(doc)
     backend = 1
     if not doc.flags.ignore_mandatory:
         backend = 0
         country_validation(doc)
         gstin_validation(doc)
-        geocode(doc)
+        check_need_for_geocode(doc)
     ccode = get_country_code(country=doc.country, all_caps=1, backend=backend)
     doc.phone = comma_phone_validations(doc.phone, ccode, backend)
     doc.fax = comma_phone_validations(doc.fax, ccode, backend)
@@ -235,7 +237,7 @@ def check_id(doc):
     return new_name, entered_name
 
 
-def geocode(doc):
+def check_need_for_geocode(doc):
     """
     Gets Google Geocoding as per the checkboxes direction
     """
@@ -243,18 +245,18 @@ def geocode(doc):
         remove_google_updates(doc)
     else:
         if not doc.json_reply:
-            geocoding(doc)
-            address_dict = render_gmap_json(doc.json_reply)
+            update_doc_json_from_geocode(doc)
+            address_dict = render_gmap_json_text(doc.json_reply)
             if address_dict:
                 update_fields_from_gmaps(doc, address_dict)
         else:
             json_dict = ast.literal_eval(doc.json_reply)
             if json_dict.get("status") == "OK":
-                address_dict = render_gmap_json(doc.json_reply)
+                address_dict = render_gmap_json_text(doc.json_reply)
                 if address_dict:
                     update_fields_from_gmaps(doc, address_dict)
             else:
-                geocoding(doc)
+                update_doc_json_from_geocode(doc)
 
 
 def remove_google_updates(doc):
