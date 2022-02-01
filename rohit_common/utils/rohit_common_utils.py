@@ -25,8 +25,11 @@ def check_or_rename_doc(document, backend):
             if backend == 1:
                 print(f"Renaming {document.doctype}: {entered_name} to New {document.doctype}: "
                     f"{new_name}")
-                frappe.rename_doc(document.doctype, entered_name, new_name, merge=False)
-                return 1
+                try:
+                    frappe.rename_doc(document.doctype, entered_name, new_name, merge=False)
+                    return 1
+                except Exception as e:
+                    print(f"Unable to Rename {document.doctype}: {entered_name} due to Error {e}")
             else:
                 frappe.throw(message)
 
