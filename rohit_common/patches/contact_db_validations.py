@@ -13,7 +13,7 @@ def master_renaming():
     Gets a list of all masters and checks it as per the rules and renames them
     """
     st_time = time.time()
-    doc_list = ["Account", "Address", "Contact", "Customer", "Supplier"]
+    doc_list = ["Address", "Contact", "Customer", "Supplier"]
     for dtyp in doc_list:
         renamed = 0
         dt_dict = frappe.db.sql(f"""SELECT name FROM `tab{dtyp}` ORDER BY creation DESC""", as_dict=1)
