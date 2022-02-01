@@ -1,7 +1,12 @@
+#  Copyright (c) 2022. Rohit Industries Group Private Limited and Contributors.
+#  For license information, please see license.txt
+
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import re
 import frappe
+from ...utils.rohit_common_utils import check_or_rename_doc
 from ...utils.contact_utils import validate_contact_master, all_contact_email_validations, \
     all_contact_phone_validations, all_contact_text_validations
 
@@ -19,3 +24,4 @@ def validate(doc, method):
     all_contact_text_validations(doc, backend=backend)
     all_contact_phone_validations(doc, backend=backend)
     all_contact_email_validations(doc, backend=backend)
+    check_or_rename_doc(doc, backend)
