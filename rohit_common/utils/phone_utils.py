@@ -10,15 +10,16 @@ def comma_phone_validations(csv_phones, country_code, backend=True):
     Returns comma separated validated phone numbers
     """
     val_csv_ph = ""
-    ph_list = csv_phones.split(",")
-    for phone in ph_list:
-        if phone != "":
-            val_phone = single_phone_validations(phone, country_code, backend)
-            if val_phone:
-                if val_csv_ph:
-                    val_csv_ph += f", {val_phone.phone}"
-                else:
-                    val_csv_ph = val_phone.phone
+    if csv_phones:
+        ph_list = csv_phones.split(",")
+        for phone in ph_list:
+            if phone != "":
+                val_phone = single_phone_validations(phone, country_code, backend)
+                if val_phone:
+                    if val_csv_ph:
+                        val_csv_ph += f", {val_phone.phone}"
+                    else:
+                        val_csv_ph = val_phone.phone
     return val_csv_ph
 
 

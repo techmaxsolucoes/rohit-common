@@ -12,14 +12,15 @@ def comma_email_validations(csv_email, backend=True):
     Returns comma separated validated emails
     """
     validated_csv = ""
-    em_list = csv_email.split(",")
-    for email in em_list:
-        val_email = single_email_validations(email, backend)
-        if val_email:
-            if validated_csv:
-                validated_csv += f", {val_email}"
-            else:
-                validated_csv = val_email
+    if csv_email:
+        em_list = csv_email.split(",")
+        for email in em_list:
+            val_email = single_email_validations(email, backend)
+            if val_email:
+                if validated_csv:
+                    validated_csv += f", {val_email}"
+                else:
+                    validated_csv = val_email
     return validated_csv
 
 
