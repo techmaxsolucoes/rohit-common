@@ -1,8 +1,43 @@
+#  Copyright (c) 2022. Rohit Industries Group Private Limited and Contributors.
+#  For license information, please see license.txt
+
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import re
 import frappe
 from frappe.utils import get_files_path
+
+
+def check_or_rename_doc(document, backend):
+    """
+    Compares the name of the document with sanitized docs and if found different
+    Renames at backend and disallows in Frontend
+    """
+    new_name, entered_name = get_sanitized_name(document)
+    if document.get('__islocal'):
+        if new_name != document.name:
+            document.name = new_name
+    else:
+        if new_name != document.name:
+            message = (f"Special Characters not allowed in {document.doctype} ID.<br>Current \
+                            {document.doctype} ID: {entered_name}.<br>Whereas Allowed \
+                            {document.doctype} ID: {new_name}")
+            if backend == 1:
+                print(f"Renaming {document.doctype}: {entered_name} to New {document.doctype}: "
+                    f"{new_name}")
+                frappe.rename_doc(document.doctype, entered_name, new_name, merge=False)
+                return 1
+            else:
+                frappe.throw(message)
+
+
+def get_sanitized_name(document):
+    """
+    Disallow Special Characters in Name of Document
+    """
+    new_name = re.sub('[^A-Za-z0-9\-]+', '', document.name)
+    entered_name = document.name
+    return new_name, entered_name
 
 
 def santize_listed_txt_fields(document, field_dict):
