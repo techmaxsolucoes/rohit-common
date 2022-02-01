@@ -5,6 +5,39 @@ import frappe
 from frappe.utils import get_files_path
 
 
+def santize_listed_txt_fields(document, field_dict):
+    """
+    Does various operations on text fields based on field_dict
+    field_dict is a dictionary with field_name and also the case of the field
+    1. Strips All text fields (removed leading and trailing spaces)
+    2. Removes extra spaces
+    3. Make the field as per cases
+    """
+    for fld in field_dict:
+        field_name = fld.get("field_name")
+        casing = fld.get("case")
+        if getattr(document, field_name):
+            stripped_fld = getattr(document, field_name).strip()
+            if stripped_fld:
+                # Below code replaces all the extra spaces
+                snt_strip = " ".join(stripped_fld.split())
+                if snt_strip:
+                    if casing == "title":
+                        cased_txt = snt_strip.title()
+                    elif casing == "upper":
+                        cased_txt = snt_strip.upper()
+                    elif casing == "lower":
+                        cased_txt = snt_strip.lower()
+                    else:
+                        cased_txt = snt_strip
+                    setattr(document, field_name, cased_txt)
+            else:
+                setattr(document, field_name, None)
+        else:
+            setattr(document, field_name, None)
+
+
+
 def separate_csv_in_table(document, tbl_name, field_name):
     """
     Moves the Comma Separated Values in a documents Child Table to Separate Rows

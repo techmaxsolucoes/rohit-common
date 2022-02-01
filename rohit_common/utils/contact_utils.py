@@ -6,7 +6,21 @@ import frappe
 from .email_utils import single_email_validations
 from .phone_utils import single_phone_validations
 from .address_utils import get_country_for_master
-from .rohit_common_utils import separate_csv_in_table, get_country_code
+from .rohit_common_utils import separate_csv_in_table, get_country_code, santize_listed_txt_fields
+
+
+def all_contact_text_validations(con_doc, backend=False):
+    """
+    Sanitizes all the text fields as pe the field dict
+    """
+    field_dict = [frappe._dict({})]
+
+    field_dict = [
+        {"field_name": "first_name", "case":"title"}, {"field_name": "middle_name", "case":"title"},
+        {"field_name": "last_name", "case":"title"}, {"field_name": "designation", "case":"title"},
+        {"field_name": "notes", "case":""}, {"field_name": "department", "case":"title"}
+    ]
+    santize_listed_txt_fields(con_doc, field_dict)
 
 
 def all_contact_phone_validations(con_doc, backend=True):

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import frappe
 from ...utils.contact_utils import validate_contact_master, all_contact_email_validations, \
-    all_contact_phone_validations
+    all_contact_phone_validations, all_contact_text_validations
 
 
 
@@ -16,5 +16,6 @@ def validate(doc, method):
     else:
         backend = 0
     validate_contact_master(doc, backend=backend)
+    all_contact_text_validations(doc, backend=backend)
     all_contact_phone_validations(doc, backend=backend)
     all_contact_email_validations(doc, backend=backend)
