@@ -3,7 +3,199 @@
 
 from __future__ import unicode_literals
 import frappe
-from rohit_common.utils.email_utils import single_email_validations
+from .email_utils import single_email_validations
+from .phone_utils import single_phone_validations
+from .address_utils import get_country_for_master
+from .rohit_common_utils import separate_csv_in_table, get_country_code
+
+
+def all_contact_phone_validations(con_doc, backend=True):
+    """
+    Runs various contact phone related validations serially.
+    """
+    validate_contact_phones(con_doc, backend)
+    exactly_one_primary_phone(con_doc)
+
+
+def all_contact_email_validations(con_doc, backend=True):
+    """
+    Runs various contact email related validations serially.
+    """
+    validate_contact_emails(con_doc, backend)
+    exactly_one_primary_email(con_doc)
+
+
+def exactly_one_primary_phone(con_doc):
+    """
+    Makes exactly 1 mobile as Primary and 1 Phone as Primary for a Contact.
+    Should be run on validated phone numbers only. Also populates the mobile
+    and phone number fields for a contact
+    """
+    pm_ph, pm_mb = 0, 0
+    csv_ph, csv_mob = "", ""
+    for row in con_doc.phone_nos:
+        if row.is_mobile == 1:
+            if csv_mob == "":
+                csv_mob += row.phone
+            else:
+                csv_mob += f", {row.phone}"
+        else:
+            if csv_ph == "":
+                csv_ph += row.phone
+            else:
+                csv_ph += f", {row.phone}"
+        if row.is_primary_mobile_no == 1:
+            if pm_mb != 0:
+                row.is_primary_mobile_no = 0
+            else:
+                pm_mb += 1
+        if row.is_primary_phone == 1:
+            if pm_ph != 0:
+                row.is_primary_phone = 0
+            else:
+                pm_ph += 1
+    con_doc.mobile_no = csv_mob
+    con_doc.phone = csv_ph
+
+
+def update_phone_row_with_validation(ph_row, valid_ph_dict, rmv_ph_list):
+    """
+    Returns Phone row after analysing the validated phone dict supplied and also
+    returns the Remove phone list
+    """
+    if valid_ph_dict:
+        if valid_ph_dict.phone_validation == 0:
+            rmv_ph_list.append(ph_row.phone)
+        else:
+            ph_row.phone = valid_ph_dict.phone
+            if valid_ph_dict.phone_validation == 1:
+                ph_row.is_valid = 1
+                ph_row.is_possible = 0
+            else:
+                ph_row.is_valid = 0
+                ph_row.is_possible = 1
+            if valid_ph_dict.phone_type == 1:
+                ph_row.is_primary_phone = 0
+                ph_row.is_mobile = 1
+            else:
+                ph_row.is_primary_mobile_no = 0
+                ph_row.is_mobile = 0
+    else:
+        rmv_ph_list.append(ph_row.phone)
+
+    return rmv_ph_list
+
+
+def validate_or_populate_phone_country(con_doc, backend=True):
+    """
+    If Country is filled then checks if the guess country is Single then it needs to Match
+    Else it can be different. If there is no country then it would fill the guessed country if
+    there is a guess available
+    """
+    for row in con_doc.phone_nos:
+        guessed_country = get_contact_country(con_doc)
+        if not row.country:
+            if guessed_country:
+                row.country = guessed_country
+        else:
+            if guessed_country:
+                if row.country != guessed_country:
+                    message = f"For {frappe.get_desk_link(con_doc.doctype, con_doc.name)} in \
+                    Contact Numbers Table Row# {row.idx} Country Entered = {row.country} whereas \
+                    Guessed Country = {guessed_country}.<br>Kindly check the discrepancey \
+                    and change the same"
+                    if backend == 1:
+                        print(message)
+                    else:
+                        frappe.throw(message)
+
+
+def get_contact_country_code(con_doc):
+    """
+    Returns a Contact's country codes based on Masters or Address Linked
+    1. If address is linked to a contact then it returns that address's country
+    2. If No Address then it would check the masters of linked and check the addresses of those
+    masters and if there is only 1 country then return that country else return NONE
+    """
+    country = get_contact_country(con_doc)
+    if country:
+        ctr_code = frappe.get_value("Country", country, "code").upper()
+    else:
+        ctr_code = ""
+    return ctr_code
+
+
+def get_contact_country(con_doc):
+    """
+    Returns a country for a contact by Guessing the linked to Master
+    1. If linke to customer or supplier, it would check the customer address countries.
+    2. If linked to Employee check address doc else return Company Linked Country
+    3. If Linked to Warehouse check address doc else return company linked country
+    4. Otherwise return NONE
+    """
+    if con_doc.address:
+        country = frappe.get_value("Address", con_doc.address, "country")
+    elif con_doc.links:
+        country = ""
+        for lnk in con_doc.links:
+            def_country = get_country_for_master(lnk.link_doctype, lnk.link_name)
+            if country == "" and def_country:
+                country = def_country
+    else:
+        country = ""
+    return country
+
+
+def validate_contact_master(con_doc, backend=True):
+    """
+    It would validate if a contact is linked to a Master like Supplier, Customer etc
+    If not then it would raise exception in case its not backend whereas in Backend it would just
+    print a message.
+    It would also check if the contact has email or phone number missing phone and
+    email is not allowed
+    """
+    if not con_doc.email_ids and not con_doc.phone_nos:
+        message = f"{frappe.get_desk_link(con_doc.doctype, con_doc.name)} does not have either \
+        Mobile or Email Address mentioned one of the Two is Mandatory"
+        if backend == 1:
+            print(message)
+        else:
+            frappe.throw(message)
+    if not con_doc.links:
+        message = f"{frappe.get_desk_link(con_doc.doctype, con_doc.name)} is not Linked to Any \
+        Master"
+        if backend==1:
+            print(message)
+        else:
+            frappe.throw(message)
+
+
+def validate_contact_phones(con_doc, backend=True):
+    """
+    Validates the phones in a Contact document's Phone Table
+    If row in table has multiple phone numbers then it would separate the row in to multiple rows
+    Also it would remove the invalid phones and also would populate the phone number field
+    """
+    remove_phones = []
+    if con_doc.phone_nos:
+        separate_csv_in_table(document=con_doc, tbl_name="phone_nos", field_name="phone")
+        validate_or_populate_phone_country(con_doc, backend=backend)
+        for row in con_doc.phone_nos:
+            ctr_code = get_country_code(country=row.country, all_caps=1, backend=backend)
+            if ctr_code:
+                val_ph_dict = single_phone_validations(row.phone, ctr_code)
+                remove_phones = update_phone_row_with_validation(ph_row=row,
+                    valid_ph_dict=val_ph_dict, rmv_ph_list=remove_phones)
+            else:
+                if backend == 1:
+                    print("pass")
+                else:
+                    frappe.throw(f"For ")
+    if remove_phones:
+        for rmv_ph in remove_phones:
+            frappe.msgprint(f"Phone No: {rmv_ph} is Invalid and is Being Removed")
+            [con_doc.phone_nos.remove(phn) for phn in con_doc.get('phone_nos')
+            if phn.phone == rmv_ph]
 
 
 def validate_contact_emails(con_doc, backend=True):
@@ -13,24 +205,41 @@ def validate_contact_emails(con_doc, backend=True):
     Also it would remove the invalid emails and also would populate the email address field
     """
     remove_emails = []
+    if con_doc.email_ids:
+        separate_csv_in_table(document=con_doc, tbl_name="email_ids", field_name="email_id")
     for row in con_doc.email_ids:
-        emails = row.email_id.split(',')
-        for email in emails:
-            valid_email = single_email_validations(email, backend=backend)
-            if valid_email:
-                # Valid Email if its 1st Email then replace the email in row else add a new row
-                if emails.index(email) == 0:
-                    row.email_id = valid_email
-                else:
-                    #Add row to the table with new email ID
-                    con_doc.append("email_ids", {"email_id": valid_email})
-            else:
-                remove_emails.append(email)
+        valid_email = single_email_validations(row.email_id, backend=backend)
+        if valid_email:
+            row.email_id = valid_email
+        else:
+            remove_emails.append(row.email_id)
     if remove_emails:
         for rmv_eml in remove_emails:
-            [con_doc.email_ids.remove(eml) for eml in con_doc.get('email_ids')
-            if eml.email_id == rmv_eml]
+            message = f"Email ID: {rmv_eml} is being removed since its not valid"
+            if backend == 1:
+                print(message)
+            else:
+                frappe.msgprint(message)
+            [con_doc.email_ids.remove(eml) for eml in con_doc.get('email_ids') if eml.email_id == rmv_eml]
 
+
+def exactly_one_primary_email(con_doc):
+    """
+    Makes exactly one email ID as primary and would populate the email ID field
+    """
+    ct_pri_em = 0
+    for row in con_doc.email_ids:
+        if row.is_primary == 1:
+            if ct_pri_em == 0:
+                ct_pri_em += 1
+                con_doc.email_id = row.email_id
+            else:
+                row.is_primary = 0
+    if ct_pri_em == 0:
+        for row in con_doc.email_ids:
+            row.is_primary = 1
+            con_doc.email_id = row.email_id
+            break
 
 
 def get_contact_phones(con_name):

@@ -5,6 +5,60 @@ import frappe
 from frappe.utils import get_files_path
 
 
+def separate_csv_in_table(document, tbl_name, field_name):
+    """
+    Moves the Comma Separated Values in a documents Child Table to Separate Rows
+    Example Contact Emails should have single email per line instead of comma separated values
+    Similarly Phones table should not have comma separated values in Phone Child table of Contact
+    """
+    new_tbl_rows = []
+    tbl_change = 0
+    tbl_lst = document.get(tbl_name)
+    for csv_row in tbl_lst:
+        row_list = (csv_row.get(field_name)).split(",")
+        if len(row_list) > 1:
+            tbl_change = 1
+            for row in row_list:
+                if row_list.index(row) == 0:
+                    new_row = csv_row.__dict__
+                    new_row[field_name] = row
+                    new_tbl_rows.append(new_row.copy())
+                else:
+                    new_row = csv_row.__dict__
+                    del new_row["name"]
+                    del new_row["idx"]
+                    new_row[field_name] = row
+                    new_tbl_rows.append(new_row.copy())
+        else:
+            new_tbl_rows.append(csv_row.__dict__.copy())
+    if tbl_change == 1:
+        if new_tbl_rows:
+            document.set(tbl_name, "")
+            document.set(tbl_name, new_tbl_rows)
+
+
+def get_country_code(country=None, all_caps=1, backend=True):
+    """
+    Returns the country code in ALL CAPS if all_caps=1 else in lower
+    Also if backend is true it returns None for no country but would
+    throw error is backend is false
+    """
+    ccode = frappe.get_value("Country", country, "code")
+    if ccode:
+        if all_caps == 1:
+            ccode = ccode.upper()
+        else:
+            ccode = ccode.lower()
+        return ccode
+    else:
+        message = f"For Country = {country} there is No Country Code defined"
+        if backend == 1:
+            print(message)
+        else:
+            frappe.msgprint(message)
+        return None
+
+
 def remove_html(html_text):
     """
     Cleans html tags from html text and return plain text
