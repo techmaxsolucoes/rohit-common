@@ -45,31 +45,40 @@ def exactly_one_primary_phone(con_doc):
     Should be run on validated phone numbers only. Also populates the mobile
     and phone number fields for a contact
     """
-    pm_ph, pm_mb = 0, 0
+    pm_ph, pm_mb = get_no_of_primary_phones(con_doc)
     csv_ph, csv_mob = "", ""
     for row in con_doc.phone_nos:
         if row.is_mobile == 1:
+            if pm_mb == 0:
+                row.is_primary_mobile_no = 1
+                pm_mb += 1
             if csv_mob == "":
                 csv_mob += row.phone
             else:
                 csv_mob += f", {row.phone}"
         else:
+            if pm_ph == 0:
+                row.is_primary_phone = 1
+                pm_ph += 1
             if csv_ph == "":
                 csv_ph += row.phone
             else:
                 csv_ph += f", {row.phone}"
-        if row.is_primary_mobile_no == 1:
-            if pm_mb != 0:
-                row.is_primary_mobile_no = 0
-            else:
-                pm_mb += 1
-        if row.is_primary_phone == 1:
-            if pm_ph != 0:
-                row.is_primary_phone = 0
-            else:
-                pm_ph += 1
     con_doc.mobile_no = csv_mob
     con_doc.phone = csv_ph
+
+
+def get_no_of_primary_phones(con_doc):
+    """
+    Returns the number of primary_mobile and primary_phones for a contact
+    """
+    pm_ph, pm_mb = 0, 0
+    for row in con_doc.phone_nos:
+        if row.is_primary_mobile_no == 1:
+            pm_mb += 1
+        if row.is_primary_phone == 1:
+            pm_ph += 1
+    return pm_ph, pm_mb
 
 
 def update_phone_row_with_validation(ph_row, valid_ph_dict, rmv_ph_list):
@@ -86,6 +95,8 @@ def update_phone_row_with_validation(ph_row, valid_ph_dict, rmv_ph_list):
                 ph_row.is_valid = 1
                 ph_row.is_possible = 0
             else:
+                frappe.msgprint(f"Phone No:{ph_row.phone} entered seems possible but there could \
+                    be some error in Entering the Phone. Kindly check again")
                 ph_row.is_valid = 0
                 ph_row.is_possible = 1
             if valid_ph_dict.phone_type == 1:
@@ -204,7 +215,7 @@ def validate_contact_phones(con_doc, backend=True):
                 if backend == 1:
                     print("pass")
                 else:
-                    frappe.throw(f"For ")
+                    frappe.throw(f"For Country:{row.country} Country Code may be Empty.")
     if remove_phones:
         for rmv_ph in remove_phones:
             frappe.msgprint(f"Phone No: {rmv_ph} is Invalid and is Being Removed")
