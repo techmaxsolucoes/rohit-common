@@ -14,8 +14,8 @@ from ..india_gst_api.gst_public_api import search_gstin
 from ...utils.email_utils import comma_email_validations
 from ...utils.address_utils import all_address_text_validations
 from ...utils.phone_utils import comma_phone_validations
-from ...utils.rohit_common_utils import get_country_code
-from ...utils.rohit_common_utils import replace_java_chars, check_system_manager
+from ...utils.rohit_common_utils import get_country_code,replace_java_chars, check_system_manager,\
+    check_or_rename_doc
 
 
 def validate(doc, method):
