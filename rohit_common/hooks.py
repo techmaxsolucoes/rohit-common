@@ -77,6 +77,9 @@ doc_events = {
     "Contact": {
         "validate": "rohit_common.rohit_common.validations.contact.validate"
     },
+    "Customer": {
+        "validate": "rohit_common.rohit_common.validations.customer.validate"
+    },
     "DocShare": {
         "validate": "rohit_common.rohit_common.validations.docshare.validate",
         "on_trash": "rohit_common.rohit_common.validations.docshare.on_trash"
@@ -99,6 +102,9 @@ doc_events = {
     },
     "Purchase Invoice": {
         "validate": "rohit_common.rohit_common.validations.purchase_invoice.validate"
+    },
+    "Supplier": {
+        "validate": "rohit_common.rohit_common.validations.supplier.validate"
     },
     "User": {
         "validate": "rohit_common.rohit_common.validations.user.validate"
