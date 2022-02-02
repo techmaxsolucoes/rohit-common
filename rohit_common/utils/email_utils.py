@@ -60,6 +60,7 @@ def validate_global_email(email_id, backend=True):
                 if response.dispoable != 1 and response.spamtrap != 1:
                     # Create Global Email
                     new_glob = frappe.new_doc("Global Emails")
+                    new_glob.flags.ignore_permissions= True
                     new_glob.email_id = passed_email
                     new_glob.domain = response.domain
                     new_glob.is_free = response.free_email
