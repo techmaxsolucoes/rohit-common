@@ -4,6 +4,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import re
+import time
 import frappe
 from frappe.utils import get_files_path
 
@@ -32,6 +33,8 @@ def check_or_rename_doc(document, backend):
                     print(f"Unable to Rename {document.doctype}: {entered_name} due to Error {e}")
             else:
                 frappe.throw(message)
+    if document.doctype in ("Address", "Contact"):
+        sanitize_dynamic_link(parenttype=document.doctype)
 
 
 def get_sanitized_name(document):
@@ -225,6 +228,21 @@ def check_sales_taxes_integrity(document):
                                                                           tax.idx))
     else:
         frappe.throw("Empty Tax Table is not Allowed for Sales Invoice {0}".format(document.name))
+
+def sanitize_dynamic_link(parenttype):
+    """
+    Finds the wrong entries in Dynamic Link for Address or Contact in DL Table and Deletes them
+    """
+    query = f"""SELECT name, parenttype, parent, link_doctype, link_name FROM `tabDynamic Link`
+    WHERE parenttype = '{parenttype}' AND parent NOT IN (SELECT name FROM `tab{parenttype}`)"""
+    dl_links = frappe.db.sql(query, as_dict=1)
+    print(query)
+    print(dl_links)
+    for dlnk in dl_links:
+        print(f"""Deleting Dynamic Link for {dlnk.parenttype}: {dlnk.parent} linked to
+            {dlnk.link_doctype} and {dlnk.link_name}""")
+        frappe.db.delete("Dynamic Link", dlnk.name)
+
 
 
 def check_dynamic_link(parenttype, parent, link_doctype, link_name):
