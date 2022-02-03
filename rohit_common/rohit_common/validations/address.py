@@ -36,6 +36,7 @@ def validate(doc, method):
     doc.email_id = comma_email_validations(doc.email_id, backend=backend)
     validate_primary_address(doc)
     validate_shipping_address(doc)
+    check_or_rename_doc(doc, backend)
 
 
 def gstin_validation(doc):
