@@ -142,8 +142,8 @@ def get_country_for_master(link_type, link_name):
     If the country is same in Multiple addresses then only it would return a country
     """
     add_dict = get_address_for_master(link_type, link_name)
+    base_country = None
     if add_dict:
-        base_country = None
         for adr in add_dict:
             if base_country:
                 if adr.country != base_country:
