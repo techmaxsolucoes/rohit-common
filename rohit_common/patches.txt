@@ -5,3 +5,5 @@ rohit_common.patches.20180217_update_state_field_address
 rohit_common.patches.20181101_update_gst_fields_p_inoivce
 rohit_common.patches.20181222_update_gst_hsn #2021-07-29
 rohit_common.patches.20200929_update_company_details
+execute:frappe.delete_doc("Report", "Modified Sales Register")
+execute:frappe.delete_doc("Report", "Modified Purchase Register")
