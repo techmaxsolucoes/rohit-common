@@ -236,8 +236,6 @@ def sanitize_dynamic_link(parenttype):
     query = f"""SELECT name, parenttype, parent, link_doctype, link_name FROM `tabDynamic Link`
     WHERE parenttype = '{parenttype}' AND parent NOT IN (SELECT name FROM `tab{parenttype}`)"""
     dl_links = frappe.db.sql(query, as_dict=1)
-    print(query)
-    print(dl_links)
     for dlnk in dl_links:
         print(f"""Deleting Dynamic Link for {dlnk.parenttype}: {dlnk.parent} linked to
             {dlnk.link_doctype} and {dlnk.link_name}""")
