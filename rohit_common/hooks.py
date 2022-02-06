@@ -107,7 +107,7 @@ doc_events = {
         "validate": "rohit_common.rohit_common.validations.purchase_invoice.validate"
     },
     "Supplier": {
-        "autoname": "rohit_common.rohit_common.validations.supplier.autoname"
+        "autoname": "rohit_common.rohit_common.validations.supplier.autoname",
         "validate": "rohit_common.rohit_common.validations.supplier.validate"
     },
     "User": {
