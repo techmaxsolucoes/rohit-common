@@ -7,6 +7,16 @@ import frappe
 from ...utils.rohit_common_utils import check_or_rename_doc
 
 
+def autoname(doc, method):
+    """
+    Automatically renames the document
+    """
+    backend = 0
+    if doc.flags.ignore_mandatory == 1:
+        backend = 1
+    check_or_rename_doc(doc, backend)
+
+
 def validate(doc, method):
     """
     Validate the Names as per the rules

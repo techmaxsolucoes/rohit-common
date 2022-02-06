@@ -11,6 +11,15 @@ from ...utils.contact_utils import validate_contact_master, all_contact_email_va
     all_contact_phone_validations, all_contact_text_validations
 
 
+def autoname(doc, method):
+    """
+    Automatically renames the document
+    """
+    backend = 0
+    if doc.flags.ignore_mandatory == 1:
+        backend = 1
+    check_or_rename_doc(doc, backend)
+
 
 def validate(doc, method):
     """

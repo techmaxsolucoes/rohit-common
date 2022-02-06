@@ -18,6 +18,13 @@ from ...utils.rohit_common_utils import get_country_code,replace_java_chars, che
     check_or_rename_doc
 
 
+def autoname(doc, method):
+    backend = 0
+    if doc.flags.ignore_mandatory == 1:
+        backend = 1
+    check_or_rename_doc(doc, backend)
+
+
 def validate(doc, method):
     """
     Contains various validations for an Address Doctype

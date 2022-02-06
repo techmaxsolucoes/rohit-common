@@ -65,6 +65,7 @@ hide_in_installer = True
 
 doc_events = {
     "Address": {
+        "autoname": "rohit_common.rohit_common.validations.address.autoname",
         "validate": "rohit_common.rohit_common.validations.address.validate"
     },
     "Asset": {
@@ -75,9 +76,11 @@ doc_events = {
         "validate": "rohit_common.rohit_common.validations.asset_category.validate"
     },
     "Contact": {
+        "autoname": "rohit_common.rohit_common.validations.contact.autoname",
         "validate": "rohit_common.rohit_common.validations.contact.validate"
     },
     "Customer": {
+        "autoname": "rohit_common.rohit_common.validations.customer.autoname",
         "validate": "rohit_common.rohit_common.validations.customer.validate"
     },
     "DocShare": {
@@ -104,6 +107,7 @@ doc_events = {
         "validate": "rohit_common.rohit_common.validations.purchase_invoice.validate"
     },
     "Supplier": {
+        "autoname": "rohit_common.rohit_common.validations.supplier.autoname"
         "validate": "rohit_common.rohit_common.validations.supplier.validate"
     },
     "User": {
