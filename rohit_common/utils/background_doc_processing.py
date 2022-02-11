@@ -5,6 +5,11 @@
 from __future__ import unicode_literals
 import frappe
 import time
+from frappe.utils.background_jobs import enqueue
+
+
+def enqueue_bg():
+    enqueue(process_bg_docs, queue="long", timeout=2700)
 
 
 def get_bg_docs():

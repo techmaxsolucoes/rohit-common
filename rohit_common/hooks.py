@@ -138,7 +138,7 @@ scheduler_events = {
        ],
     "hourly": [
         "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.check_correct_folders",
-        "rohit_common.utils.background_doc_processing.process_bg_docs"
+        "rohit_common.utils.background_doc_processing.enqueue_bg"
     ],
     "weekly_long": [
         "rohit_common.rohit_common.scheduled_tasks.auto_delete_version.enqueue_deletion",
