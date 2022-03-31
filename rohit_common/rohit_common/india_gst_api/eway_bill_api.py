@@ -1,16 +1,31 @@
 #  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
 #  For license information, please see license.txt
 import frappe
-from datetime import datetime
-from .common import get_gsp_details, get_api_url
+import requests
+from datetime import datetime, timedelta
 from frappe.utils import get_datetime, getdate
 from frappe.utils.file_manager import save_file
-import requests
-timeout = 5
-api = 'eway'
+from .common import get_base_url, get_aspid_pass, get_default_gstin
+from ..validations.google_maps import get_distance_matrix, get_approx_dist_frm_matrix
+TIMEOUT=5
+
+
+def get_eway_distance(frm_adr_name, to_adr_name):
+    """
+    Returns distance in Integer for From and To Address based on Eway Rules
+    """
+    frm_doc = frappe.get_doc("Address", frm_adr_name)
+    to_doc = frappe.get_doc("Address", to_adr_name)
+    dist_matrix = get_distance_matrix(origin=frm_doc.pincode, dest=to_doc.pincode)
+    distance = min(int(get_approx_dist_frm_matrix(dist_matrix)), 3999)
+
+    return distance
 
 
 def create_ewb_from_json(ewb_json):
+    """
+    Creates eway bill from JSON
+    """
     action = 'GENEWAYBILL'
     res_json = process_ewb_post_request(api=api, action=action, json_data=ewb_json)
     return res_json
@@ -21,7 +36,7 @@ def cancel_ewb(ewb_no):
     res_json = process_ewb_post_request(api=api, action=action, json_data=ewb_json)
 
 
-def update_partb_ewb (ewb_doc):
+def update_partb_ewb(ewb_doc):
     action = 'VEHEWB'
     ewb_veh_data = {}
     for veh in ewb_doc.vehicles:
@@ -43,9 +58,10 @@ def update_partb_ewb (ewb_doc):
 
 
 def get_eway_bill_details(ewb_no, raw_resp=0):
+    api = "ewayapi"
     action = 'GetEwayBill'
-    parameter = 'ewbNo'
-    res_json = process_ewb_get_request(api=api, action=action, parm_name=parameter, parm_val=ewb_no, raw_resp=raw_resp)
+    param_dt = {"param": "ewbNo", "param_val": ewb_no}
+    res_json = process_ewb_get_request(api=api, action=action, param_dt=param_dt, raw_resp=raw_resp)
     return res_json
 
 
@@ -60,9 +76,10 @@ def get_ewb_by_dt_dn(dt, dn):
 
 
 def get_ewb_date(ewb_date):
-    action = 'GetEwayBillsByDate'
-    parameter = 'date'
-    res_json = process_ewb_get_request(api=api, action=action, parm_name=parameter, parm_val=ewb_date)
+    api = "ewayapi"
+    action = "GetEwayBillsByDate"
+    param_dt = {"param": "date", "param_val": ewb_date}
+    res_json = process_ewb_get_request(api=api, action=action, param_dt=param_dt)
     return res_json
 
 
@@ -74,25 +91,34 @@ def get_ewb_others(ewb_date):
 
 
 def get_ewb_detailed_print(ewbdoc, json_data):
-    api = 'asp'
+    api = 'aspapi'
     action = 'printdetailewb'
-    response = process_print_request(ewbdoc=ewbdoc, api=api, action=action, json=json_data)
+    response = process_print_request(ewbdoc=ewbdoc, api=api, action=action, json=json_data,
+        gstin=ewbdoc.generated_by)
     return response
 
 
-def process_print_request(ewbdoc, api, action, json):
-    gsp_link, aspid, asppass, gstin, sandbox = get_gsp_details(api=api, action=action)
-    api_url = get_api_url(api)
-    full_url = gsp_link + api_url + action + '?aspid=' + aspid + '&password=' + asppass + '&Gstin=' + gstin
-    response = requests.post(url=full_url, json=json, timeout=timeout)
+def process_print_request(ewbdoc, api, action, json, gstin=None):
+    """
+    Process print Request and Saves the file for detailed eWay Print with eWay Doc
+    """
+    base_url, sbox = get_base_url()
+    print_url = get_eway_url(base_url, sbox)
+    aspid, asppass = get_aspid_pass()
+    api_details = get_eway_api(api=api, action=action)
+    if not gstin:
+        gstin = get_default_gstin()
+    full_url = f"{print_url}/{api}/{api_details['version']}/{action}?"
+    full_url += f"aspid={aspid}&password={asppass}&Gstin={gstin}"
+    response = requests.post(url=full_url, json=json, timeout=TIMEOUT)
     image_data = response.content
-    save_file('{}.pdf'.format(ewbdoc.eway_bill_no), image_data, ewbdoc.doctype, ewbdoc.name, is_private=1)
+    save_file(f"{ewbdoc.eway_bill_no}.pdf", image_data, ewbdoc.doctype, ewbdoc.name, is_private=1)
     return response
 
 
 def process_ewb_post_request(api, action, json_data):
     full_url = get_ewb_url(api, action)
-    response = requests.post(url=full_url, json=json_data, timeout=timeout)
+    response = requests.post(url=full_url, json=json_data, timeout=TIMEOUT)
     res_json = response.json()
     ewb_no = res_json.get('ewayBillNo', "")
     if ewb_no == "":
@@ -107,20 +133,6 @@ def process_ewb_post_request(api, action, json_data):
         return res_json
 
 
-def process_ewb_get_request(api, action, parm_name, parm_val, parm_name2=None, parm_val2=None, raw_resp=0):
-    if parm_name2:
-        full_url = get_ewb_url(api, action) + '&' + parm_name + '=' + parm_val + '&' + parm_name2 + '=' + parm_val2
-    else:
-        full_url = get_ewb_url(api, action) + '&' + parm_name + '=' + str(parm_val)
-    response = requests.get(url=full_url, timeout=timeout)
-    if raw_resp == 1:
-        res_json = response
-    else:
-        res_json = response.json()
-    print (res_json)
-    return res_json
-
-
 def get_ewb_url(api, action):
     gsp_link, aspid, asppass, gstin, sandbox = get_gsp_details(api=api, action=action)
     auth_token = get_ewb_access_token()
@@ -128,51 +140,6 @@ def get_ewb_url(api, action):
     url = gsp_link + api_url + api + 'api?action=' + action + '&aspid=' + aspid + '&password=' + asppass + \
                '&gstin=' + gstin + '&authtoken=' + auth_token
     return url
-
-
-def get_ewb_access_token():
-    rset = frappe.get_single('Rohit Settings')
-    now_time = datetime.now()
-    ac_token_time = get_datetime(rset.access_token_time)
-    if not rset.access_token_time:
-        time_diff_hrs = 6
-    else:
-        time_diff_hrs = (now_time - ac_token_time).total_seconds()/3600
-    # Only Need Access Token after 6 hours of getting the first one since Access Token is Valid for 6 hours
-    if time_diff_hrs >= 6:
-        res_json = get_eway_auth_token()
-        if res_json.get("status") == '1':
-            access_token = res_json.get("authtoken")
-            rset.access_token = access_token
-            rset.access_token_time = now_time
-            rset.save()
-            frappe.db.commit()
-            rset.reload()
-            return access_token
-        else:
-            print('Error')
-    else:
-        access_token = rset.access_token
-        return access_token
-
-
-def get_eway_auth_token():
-    rset = frappe.get_single('Rohit Settings')
-    api = 'eway'
-    action = 'ACCESSTOKEN'
-    gsp_link, aspid, asppass, gstin, sandbox = get_gsp_details(api=api, action=action)
-    api_url = get_api_url(api=api)
-    if rset.sandbox_mode == 1:
-        gstin = '05AAACG1539P1ZH'
-        ewb_uname = '05AAACG1539P1ZH'
-        ewb_pass = 'abc123@@'
-    else:
-        ewb_uname = rset.eway_bill_id
-        ewb_pass = rset.eway_bill_password
-    full_url = gsp_link + api_url + 'authenticate?action=' + action + '&aspid=' + aspid + '&password=' + asppass + \
-               '&gstin=' + gstin + '&username=' + ewb_uname + '&ewbpwd=' + ewb_pass
-    response = requests.get(url=full_url, timeout=timeout)
-    return response.json()
 
 
 def get_supply_type(data, text):
@@ -232,7 +199,7 @@ def get_doctype(text, data=None):
         return data
 
 
-def get_docno (data, dt, dn):
+def get_docno(data, dt, dn):
     # Text(16) Alphanum, -, /
     doc = frappe.get_doc(dt, dn)
     if dt == 'Purchase Order':
@@ -265,6 +232,9 @@ def get_from_address_doc(doc, data, text):
 
 
 def get_value_of_tax(data, doc):
+    """
+    Updates a frappe dictionary data with Taxable values
+    """
     # data.totalValue = doc.total_value
     # data.totInvValue = doc.taxable_value
     data.totInvValue = doc.total_value
@@ -279,19 +249,29 @@ def get_value_of_tax(data, doc):
 
 
 def get_transport_mode(text):
+    """
+    Returns integer for Text for Transport Mode
+    """
+    tpt = 0
     if text == 'Road':
-        return 1
+        tpt = 1
     elif text == 'Rail':
-        return 2
+        tpt = 2
     elif text == 'Air':
-        return 3
+        tpt = 3
     elif text == 'Ship':
-        return 4
+        tpt = 4
     elif text == 'InTransit':
-        return 5
+        tpt = 5
+    else:
+        frappe.throw(f"Unknow Type of Transport Mode {text}")
+    return tpt
 
 
 def get_transporter_id(data, dt, dn, eway_doc):
+    """
+    Updates Transport ID in Data Dictionary
+    """
     doc = frappe.get_doc(dt, dn)
     transp_doc = frappe.get_doc('Transporters', doc.transporters)
     if transp_doc.self_pickup == 1:
@@ -300,26 +280,35 @@ def get_transporter_id(data, dt, dn, eway_doc):
         if transp_doc.gstin_for_eway:
             data.transporterId = transp_doc.gstin_for_eway
         else:
-            frappe.throw('GSTIN for {} is not mentioned'.format(frappe.get_desk_link('Transporters', doc.transporters)))
+            frappe.throw(f"GSTIN for {frappe.get_desk_link('Transporters', doc.transporters)} \
+                is not mentioned")
     return data
 
 
 def convert_int_transport_mode(mode_integer):
+    """
+    Converts Integer to Transport Mode and Returns Transport Mode in Text
+    """
+    tpt_txt = ""
     if int(mode_integer) == 1:
-        return "Road"
+        tpt_txt = "Road"
     elif int(mode_integer) == 2:
-        return "Rail"
+        tpt_txt = "Rail"
     elif int(mode_integer) == 3:
-        return "Air"
+        tpt_txt = "Air"
     elif int(mode_integer) == 4:
-        return "Ship"
+        tpt_txt = "Ship"
     elif int(mode_integer) == 5:
-        return "InTransit"
+        tpt_txt = "InTransit"
     else:
-        frappe.throw('Error Code Not in Transport List')
+        frappe.throw(f"Error: Code {mode_integer} Not in Transport List. Try Values 1 to 5")
+    return tpt_txt
 
 
 def get_trans_type(data, text):
+    """
+    Updates the frappe dictionary with transctiontype for Value
+    """
     if text == 'Regular':
         data.transactionType = 1
     elif text == 'Bill To - Ship To':
@@ -332,6 +321,9 @@ def get_trans_type(data, text):
 
 
 def get_doc_date(data, dt, dn):
+    """
+    Updates the dictionary with docDate field as a string
+    """
     doc = frappe.get_doc(dt, dn)
     if dt == 'Sales Invoice':
         date_string = doc.posting_date
@@ -342,54 +334,81 @@ def get_doc_date(data, dt, dn):
     return data
 
 
-def get_taxes_type(dt, dn):
+def get_taxes_type(dtype, dname):
+    """
+    Returns a dictionary with taxes amount and percentages and also returns Total GST tax
+    percentage as a dictionary and would also return the taxable value
+    cgst_amt = CGST Amount, cgst_per = CGST Percentage
+    sgst_amt = sGST Amount, sgst_per = sGST Percentage
+    igst_amt = IGST Amount, igst_per = IGST Percentage
+    gst_per = Total GST Tax Percentage, tax_val = Taxable Value
+    tot_val = Grand Total of the Doctype
+    """
+    gst_per = 0
+    tax_val = 0
     taxes_dict = {}
-    doc = frappe.get_doc(dt, dn)
+    doc = frappe.get_doc(dtype, dname)
     gset = frappe.get_single('GST Settings')
+    tax_val = doc.base_net_total
     for tax in doc.taxes:
         for acc in gset.gst_accounts:
             if tax.account_head == acc.cgst_account:
                 taxes_dict["cgst_amt"] = tax.base_tax_amount
                 taxes_dict["cgst_per"] = tax.rate
+                gst_per += tax.rate
             elif tax.account_head == acc.sgst_account:
                 taxes_dict["sgst_amt"] = tax.base_tax_amount
                 taxes_dict["sgst_per"] = tax.rate
+                gst_per += tax.rate
             elif tax.account_head == acc.igst_account:
                 taxes_dict["igst_amt"] = tax.base_tax_amount
                 taxes_dict["igst_per"] = tax.rate
+                gst_per += tax.rate
+    taxes_dict["gst_per"] = gst_per
+    taxes_dict["tax_val"] = tax_val
+    taxes_dict["tot_val"] = doc.base_grand_total
     return taxes_dict
 
 
 def get_items_table(data, tbl_dict):
+    """
+    Updates the data dictionary with CGST, SGST and IGST rates and Item Code and Description
+    """
     it_dict = {}
-    for d in tbl_dict:
-        uom_doc = frappe.get_doc('UOM', d.uom)
-        tariff_doc = frappe.get_doc('Customs Tariff Number', d.gst_hsn_code)
-        it_dict['itemNo'] = d.idx
-        # it_dict['productId'] = d.item_code
+    for row in tbl_dict:
+        uom_doc = frappe.get_doc('UOM', row.uom)
+        tariff_doc = frappe.get_doc('Customs Tariff Number', row.gst_hsn_code)
+        it_dict['itemNo'] = row.idx
+        # it_dict['productId'] = row.item_code
         it_dict['productName'] = tariff_doc.item_code
         it_dict['productDesc'] = tariff_doc.description
-        it_dict['hsnCode'] = d.gst_hsn_code
-        it_dict['quantity'] = d.qty
+        it_dict['hsnCode'] = row.gst_hsn_code
+        it_dict['quantity'] = row.qty
         if uom_doc.eway_bill_uom:
             it_dict['qtyUnit'] = uom_doc.eway_bill_uom
         else:
-            frappe.throw('No UOM Mapping Defined for {}'.format(frappe.get_desk_link('UOM', d.uom)))
-        it_dict['cgstRate'] = d.cgst_rate
-        it_dict['sgstRate'] = d.sgst_rate
-        it_dict['igstRate'] = d.igst_rate
-        it_dict['cessRate'] = d.cess_rate
+            frappe.throw(f"No UOM Mapping Defined for {frappe.get_desk_link('UOM', row.uom)}")
+        it_dict['cgstRate'] = row.cgst_rate
+        it_dict['sgstRate'] = row.sgst_rate
+        it_dict['igstRate'] = row.igst_rate
+        it_dict['cessRate'] = row.cess_rate
     data.itemList = [it_dict]
     return data
 
 
 def search_existing_ewb(ewb_no):
-    exist_ewb = frappe.db.sql("""SELECT name FROM `tabeWay Bill` WHERE eway_bill_no = '%s' 
-    AND docstatus != 2"""%(ewb_no), as_dict=1)
+    """
+    Searchs for Existing Eway Bill in DB based on Eway Bill No
+    """
+    exist_ewb = frappe.db.sql("""SELECT name FROM `tabeWay Bill` WHERE eway_bill_no = '%s'
+    AND docstatus != 2""" %(ewb_no), as_dict=1)
     return exist_ewb
 
 
 def ewb_from_ewb_summary(ewbj):
+    """
+    Creates a eWay Bill Doc for eWay Bill Summary
+    """
     existing_ewb = search_existing_ewb(ewbj.get('ewbNo'))
     if not existing_ewb:
         ewb = frappe.new_doc('eWay Bill')
@@ -416,11 +435,14 @@ def ewb_from_ewb_summary(ewbj):
         text = 'Created'
     else:
         text = 'Updated'
-    frappe.msgprint('{} {} with eWay Bill# {}'.format(text, frappe.get_desk_link('eWay Bill', ewb.name),
-                                                      ewb.eway_bill_no))
+    frappe.msgprint(f"{text} {frappe.get_desk_link('eWay Bill', ewb.name)} with eWay Bill# \
+        {ewb.eway_bill_no}")
 
 
-def ewb_from_ewb_detail(ewbj, created_by="self"):
+def ewb_from_ewb_detail(ewbj):
+    """
+    Create Eway Bill from Eway Bill Details
+    """
     frappe.msgprint(str(ewbj))
     gstin = frappe.get_value('Rohit Settings', 'Rohit Settings', 'gstin')
     # First Search for eWay Bill if not exists then create a new eWay Bill
@@ -457,7 +479,7 @@ def ewb_from_ewb_detail(ewbj, created_by="self"):
     ewb.to_place = ewbj.get('toPlace')
     ewb.to_address_text = ewbj.get('toAddr1') + "," + ewbj.get('toAddr2') + '\n' + ewbj.get('toPlace') + ", " \
                                 "" + "State Code: " + str(ewbj.get('toStateCode')) + ", " + str(ewbj.get(
-        'toPincode'))
+                                    'toPincode'))
     if ewbj.get('validUpto') != '':
         ewb.valid_upto = datetime.strptime(ewbj.get('validUpto'), '%d/%m/%Y %I:%M:%S %p')
     ewb.extended_times = ewbj.get('extendedTimes')
@@ -506,8 +528,8 @@ def ewb_from_ewb_detail(ewbj, created_by="self"):
         text = 'Created'
     else:
         text = 'Updated'
-    frappe.msgprint('{} {} with eWay Bill# {}'.
-                    format(text, frappe.get_desk_link('eWay Bill', ewb.name), ewb.eway_bill_no))
+    frappe.msgprint(f"{text} {frappe.get_desk_link('eWay Bill', ewb.name)} with eWay Bill# \
+        {ewb.eway_bill_no}")
 
 
 def others_ewb_from_summary(ewbj):
@@ -531,5 +553,137 @@ def others_ewb_from_summary(ewbj):
         text = 'Created'
     else:
         text = 'Updated'
-    frappe.msgprint('{} {} with eWay Bill# {}'.format(text, frappe.get_desk_link('eWay Bill', ewb.name),
-                                                      ewb.eway_bill_no))
+    frappe.msgprint(f"{text} {frappe.get_desk_link('eWay Bill', ewb.name)} with eWay Bill# \
+        {ewb.eway_bill_no}")
+
+
+def get_ewb_access_token():
+    """
+    Checks the auth token in DB if expired or is going to expire in 10 mins or 600 secs
+    then calls and gets the Auth token refreshed from Server
+    """
+    rset = frappe.get_single('Rohit Settings')
+    now_time = datetime.now()
+    ac_token_time = get_datetime(rset.access_token_time)
+    if not rset.access_token_time:
+        time_diff_secs = 0
+    else:
+        time_diff_secs = (ac_token_time - now_time).total_seconds()
+    # Only Need Access Token after 6 hours of getting the first one since Access Token is Valid
+    # for 6 hours once taken from server and call only when its expired
+    if time_diff_secs <= 0:
+        res_json = get_eway_auth_token()
+        if res_json.get("status") == '1':
+            access_token = res_json.get("authtoken")
+            rset.access_token = access_token
+            rset.access_token_time = now_time + timedelta(hours=6)
+            rset.save()
+            frappe.db.commit()
+            rset.reload()
+        else:
+            print(f"Error while fetching the Auth Token {res_json}")
+            exit()
+    else:
+        access_token = rset.access_token
+    return access_token
+
+
+def get_eway_auth_token():
+    """
+    Gets the eWay Bill Auth Token from the Server
+    """
+    api = 'auth'
+    full_url = get_full_eway_url(api=api)
+    response = requests.get(url=full_url, timeout=TIMEOUT)
+    print(response.json())
+    return response.json()
+
+
+def process_ewb_get_request(api, action=None, param_dt=None, raw_resp=0):
+    """
+    Returns the Eway Response based on API and Param Dict
+    """
+    full_url = get_full_eway_url(api=api, action=action, param_dt=param_dt)
+    response = requests.get(url=full_url, timeout=TIMEOUT)
+    if raw_resp == 1:
+        res_json = response
+    else:
+        res_json = response.json()
+    return res_json
+
+
+def get_full_eway_url(api="auth", action=None, gstin=None, param_dt=None):
+    """
+    Returns full eWay bill related URL based on the API being used
+    """
+    aspid, asppass = get_aspid_pass()
+    eway_uname, eway_pass = get_eway_pass()
+    base_url, sbox = get_base_url()
+    api_details = get_eway_api(api, action=action)
+    if not gstin:
+        gstin = get_default_gstin()
+
+    full_url = get_eway_url(base_url, sbox)
+    if api_details.get("version"):
+        full_url += f"/{api_details['version']}/dec"
+    full_url += f"/{api}?action={api_details['action']}&aspid={aspid}&password={asppass}"
+    full_url += f"&gstin={gstin}&username={eway_uname}&ewbpwd={eway_pass}"
+
+    if api_details.get("token", 0) == 1:
+        auth_token = get_ewb_access_token()
+        full_url += f"&authtoken={auth_token}"
+
+    if param_dt:
+        if param_dt.get("param", None):
+            full_url += f"&{param_dt['param']}={param_dt['param_val']}"
+        if param_dt.get("param2", None):
+            full_url += f"&{param_dt['param2']}={param_dt['param_val2']}"
+    print(full_url)
+    return full_url
+
+
+def get_eway_url(base_url, sbox):
+    """
+    Returns the URL based on Sandbox or not
+    """
+    if sbox == 1:
+        full_url = f"{base_url}"
+    else:
+        full_url = f"{base_url[:8]}einvapi.{base_url[8:]}"
+    return full_url
+
+
+def get_eway_pass(sbox=0):
+    """
+    Returns the E-Invoices user ID and password
+    """
+    rset = frappe.get_doc("Rohit Settings", "Rohit Settings")
+    if sbox == 0:
+        eway_id = rset.eway_bill_id
+        eway_pass = rset.eway_bill_password
+    else:
+        eway_id = "rohit_sand_taxpro"
+        eway_pass = "ASJ9Ar3@@C"
+
+    return eway_id, eway_pass
+
+
+def get_eway_api(api, action=None):
+    """
+    Returns dictionary for API details for Eway Bills
+    """
+    api_details = {}
+    eway_api = [
+        {"api": "auth", "version": "v1.03", "action":"ACCESSTOKEN"},
+        {"api": "ewayapi", "version": "v1.03", "action":"GetEwayBillsByDate", "token": 1},
+        {"api": "ewayapi", "version": "v1.03", "action":"GetEwayBill", "token": 1},
+        {"api": "aspapi", "version": "v1.0", "action":"printdetailewb"}
+    ]
+    for row in eway_api:
+        if row["api"] == api:
+            if action:
+                if row["action"] == action:
+                    api_details = row
+            else:
+                api_details = row
+    return api_details
