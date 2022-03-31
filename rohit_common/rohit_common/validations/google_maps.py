@@ -16,25 +16,27 @@ def get_distance_matrix(origin, dest, mode='driving', units='metric'):
     # find_data =
     full_url = url + 'units=' + units +'&origins=' + origin + '&destinations=' + dest + '&mode=' + mode + "&key=" + key
     characters = [" ", "#"]
-    for ch in characters:
-        full_url = full_url.replace(ch, "+")
+    for chrc in characters:
+        full_url = full_url.replace(chrc, "+")
     response = requests.get(url=full_url)
-    print(response.content)
+    # print(response.content)
     response_json = json.loads(response.content)
-    print(response_json)
+    # print(response_json)
     return response_json
 
 
 def get_approx_dist_frm_matrix(dist_matrix, unit="km"):
+    dst = 0
     if dist_matrix.get('status') == 'OK':
         rows = dist_matrix.get('rows')[0]
         elements = rows.get('elements')[0]
         dist = elements.get('distance')
         dist_mts = dist.get('value')
     if unit=='km':
-        return dist_mts/1000
+        dst = dist_mts/1000
     else:
-        return dist_mts
+        dst = dist_mts
+    return dst
 
 
 def get_geocoded_address_dict(adr_doc):
