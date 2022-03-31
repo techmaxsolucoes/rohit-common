@@ -10,6 +10,13 @@ from frappe.model.document import Document
 
 class RohitSettings(Document):
     def validate(self):
+        if self.enable_einvoice == 1:
+            if not self.einvoice_applicable_date:
+                frappe.throw("E-Invoice Applicable Date is Mandatory")
+            if self.eway_bill_limit < 1:
+                frappe.throw(f"Enabling e-Invoice should enable Auto e-Way Bills for Invoices \
+                    and Limit for the e-Way Bill should be greater than 1. Please correct the \
+                    value {self.eway_bill_limit}")
         min_days_to_keep = 30
         self.sort_single_field_child("auto_deletion_policy_for_files", "document_type")
         self.sort_single_field_child("roles_allow_pub_att", "role")

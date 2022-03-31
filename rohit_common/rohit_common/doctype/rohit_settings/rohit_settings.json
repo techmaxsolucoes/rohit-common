@@ -13,6 +13,10 @@
   "stale_gstin_validation_days",
   "sandbox_mode",
   "cb0",
+  "enable_eway_for_po",
+  "enable_einvoice",
+  "einvoice_applicable_date",
+  "eway_bill_limit",
   "eway_bill_id",
   "eway_bill_password",
   "api_link",
@@ -99,12 +103,15 @@
   {
    "fieldname": "access_token",
    "fieldtype": "Data",
-   "label": "Access Token"
+   "label": "Access Token",
+   "read_only": 1
   },
   {
+   "description": "Validity time for the Access Token and not the time at which it was pulled",
    "fieldname": "access_token_time",
    "fieldtype": "Datetime",
-   "label": "Access Token Time"
+   "label": "Access Token Time",
+   "read_only": 1
   },
   {
    "collapsible": 1,
@@ -228,10 +235,34 @@
    "fieldname": "minimum_credits",
    "fieldtype": "Int",
    "label": "Minimum Credits"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_einvoice",
+   "fieldtype": "Check",
+   "label": "Enable eInvoice"
+  },
+  {
+   "depends_on": "eval:doc.enable_einvoice===1",
+   "fieldname": "eway_bill_limit",
+   "fieldtype": "Int",
+   "label": "eWay Bill Limit"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_eway_for_po",
+   "fieldtype": "Check",
+   "label": "Enable eWay for PO"
+  },
+  {
+   "depends_on": "eval:doc.enable_einvoice===1",
+   "fieldname": "einvoice_applicable_date",
+   "fieldtype": "Date",
+   "label": "eInvoice Applicable Date"
   }
  ],
  "issingle": 1,
- "modified": "2022-01-16 14:31:40.654686",
+ "modified": "2022-03-31 09:14:23.711653",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",
