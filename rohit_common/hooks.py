@@ -129,6 +129,11 @@ scheduler_events = {
             "rohit_common.rohit_common.scheduled_tasks.auto_update_gstin_status.enqueue_gstin_update"
             # Runs everyday at 2:10 AM
         ],
+        # Runs every 15 mins below jobs
+        "*/15 * * * *": [
+            "rohit_common.rohit_common.scheduled_tasks.auto_einvoice_tasks.enq_inv_sub",
+            "rohit_common.rohit_common.scheduled_tasks.auto_einvoice_tasks.enq_einv_create"
+        ]
     },
     "all": [
         "rohit_common.rohit_common.scheduled_tasks.auto_refresh_gstin_auth_code.execute"

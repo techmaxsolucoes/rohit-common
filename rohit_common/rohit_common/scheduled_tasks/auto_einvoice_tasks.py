@@ -8,23 +8,18 @@ from frappe.utils.background_jobs import enqueue
 from ..india_gst_api.einv import generate_irn
 
 
-def enqueue_einvoice_jobs():
+def enq_inv_sub():
+    """
+    Performs Draft Invoice Submission for 14 mins max since it runs every 15 mins
+    """
+    enqueue(get_docs_to_submit, queue="long", timeout=800)
+
+
+def enq_einv_create():
     """
     Performs eInvoice jobs for 14 mins max since it runs every 15 mins
     """
-    enqueue(perform_einvoice_auto_tasks, queue="long", timeout=800)
-
-
-def perform_einvoice_auto_tasks():
-    """
-    Does the following tasks
-    1. Gets SI or JV marked to submit and submits them.
-    2. If einvoice is activated then checks if einvoice is needed to be raised and raises the same.
-    3. If eWay is needed then would generate the eway Bill as well after raising the einvoice
-    """
-    get_docs_to_submit()
-    make_einvoice_for_docs()
-    # make_eway_bill_for_docs()
+    enqueue(make_einvoice_for_docs, queue="long", timeout=800)
 
 
 def get_docs_to_submit():
