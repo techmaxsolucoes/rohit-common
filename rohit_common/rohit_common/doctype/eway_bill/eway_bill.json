@@ -116,6 +116,7 @@
    "allow_on_submit": 1,
    "fieldname": "mode_of_transport",
    "fieldtype": "Select",
+   "in_standard_filter": 1,
    "label": "Mode of Transport",
    "options": "\nRoad\nRail\nAir\nShip"
   },
@@ -475,7 +476,7 @@
  ],
  "is_submittable": 1,
  "max_attachments": 1,
- "modified": "2020-10-16 01:35:54.025182",
+ "modified": "2022-03-21 06:52:24.664674",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "eWay Bill",

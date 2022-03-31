@@ -66,8 +66,9 @@ def check_series(doc, tx_doc):
 
 def on_update(doc, method):
     validate_export_bill_fields(doc)
-    it_list = get_item_synopsis(doc)
-    if not doc.items_synopsis:
+    it_list, needs_update = get_item_synopsis(doc)
+    if needs_update == 1:
+        doc.items_synopsis = []
         for d in it_list:
             doc.append("items_synopsis", d.copy())
 
@@ -127,14 +128,26 @@ def check_customs_tariff(doc):
 def validate_other_fields(doc):
     validate_add_fields(doc)
     validate_export_bill_fields(doc)
-    it_list = get_item_synopsis(doc)
-    if not doc.items_synopsis:
+    it_list, needs_update = get_item_synopsis(doc)
+    if needs_update == 1:
+        doc.items_synopsis = []
         for d in it_list:
             doc.append("items_synopsis", d.copy())
 
 
 def get_item_synopsis(doc):
+    """
+    Returns Item List for Synopsis and also integer if item synopsis needs to be Updated
+    """
     it_list = []
+    needs_update = 0
+    syn_net_total = 0
+    syn_tot_qty = 0
+    for row in doc.items_synopsis:
+        syn_net_total += row.base_amount
+        syn_tot_qty += row.qty
+    if syn_net_total != doc.base_net_total or syn_tot_qty != doc.total_qty:
+        needs_update = 1
     for item in doc.items:
         if item.idx == 1:
             it_list = update_item_table(it_list, item)
@@ -152,7 +165,7 @@ def get_item_synopsis(doc):
                         break
             if found == 0:
                 it_list = update_item_table(it_list, item)
-    return it_list
+    return it_list, needs_update
 
 
 def check_delivery_note_rule(doc, method):

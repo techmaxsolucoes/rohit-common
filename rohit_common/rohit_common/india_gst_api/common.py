@@ -14,12 +14,21 @@ def get_place_of_supply(dtype, dname):
     """
     doc = frappe.get_doc(dtype, dname)
     if dtype == "Sales Invoice":
-        state = frappe.get_value("Address", doc.customer_address, "state")
+        country = frappe.get_value("Address", doc.customer_address, "country")
+        if country == "India":
+            state = frappe.get_value("Address", doc.customer_address, "state")
+        else:
+            pos = "96"
     elif dtype == "Purchase Order":
-        state = frappe.get_value("Address", doc.billing_address, "state")
+        country = frappe.get_value("Address", doc.billing_address, "country")
+        if country == "India":
+            state = frappe.get_value("Address", doc.billing_address, "state")
+        else:
+            pos = "96"
     else:
         frappe.throw("Unable to State Code")
-    pos = frappe.get_value("State", state, "state_code_numeric")
+    if country == "India":
+        pos = frappe.get_value("State", state, "state_code_numeric")
     return pos
 
 
@@ -59,7 +68,7 @@ def get_numeric_state_code(state_name, country="India"):
     Returns Integer for State Name for Indian State Code else returns 96 for Other Countries
     """
     if country != "India":
-        state_code = 96
+        state_code = "96"
     else:
         state_code = frappe.get_value("State", state_name, "state_code_numeric")
     return state_code
@@ -85,11 +94,9 @@ def get_base_url(sbox=0):
     rset = frappe.get_doc("Rohit Settings", "Rohit Settings")
     if sbox == 0:
         sbox = rset.sandbox_mode
-    if sbox == 1:
         api_link = rset.sandbox_api_link
     else:
         api_link = rset.api_link
-
     return api_link, sbox
 
 
