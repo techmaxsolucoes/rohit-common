@@ -354,8 +354,8 @@ def get_taxes_type(dtype, dname):
     gset = frappe.get_single('GST Settings')
     tax_val = doc.base_net_total
     for tax in doc.taxes:
+        found = 0
         for acc in gset.gst_accounts:
-            found = 0
             if tax.account_head == acc.cgst_account:
                 found = 1
                 taxes_dict["cgst_amt"] = tax.base_tax_amount
