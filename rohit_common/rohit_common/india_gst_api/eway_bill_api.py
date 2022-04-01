@@ -1,5 +1,7 @@
 #  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
 #  For license information, please see license.txt
+
+import re
 import frappe
 import requests
 from datetime import datetime, timedelta
@@ -347,23 +349,33 @@ def get_taxes_type(dtype, dname):
     gst_per = 0
     tax_val = 0
     taxes_dict = {}
+    taxes_dict["other_amt"] = 0
     doc = frappe.get_doc(dtype, dname)
     gset = frappe.get_single('GST Settings')
     tax_val = doc.base_net_total
     for tax in doc.taxes:
         for acc in gset.gst_accounts:
+            found = 0
             if tax.account_head == acc.cgst_account:
+                found = 1
                 taxes_dict["cgst_amt"] = tax.base_tax_amount
                 taxes_dict["cgst_per"] = tax.rate
                 gst_per += tax.rate
             elif tax.account_head == acc.sgst_account:
+                found = 1
                 taxes_dict["sgst_amt"] = tax.base_tax_amount
                 taxes_dict["sgst_per"] = tax.rate
                 gst_per += tax.rate
             elif tax.account_head == acc.igst_account:
+                found = 1
                 taxes_dict["igst_amt"] = tax.base_tax_amount
                 taxes_dict["igst_per"] = tax.rate
                 gst_per += tax.rate
+        if found == 0:
+            if re.search('discount', tax.description, re.IGNORECASE):
+                taxes_dict["discount_amt"] = tax.base_tax_amount
+            else:
+                taxes_dict["other_amt"] += tax.base_tax_amount
     taxes_dict["gst_per"] = gst_per
     taxes_dict["tax_val"] = tax_val
     taxes_dict["tot_val"] = doc.base_grand_total

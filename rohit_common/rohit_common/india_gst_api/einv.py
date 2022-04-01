@@ -2,6 +2,7 @@
 #  For license information, please see license.txt
 # -*- coding: utf-8 -*-
 import io
+import re
 import json
 import frappe
 import requests
@@ -52,7 +53,7 @@ def get_irn_details(irn_no):
     return irn_dict
 
 
-def generate_irn(dtype="Sales Invoice", dname="RB212203967"):
+def generate_irn(dtype="Sales Invoice", dname="RB2122/EXP-00051"):
     """
     Generates the IRN for a Document No and a Document Type
     IRN can be generated for the following documents only B2B
@@ -64,7 +65,7 @@ def generate_irn(dtype="Sales Invoice", dname="RB212203967"):
     full_url = add_qr_code_size(url=full_url)
     headers = get_headers()
     einv_json = gen_einv_json(dtype=dtype, dname=dname)
-    # print(einv_json)
+    print(einv_json)
     res = json.loads(requests.post(url=full_url, headers=headers, data=einv_json,
         timeout=TIMEOUT).text)
     # print(res)
@@ -87,7 +88,8 @@ def attach_qrcode(dtype, dname, qrcode):
     """
     Creates and Attaches the QR code from a QR Code Value
     """
-    filename = f"QRCode_{dname}.png"
+    new_dname = re.sub('[^A-Za-z0-9]+', '', dname)
+    filename = f"QRCode_{new_dname}.png"
 
     qr_image = io.BytesIO()
     url = qrcreate(qrcode, error='L')
@@ -230,6 +232,8 @@ def get_einv_item_details(dtype, dname):
         val_dt.CgstVal = abs(tax_details.get("cgst_amt", 0))
         val_dt.SgstVal = abs(tax_details.get("sgst_amt", 0))
         val_dt.IgstVal = abs(tax_details.get("igst_amt", 0))
+        val_dt.Discount = abs(tax_details.get("discount_amt", 0))
+        val_dt.OthChrg = abs(tax_details.get("other_amt", 0))
         gst_rate = tax_details.get("gst_per")
         for row in dtd.items:
             it_row_dict = frappe._dict({})
@@ -443,8 +447,6 @@ def get_einv_supply_type(gst_category, exp_type=None):
             stype = "EXPWP"
         elif exp_type == "Without Payment of Tax":
             stype = "EXPWOP"
-    elif gst_category == "Deemed Export":
-        stype = "DEXP"
     elif gst_category == "SEZ":
         if exp_type == "With Payment of Tax":
             stype = "SEZWP"

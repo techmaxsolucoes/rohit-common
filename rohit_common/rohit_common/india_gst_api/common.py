@@ -93,7 +93,9 @@ def get_base_url(sbox=0):
     """
     rset = frappe.get_doc("Rohit Settings", "Rohit Settings")
     if sbox == 0:
+        # If the sandbox mode is default to ZERO then checks if Sbox is active in settings
         sbox = rset.sandbox_mode
+    if sbox == 0:
         api_link = rset.api_link
     else:
         api_link = rset.sandbox_api_link
