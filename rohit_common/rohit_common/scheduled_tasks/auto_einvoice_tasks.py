@@ -36,6 +36,13 @@ def get_docs_to_submit():
                     doc_t = frappe.get_doc(doc, dtd.name)
                     doc_t.submit()
                     frappe.db.commit()
+                    rset = frappe.get_doc("Rohit Settings", "Rohit Settings")
+                    if rset.enable_einvoice == 1 and \
+                            rset.einvoice_applicable_date <= doc_t.posting_date:
+                        try:
+                            generate_irn(dtype=doc_t.doctype, dname=doc_t.name)
+                        except Exception as e:
+                            print(f"Error Encountered while generating e-Invoice {e}")
                 except Exception as e:
                     print(e)
 

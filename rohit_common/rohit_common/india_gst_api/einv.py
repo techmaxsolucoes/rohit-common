@@ -65,7 +65,6 @@ def generate_irn(dtype="Sales Invoice", dname="RB2122/EXP-00051"):
     full_url = add_qr_code_size(url=full_url)
     headers = get_headers()
     einv_json = gen_einv_json(dtype=dtype, dname=dname)
-    print(einv_json)
     res = json.loads(requests.post(url=full_url, headers=headers, data=einv_json,
         timeout=TIMEOUT).text)
     # print(res)
