@@ -94,9 +94,9 @@ def get_base_url(sbox=0):
     rset = frappe.get_doc("Rohit Settings", "Rohit Settings")
     if sbox == 0:
         sbox = rset.sandbox_mode
-        api_link = rset.sandbox_api_link
-    else:
         api_link = rset.api_link
+    else:
+        api_link = rset.sandbox_api_link
     return api_link, sbox
 
 
