@@ -227,13 +227,13 @@ def get_einv_item_details(dtype, dname):
     dtd = frappe.get_doc(dtype, dname)
     if dtype == "Sales Invoice":
         tax_details = get_taxes_type(dtype, dname)
-        val_dt.AssVal = abs(tax_details.get("tax_val", 0))
-        val_dt.TotInvVal = abs(tax_details.get("tot_val", 0))
-        val_dt.CgstVal = abs(tax_details.get("cgst_amt", 0))
-        val_dt.SgstVal = abs(tax_details.get("sgst_amt", 0))
-        val_dt.IgstVal = abs(tax_details.get("igst_amt", 0))
-        val_dt.Discount = abs(tax_details.get("discount_amt", 0))
-        val_dt.OthChrg = abs(tax_details.get("other_amt", 0))
+        val_dt.AssVal = round(abs(tax_details.get("tax_val", 0)), 2)
+        val_dt.TotInvVal = round(abs(tax_details.get("tot_val", 0)), 2)
+        val_dt.CgstVal = round(abs(tax_details.get("cgst_amt", 0)), 2)
+        val_dt.SgstVal = round(abs(tax_details.get("sgst_amt", 0)), 2)
+        val_dt.IgstVal = round(abs(tax_details.get("igst_amt", 0)), 2)
+        val_dt.Discount = round(abs(tax_details.get("discount_amt", 0)), 2)
+        val_dt.OthChrg = round(abs(tax_details.get("other_amt", 0)), 2)
         gst_rate = tax_details.get("gst_per")
         for row in dtd.items:
             it_row_dict = frappe._dict({})
@@ -249,9 +249,9 @@ def get_einv_item_details(dtype, dname):
             it_row_dict.HsnCd = row.gst_hsn_code
             it_row_dict.Qty = abs(row.qty)
             it_row_dict.Unit = get_gst_based_uom(row.uom)
-            it_row_dict.UnitPrice = row.base_rate
-            it_row_dict.TotAmt = abs(row.base_amount)
-            it_row_dict.AssAmt = abs(row.base_amount)
+            it_row_dict.UnitPrice = round(row.base_rate, 2)
+            it_row_dict.TotAmt = round(abs(row.base_amount), 2)
+            it_row_dict.AssAmt = round(abs(row.base_amount), 2)
             it_row_dict.GstRt = gst_rate
             it_row_dict.IgstAmt = abs(round(row.base_amount * (tax_details.get("igst_per", 0)/100),
                 2))
