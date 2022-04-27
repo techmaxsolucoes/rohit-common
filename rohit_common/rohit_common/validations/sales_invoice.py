@@ -1,4 +1,4 @@
-#  Copyright (c) 2021. Rohit Industries Group Private Limited and Contributors.
+#  Copyright (c) 2022. Rohit Industries Group Private Limited and Contributors.
 #  For license information, please see license.txt
 # -*- coding: utf-8 -*-
 
@@ -18,19 +18,55 @@ def on_submit(doc, method):
 
 
 def validate(doc, method):
-    template_doc = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
-    check_customs_tariff(doc)
+    # ttd = Tax Template Document
+    ttd = frappe.get_doc("Sales Taxes and Charges Template", doc.taxes_and_charges)
     check_all_dynamic_links(doc)
-    update_sender_details(doc, template_doc)
-    check_series(doc, template_doc)
+    check_local_natl_tax_rules(doc, ttd)
+    update_sender_details(doc, ttd)
+    check_series(doc, ttd)
     validate_address_google_update(doc)
     validate_other_fields(doc)
-    check_delivery_note_rule(doc, method)
-    check_local_natl_tax_rules(doc, template_doc)
+    check_delivery_note_rule(doc)
+    check_govt_related_rules(doc)
     check_sales_taxes_integrity(doc)
     add_list = [doc.customer_address, doc.shipping_address_name]
     for add in add_list:
         check_validated_gstin(add, doc)
+
+
+def check_govt_related_rules(doc):
+    """
+    Checks for Various Govt Related Rules and updates GST related rules and fields
+    """
+    check_customs_tariff(doc)
+    update_gst_related_fields(doc)
+
+
+def update_gst_related_fields(si_doc):
+    """
+    Updates the fields for Sales Invoice Doc, the following fields are updated
+    1. GST Category which determines type of Supply like B2B, B2C, Export (with or without Payment)
+    or SEZ (with or without Payment) or Deemed Export
+    """
+    tax_adr = frappe.get_value("Accounts Settings", "Accounts Settings",
+        "determine_address_tax_category_from")
+    if tax_adr == "Billing Address":
+        adr_fd = "customer_address"
+    else:
+        adr_fd = "shipping_address_name"
+    comp_ctry = frappe.get_value("Address", si_doc.company_address, "country")
+    gst_active = frappe.get_value("Country", comp_ctry, "gst_details")
+    adr_doc = frappe.get_doc("Address", si_doc.get(adr_fd))
+    if gst_active == 1:
+        # Reverse Charge is Set to Statically No
+        si_doc.reverse_charge = "N"
+        if adr_doc.country == comp_ctry:
+            if adr_doc.gstin == "NA":
+                si_doc.gst_category = "Unregistered"
+            else:
+                si_doc.gst_category = "Registered Regular"
+        else:
+            si_doc.gst_category = "Overseas"
 
 
 def check_all_dynamic_links(doc):
@@ -66,6 +102,7 @@ def check_series(doc, tx_doc):
 
 def on_update(doc, method):
     validate_export_bill_fields(doc)
+    check_govt_related_rules(doc)
     it_list, needs_update = get_item_synopsis(doc)
     if needs_update == 1:
         doc.items_synopsis = []
@@ -83,33 +120,42 @@ def update_sender_details(doc, tmp_doc):
 
 
 def check_local_natl_tax_rules(doc, template_doc):
+    """
+    Checks rules of GST Tax as per States and also updates the fields in the document
+    """
     # Will only check if the Tax Rate is not Sample
     # Check if Shipping State is Same as Template State then check if the tax template is LOCAL
     # Else if the States are different then the template should NOT BE LOCAL
     bill_state = frappe.db.get_value("Address", doc.customer_address, "state_rigpl")
     ship_country = frappe.db.get_value("Address", doc.shipping_address_name, "country")
 
-    if bill_state == template_doc.state and template_doc.is_export == 0 and template_doc.is_sample != 1:
+    if bill_state == template_doc.state and template_doc.is_export == 0 and \
+            template_doc.is_sample != 1:
         doc.place_of_supply = template_doc.state
         if template_doc.is_local_sales != 1:
-            frappe.throw("Selected Tax {0} is NOT LOCAL Tax but Billing Address is in Same State {1}, "
-                         "hence either change Billing Address or Change the Selected Tax".
-                         format(doc.taxes_and_charges, bill_state))
-    elif ship_country == 'India' and bill_state != template_doc.state and template_doc.is_sample != 1:
+            frappe.throw(f"Selected Tax {doc.taxes_and_charges} is NOT LOCAL Tax but Billing \
+                Address is in Same State {bill_state}, hence either change Billing Address or \
+                Change the Selected Tax")
+    elif ship_country == 'India' and bill_state != template_doc.state and \
+            template_doc.is_sample != 1:
         doc.place_of_supply = bill_state
         if template_doc.is_local_sales == 1:
-            frappe.throw("Selected Tax {0} is LOCAL Tax but Billing Address is in Different State {1}, "
-                         "hence either change Billing Address or Change the Selected Tax".
-                         format(doc.taxes_and_charges, bill_state))
+            frappe.throw(f"Selected Tax {doc.taxes_and_charges} is LOCAL Tax but Billing Address \
+                is in Different State {bill_state}, hence either change Billing Address or Change \
+                the Selected Tax")
     elif ship_country != 'India':  # Case of EXPORTS
         doc.place_of_supply = "Exempted"
         if template_doc.is_export != 1:
-            frappe.throw("Selected Tax {0} is for Indian Sales but Billing Address is in Different Country {1}, "
-                         "hence either change Billing Address or Change the Selected Tax".
-                         format(doc.taxes_and_charges, ship_country))
+            frappe.throw(f"Selected Tax {doc.taxes_and_charges} is for Indian Sales but Billing \
+                Address is in Different Country {ship_country}, hence either change Billing \
+                Address or Change the Selected Tax")
 
 
 def check_customs_tariff(doc):
+    """
+    Removes HTML tags and also does not allow CTSH below 6 digit or any item which is not linked
+    to a Customs Tariff
+    """
     for items in doc.items:
         items.description = remove_html(items.description)
         custom_tariff = frappe.db.get_value("Item", items.item_code, "customs_tariff_number")
@@ -117,12 +163,12 @@ def check_customs_tariff(doc):
             if len(custom_tariff) >= 6:
                 items.gst_hsn_code = custom_tariff
             else:
-                frappe.throw(("Item Code {0} in line# {1} has a Custom Tariff {2} which is less than 6 digit, "
-                              "please get the Custom Tariff corrected").
-                             format(items.item_code, items.idx, custom_tariff))
+                frappe.throw(f"Item Code {items.item_code} in line# {items.idx} has a Custom \
+                    Tariff {custom_tariff} which is less than 6 digit, please get the Custom \
+                    Tariff corrected")
         else:
-            frappe.throw("Item Code {0} in line# {1} does not have linked Customs Tariff in Item Master".
-                         format(items.item_code, items.idx))
+            frappe.throw(f"Item Code {items.item_code} in line# {items.idx} does not have linked \
+                Customs Tariff in Item Master")
 
 
 def validate_other_fields(doc):
@@ -168,7 +214,7 @@ def get_item_synopsis(doc):
     return it_list, needs_update
 
 
-def check_delivery_note_rule(doc, method):
+def check_delivery_note_rule(doc):
     dn_dict = frappe._dict()
     list_of_dn_dict = []
 
@@ -246,7 +292,6 @@ def validate_export_bill_fields(doc):
         if doc.mode_of_transport not in ('Air', 'Ship'):
             frappe.throw('Only Air or Sea as Mode of Transport is Allowed for Export Related {}'.
                          format(frappe.get_desk_link(doc.doctype, doc.name)))
-        doc.gst_category = 'Overseas'
         if not tx_tmp_doc.iec_code:
             frappe.throw('IEC Code is not Mentioned in {} for {}'.
                          format(frappe.get_desk_link('Sales Taxes and Charges Template', doc.taxes_and_charges),
