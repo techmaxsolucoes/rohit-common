@@ -53,7 +53,7 @@ def get_irn_details(irn_no):
     return irn_dict
 
 
-def generate_irn(dtype="Sales Invoice", dname="RB212203892"):
+def generate_irn(dtype, dname):
     """
     Generates the IRN for a Document No and a Document Type
     IRN can be generated for the following documents only B2B
@@ -566,3 +566,14 @@ def get_einv_api(api):
         if row["api"] == api:
             api_details = row
     return api_details
+
+def einv_needed(dtype, dname):
+    """
+    Returns boolean is eInvoice is needed for a Document
+    """
+    einv_need = 0
+    dtd = frappe.get_doc(dtype, dname)
+    if dtype == "Sales Invoice":
+        if dtd.gst_category != "Unregistered":
+            einv_need = 1
+    return einv_need

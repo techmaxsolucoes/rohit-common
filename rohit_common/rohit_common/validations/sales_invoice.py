@@ -25,7 +25,6 @@ def validate(doc, method):
     update_sender_details(doc, ttd)
     check_series(doc, ttd)
     validate_address_google_update(doc)
-    validate_other_fields(doc)
     check_delivery_note_rule(doc)
     check_govt_related_rules(doc)
     check_sales_taxes_integrity(doc)
@@ -40,6 +39,7 @@ def check_govt_related_rules(doc):
     """
     check_customs_tariff(doc)
     update_gst_related_fields(doc)
+    validate_other_fields(doc)
 
 
 def update_gst_related_fields(si_doc):
@@ -48,6 +48,8 @@ def update_gst_related_fields(si_doc):
     1. GST Category which determines type of Supply like B2B, B2C, Export (with or without Payment)
     or SEZ (with or without Payment) or Deemed Export
     """
+    if si_doc.background_processing == 1:
+        si_doc.marked_to_submit = 0
     tax_adr = frappe.get_value("Accounts Settings", "Accounts Settings",
         "determine_address_tax_category_from")
     if tax_adr == "Billing Address":

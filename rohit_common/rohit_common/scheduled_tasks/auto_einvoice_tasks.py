@@ -5,7 +5,7 @@
 import frappe
 from frappe.utils import flt
 from frappe.utils.background_jobs import enqueue
-from ..india_gst_api.einv import generate_irn
+from ..india_gst_api.einv import einv_needed, generate_irn
 
 
 def enq_inv_sub():
@@ -39,10 +39,15 @@ def get_docs_to_submit():
                     rset = frappe.get_doc("Rohit Settings", "Rohit Settings")
                     if rset.enable_einvoice == 1 and \
                             rset.einvoice_applicable_date <= doc_t.posting_date:
-                        try:
-                            generate_irn(dtype=doc_t.doctype, dname=doc_t.name)
-                        except Exception as e:
-                            print(f"Error Encountered while generating e-Invoice {e}")
+                        need_einv = einv_needed(doc, doc_t.name)
+                        # print(f"{doc}: {doc_t.name} E-Invoice Neded = {need_einv}")
+                        if need_einv == 1:
+                            try:
+                                generate_irn(dtype=doc_t.doctype, dname=doc_t.name)
+                            except Exception as e:
+                                print(f"Error Encountered while generating e-Invoice {e}")
+                        else:
+                            print(f"E-Invoice is Not Needed for {doc}: {doc_t.name}")
                 except Exception as e:
                     print(e)
 
@@ -62,11 +67,13 @@ def make_einvoice_for_docs():
             einv_docs = frappe.db.sql(query, as_dict=1)
             if einv_docs:
                 for einv in einv_docs:
-                    try:
-                        print(f"Trying to Generate eInvoice for {doc}: {einv.name}")
-                        generate_irn(dtype=doc, dname=einv.name)
-                    except Exception as e:
-                        print(e)
+                    need_einv = einv_needed(doc, einv.name)
+                    if need_einv == 1:
+                        try:
+                            print(f"Trying to Generate eInvoice for {doc}: {einv.name}")
+                            generate_irn(dtype=doc, dname=einv.name)
+                        except Exception as e:
+                            print(e)
 
 
 def make_eway_bill_for_docs():
