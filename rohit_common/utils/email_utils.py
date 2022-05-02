@@ -58,19 +58,14 @@ def validate_global_email(email_id, backend=True):
         if success == 1:
             if response.result == "deliverable":
                 if response.dispoable != 1 and response.spamtrap != 1:
-                    # Create Global Email
-                    new_glob = frappe.new_doc("Global Emails")
-                    new_glob.flags.ignore_permissions= True
-                    new_glob.email_id = passed_email
-                    new_glob.domain = response.domain
-                    new_glob.is_free = response.free_email
-                    new_glob.is_role = response.role
-                    if response.accept_all == 1:
-                        new_glob.is_accept_all = response.accept_all
-                    new_glob.insert()
+                    create_gloabal_email(passed_email, response)
                 else:
                     message = f"Email: {email_id} is a Disposable or Spam Trap Email"
                     passed_email = ""
+            elif response.result == "accept all":
+                frappe.msgprint(f"{passed_email} belongs to a Domain where Email ID cannot be \
+                    verified for errors in Spellings")
+                create_gloabal_email(passed_email, response)
             else:
                 message = f"Email: {email_id} is Not Deliverable"
                 passed_email = ""
@@ -86,6 +81,21 @@ def validate_global_email(email_id, backend=True):
         else:
             frappe.msgprint(message)
     return passed_email
+
+
+def create_gloabal_email(passed_email, response):
+    """
+    Creates a Global Email for passed email and response from Bouncify
+    """
+    new_glob = frappe.new_doc("Global Emails")
+    new_glob.flags.ignore_permissions= True
+    new_glob.email_id = passed_email
+    new_glob.domain = response.domain
+    new_glob.is_free = response.free_email
+    new_glob.is_role = response.role
+    if response.accept_all == 1:
+        new_glob.is_accept_all = response.accept_all
+    new_glob.insert()
 
 
 def process_bouncify_response(email_id, backend=True):
