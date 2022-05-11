@@ -58,8 +58,8 @@ def get_docs_to_submit():
                 except NegativeStockError:
                     print(f"Negative Stock Error for {doc_t.name} hence Rolling Back")
                     frappe.db.rollback()
-                else:
-                    print(f"Some Other Error in {doc_t.name} and hence Rolling Back")
+                except Exception as e:
+                    print(f"Some Other Error for {doc_t.name} and Error = {e}")
                     frappe.db.rollback()
 
 
