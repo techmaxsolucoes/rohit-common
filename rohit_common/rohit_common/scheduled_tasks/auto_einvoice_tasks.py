@@ -22,6 +22,24 @@ def enq_einv_create():
     enqueue(make_einvoice_for_docs, queue="long", timeout=800)
 
 
+def get_unposted_invoices():
+    """
+    Gets a list of invoices which are not posted in the General Ledger and also the ones
+    not posted in Stock Ledger
+    """
+    gl_not_posted = frappe.db.sql("""SELECT si.name, si.creation FROM `tabSales Invoice` si
+        WHERE si.base_grand_total > 0 AND si.docstatus = 1 AND si.name NOT IN (SELECT gle.voucher_no
+        FROM `tabGL Entry` gle WHERE gle.voucher_type = 'Sales Invoice'
+        AND gle.voucher_no = si.name) ORDER BY si.creation""", as_dict=1)
+    for un_si in gl_not_posted:
+        sid = frappe.get_doc("Sales Invoice", un_si)
+        sid.cancel()
+        frappe.db.set_value("Sales Invoice", un_si.name, "docstatus", 0)
+        frappe.db.set_value("Sales Invoice", un_si.name, "set_posting_time", 1)
+        frappe.db.set_value("Sales Invoice", un_si.name, "marked_to_submit", 1)
+        print(f"SI# {un_si.name} not Posted in General Ledger hence Made Draft")
+
+
 def get_docs_to_submit():
     """
     Submits the Sales Invoices or JV which are marked to Submit
@@ -35,19 +53,6 @@ def get_docs_to_submit():
                 try:
                     doc_t = frappe.get_doc(doc, dtd.name)
                     doc_t.submit()
-                    frappe.db.commit()
-                    rset = frappe.get_doc("Rohit Settings", "Rohit Settings")
-                    if rset.enable_einvoice == 1 and \
-                            rset.einvoice_applicable_date <= doc_t.posting_date:
-                        need_einv = einv_needed(doc, doc_t.name)
-                        # print(f"{doc}: {doc_t.name} E-Invoice Neded = {need_einv}")
-                        if need_einv == 1:
-                            try:
-                                generate_irn(dtype=doc_t.doctype, dname=doc_t.name)
-                            except Exception as e:
-                                print(f"Error Encountered while generating e-Invoice {e}")
-                        else:
-                            print(f"E-Invoice is Not Needed for {doc}: {doc_t.name}")
                 except Exception as e:
                     print(e)
 
