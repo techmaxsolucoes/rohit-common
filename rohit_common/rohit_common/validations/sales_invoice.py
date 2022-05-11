@@ -194,7 +194,7 @@ def get_item_synopsis(doc):
     for row in doc.items_synopsis:
         syn_net_total += row.base_amount
         syn_tot_qty += row.qty
-    if syn_net_total != doc.base_net_total or syn_tot_qty != doc.total_qty:
+    if round(syn_net_total, 1) != round(doc.base_net_total, 1) or syn_tot_qty != doc.total_qty:
         needs_update = 1
     for item in doc.items:
         if item.idx == 1:
