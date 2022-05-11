@@ -5,6 +5,7 @@
 import frappe
 from frappe.utils import flt
 from frappe.utils.background_jobs import enqueue
+from erpnext.stock.stock_ledger import NegativeStockError
 from ..india_gst_api.einv import einv_needed, generate_irn
 
 
@@ -50,11 +51,16 @@ def get_docs_to_submit():
             AND marked_to_submit = 1""", as_dict=1)
         if dft_doc:
             for dtd in dft_doc:
+                doc_t = frappe.get_doc(doc, dtd.name)
                 try:
-                    doc_t = frappe.get_doc(doc, dtd.name)
                     doc_t.submit()
-                except Exception as e:
-                    print(e)
+                    print(f"Submitting {doc_t.name}")
+                except NegativeStockError:
+                    print(f"Negative Stock Error for {doc_t.name} hence Rolling Back")
+                    frappe.db.rollback()
+                else:
+                    print(f"Some Other Error in {doc_t.name} and hence Rolling Back")
+                    frappe.db.rollback()
 
 
 def make_einvoice_for_docs():
