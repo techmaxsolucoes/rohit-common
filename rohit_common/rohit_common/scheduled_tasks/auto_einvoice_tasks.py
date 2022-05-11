@@ -61,6 +61,7 @@ def get_docs_to_submit():
                 except Exception as e:
                     print(f"Some Other Error for {doc_t.name} and Error = {e}")
                     frappe.db.rollback()
+                frappe.db.commit()
 
 
 def make_einvoice_for_docs():
