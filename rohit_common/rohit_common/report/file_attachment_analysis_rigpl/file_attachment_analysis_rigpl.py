@@ -17,12 +17,14 @@ def get_columns(filters):
         return ["Attached to Doctype::300", "No of Files:Int:100", "Size (MB):Float:100"]
     elif filters.get("summary_fol") == 1:
         return ["Folder Name:Link/File:300", "Parent Folder:Link/File:300", "No of Files:Int:100",
-            "Actual Files Size (MB):Float:100", "Size Listed:Float:100", "Left:Int:80", "Right:Int:80"]
+            "Actual Files Size (MB):Float:100", "Size Listed:Float:100", "Left:Int:80",
+            "Right:Int:80", "Owner::120"]
     else:
         if filters.get("is_folder") == 1:
             return [
                 "ID:Link/File:450", "File Name::200", "Parent Folder:Link/File:350", "Size(MB):Float:100",
                 "Left:Int:80", "Right:Int:80", "Files:Int:80","Is Home:Int:40", "Is Attachment::40"
+                "Owner::80"
             ]
         else:
             return [
@@ -52,7 +54,8 @@ def get_data(filters):
         ROUND(((SUM(file_size))/1024/1024),2) as size FROM `tabFile` WHERE docstatus=0 AND is_folder=0 %s
         GROUP BY attached_to_doctype ORDER BY size DESC, no_of_files DESC """ % cond_summary, as_list=1)
     elif filters.get("summary_fol") == 1:
-        new_data = frappe.db.sql("""SELECT name, folder, ROUND(file_size/1024/1024, 2) as size, lft, rgt
+        new_data = frappe.db.sql("""SELECT name, folder, ROUND(file_size/1024/1024, 2) as size, lft, rgt,
+            owner
             FROM `tabFile`
             WHERE docstatus=0 AND is_folder=1
             ORDER BY lft DESC, rgt DESC""", as_dict=1)
@@ -62,7 +65,8 @@ def get_data(filters):
             row["act_size"] = files[0].size
             row["count"] = files[0].nos
         for row in new_data:
-            data_row = [row.name, row.folder, row.count, row.act_size, row.size, row.lft, row.rgt]
+            data_row = [row.name, row.folder, row.count, row.act_size, row.size, row.lft, row.rgt,
+            row.owner]
             data.append(data_row)
     else:
         if filters.get("is_folder") == 1:
