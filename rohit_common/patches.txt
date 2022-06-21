@@ -7,3 +7,4 @@ rohit_common.patches.20181222_update_gst_hsn #2021-07-29
 rohit_common.patches.20200929_update_company_details
 execute:frappe.delete_doc("Report", "Modified Sales Register")
 execute:frappe.delete_doc("Report", "Modified Purchase Register")
+rohit_common.patches.delete_custom_fields
