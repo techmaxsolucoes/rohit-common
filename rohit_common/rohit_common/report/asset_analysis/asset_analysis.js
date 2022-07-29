@@ -36,5 +36,11 @@ frappe.query_reports["Asset Analysis"] = {
 			"options": "Account",
 			"get_query": function(){ return {'filters': [['Account', 'account_type','=', 'Fixed Asset']]}}
 		},
+		{
+			"fieldname":"compare_accounts",
+			"label": "Compare Accounts",
+			"fieldtype": "Check",
+			"default": 1,
+		},
 	]
 }
