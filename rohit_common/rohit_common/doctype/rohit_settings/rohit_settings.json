@@ -39,6 +39,7 @@
   "bg_submit_cancel_docs",
   "sb5",
   "email_base_link",
+  "email_stale_days",
   "cb5",
   "email_api_key",
   "minimum_credits"
@@ -259,10 +260,16 @@
    "fieldname": "einvoice_applicable_date",
    "fieldtype": "Date",
    "label": "eInvoice Applicable Date"
+  },
+  {
+   "description": "Days after which email would be re-verified\nDefault 180 days and Minimum should be 30 days",
+   "fieldname": "email_stale_days",
+   "fieldtype": "Int",
+   "label": "Email Stale Days"
   }
  ],
  "issingle": 1,
- "modified": "2022-03-31 09:14:23.711653",
+ "modified": "2022-08-08 09:37:52.222305",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Settings",

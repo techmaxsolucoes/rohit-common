@@ -4,6 +4,7 @@
 import json
 import frappe
 import requests
+from datetime import datetime
 from frappe.utils import flt, validate_email_address
 
 
@@ -66,6 +67,11 @@ def validate_global_email(email_id, backend=True):
                 frappe.msgprint(f"{passed_email} belongs to a Domain where Email ID cannot be \
                     verified for errors in Spellings")
                 create_gloabal_email(passed_email, response)
+            elif response.result == "unknown":
+                frappe.msgprint(f"{passed_email} belongs to a Domain where Email ID cannot be \
+                    verified by sending an Email")
+                # frappe.msgprint(f"Passed Email = {passed_email} and Response = {response}")
+                create_gloabal_email(passed_email, response)
             else:
                 message = f"Email: {email_id} is Not Deliverable"
                 passed_email = ""
@@ -93,6 +99,11 @@ def create_gloabal_email(passed_email, response):
     new_glob.domain = response.domain
     new_glob.is_free = response.free_email
     new_glob.is_role = response.role
+    new_glob.username = response.user
+    new_glob.verified_on = datetime.now()
+    if response.success == 1:
+        if response.result == "deliverable":
+            new_glob.verified = 1
     if response.accept_all == 1:
         new_glob.is_accept_all = response.accept_all
     new_glob.insert()
