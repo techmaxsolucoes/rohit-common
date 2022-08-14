@@ -8,4 +8,4 @@ rohit_common.patches.20200929_update_company_details
 execute:frappe.delete_doc("Report", "Modified Sales Register")
 execute:frappe.delete_doc("Report", "Modified Purchase Register")
 rohit_common.patches.asset_correction
-rohit_common.patches.delete_custom_fields
+rohit_common.patches.delete_custom_fields #2022-08-15
