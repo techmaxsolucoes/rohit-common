@@ -85,7 +85,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "GSTR2 Analysis Report",
    "link_to": "GSTR2 Analysis RIGPL",
    "link_type": "Report",
@@ -94,7 +94,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "Cleartax Import Report",
    "link_to": "Clear Tax Import Format",
    "link_type": "Report",
@@ -103,7 +103,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "Offline Import Report",
    "link_to": "GST Offline Import Format RIGPL",
    "link_type": "Report",
@@ -156,7 +156,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "Asset Analysis",
    "link_to": "Asset Analysis",
    "link_type": "Report",
@@ -174,7 +174,7 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
+   "is_query_report": 1,
    "label": "Stock Ledger RIGPL",
    "link_to": "Stock Ledger Normal",
    "link_type": "Report",
@@ -182,7 +182,7 @@
    "type": "Link"
   }
  ],
- "modified": "2022-08-15 04:00:12.532462",
+ "modified": "2022-08-15 04:07:11.901736",
  "modified_by": "Administrator",
  "module": "rohit_common",
  "name": "Rohit Common",
