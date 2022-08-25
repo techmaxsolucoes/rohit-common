@@ -10,8 +10,13 @@ app_color = "#007AFF"
 app_email = "aditya@rigpl.com"
 app_url = "https://github.com/adityaduggal/rohit_common"
 app_version = "0.0.1"
-fixtures = ["Custom Field"]
 hide_in_installer = True
+
+# Fixtures help https://frappeframework.com/docs/v13/user/en/python-api/hooks#fixtures
+fixtures = [
+    {"dt": "Client Script", "filters": [
+        ["dt", "in", "Address, Asset, Contact, Sales Taxes and Charges Template"]]}
+]
 
 # Includes in <head>
 # ------------------
@@ -140,7 +145,7 @@ scheduler_events = {
     ],
     "daily": [
         "rohit_common.rohit_common.scheduled_tasks.auto_update_from_erp.update_export_invoices"
-       ],
+    ],
     "hourly": [
         "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.check_correct_folders",
         "rohit_common.utils.background_doc_processing.enqueue_bg"

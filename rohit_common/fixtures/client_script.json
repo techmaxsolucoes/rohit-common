@@ -1,0 +1,54 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Address",
+  "enabled": 1,
+  "modified": "2021-01-05 21:02:55.588033",
+  "name": "address_form_rohit",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "cur_frm.add_fetch('state_rigpl','state_code_numeric','gst_state_number');\nfrappe.ui.form.on('Address', \"state_rigpl\", function(frm, cdt, cdn){\n\tvar d = locals[cdt][cdn]\n\tif (d.country === 'India'){\n\t\tfrappe.model.set_value(cdt, cdn, \"gst_state\", d.state_rigpl);\n\t\tfrappe.model.set_value(cdt, cdn, \"gst_state_number\", d.gstin.substring(0,2));\n\t\tcur_frm.refresh_fields();\n\t}\n});\n\nfrappe.ui.form.on('Address', \"email_id\", function(frm, cdt, cdn){\n\tvar d = locals[cdt][cdn]\n\tfrappe.model.set_value(cdt, cdn, \"email_address_validated\", 0);\n\tcur_frm.refresh_fields();\n});\n\nfrappe.ui.form.on('Address', \"gstin\", function(frm, cdt, cdn){\n\tvar d = locals[cdt][cdn]\n\tfrappe.model.set_value(cdt, cdn, \"gst_state\", d.state_rigpl);\n\tfrappe.model.set_value(cdt, cdn, \"gst_state_number\", d.gstin.substring(0,2));\n\tcur_frm.refresh_fields();\n});\n\nfrappe.ui.form.on(\"Address\", {\n    onload: function(frm){\n        frm.set_query(\"state_rigpl\", function(doc){\n            return {\n\t\t\t\t\"filters\": {\n\t\t\t\t\t\"country\": frm.doc.country\n\t\t\t\t}\n            };\n        });\n    },\n\tonload_post_render(frm) {\n\t\tif (frm.doc.latitude && frm.doc.longitude) {\n\t\t    var marker = L.marker([frm.doc.latitude, frm.doc.longitude]).addTo(frm.fields_dict.location.map);\n\t\t    marker.bindPopup(frm.doc.address_title).openPopup();\n\t\t\tfrm.fields_dict.location.map.setView([frm.doc.latitude, frm.doc.longitude], 20);\n\t\t}\n\t\telse {\n\t\t\tfrm.doc.latitude = frm.fields_dict.location.map.getCenter()['lat'];\n\t\t\tfrm.doc.longitude = frm.fields_dict.location.map.getCenter()['lng'];\n\t\t}\n\t},\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Asset",
+  "enabled": 1,
+  "modified": "2017-07-28 21:02:55.611636",
+  "name": "asset_form_rohit",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Asset', {\n\tmake_schedules_editable: function(frm) {\n\t\tvar is_editable = frm.doc.manual_depreciation_schedule===1 ? true : false;\n\t\tfrm.toggle_enable(\"schedules\", is_editable);\n\t\tfrm.fields_dict[\"schedules\"].grid.toggle_enable(\"schedule_date\", is_editable);\n\t\tfrm.fields_dict[\"schedules\"].grid.toggle_enable(\"depreciation_amount\", is_editable);\n\t}\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Contact",
+  "enabled": 1,
+  "modified": "2021-01-05 21:02:55.635523",
+  "name": "contact_form_rohit",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on(\"Contact Email\", \"email_id\", function(frm, cdt, cdn){\n\tvar d = locals[cdt][cdn]\n\tfrappe.model.set_value(cdt, cdn, \"validated\", 0);\n\tcur_frm.refresh_fields();\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Sales Taxes and Charges Template",
+  "enabled": 1,
+  "modified": "2022-02-07 21:02:55.564465",
+  "name": "stct_form_rohit",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on(\"Sales Taxes and Charges Template\", {\n    onload: function(frm){\n        frm.set_query(\"default_bank_account\", function(doc){\n            return {\n\t\t\t\t\"filters\": {\n\t\t\t\t\t\"is_company_account\": 1,\n\t\t\t\t\t\"verified\": 1\n\t\t\t\t}\n            };\n        });\n    },\n});",
+  "view": "Form"
+ }
+]
