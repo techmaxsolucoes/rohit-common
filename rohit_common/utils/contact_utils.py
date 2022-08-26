@@ -2,11 +2,77 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+from six import iteritems
 import frappe
+from frappe.desk.reportview import get_match_cond
 from .email_utils import single_email_validations
 from .phone_utils import single_phone_validations
 from .address_utils import get_country_for_master
 from .rohit_common_utils import separate_csv_in_table, get_country_code, santize_listed_txt_fields
+
+
+@frappe.whitelist()
+def rigpl_contact_query(doctype, txt, searchfield, start, page_len, filters):
+    link_doctype = filters.pop("link_doctype")
+    link_name = filters.pop("link_name")
+
+    condition = ""
+    meta = frappe.get_meta("Contact")
+    for fieldname, value in iteritems(filters):
+        if meta.get_field(fieldname) or fieldname in frappe.db.DEFAULT_COLUMNS:
+            condition += " and {field}={value}".format(
+                field=fieldname, value=frappe.db.escape(value))
+
+    searchfields = meta.get_search_fields()
+
+    if searchfield and (meta.get_field(searchfield) or searchfield in frappe.db.DEFAULT_COLUMNS):
+        searchfields.append(searchfield)
+
+    columns = ""
+    if searchfields:
+        for fld in searchfields:
+            columns += f", `tabContact`.{fld}"
+
+    search_condition = ""
+    for field in searchfields:
+        if search_condition == "":
+            search_condition += "`tabContact`.`{field}` like %(txt)s".format(
+                field=field)
+        else:
+            search_condition += " or `tabContact`.`{field}` like %(txt)s".format(
+                field=field)
+
+    return frappe.db.sql(
+        """select
+            `tabContact`.name, `tabContact`.first_name, `tabContact`.last_name {columns}
+        from
+            `tabContact`, `tabDynamic Link`
+        where
+            `tabDynamic Link`.parent = `tabContact`.name and
+            `tabDynamic Link`.parenttype = 'Contact' and
+            `tabDynamic Link`.link_doctype = %(link_doctype)s and
+            `tabDynamic Link`.link_name = %(link_name)s and
+            ({search_condition})
+            {mcond} {condition}
+        order by
+            if(locate(%(_txt)s, `tabContact`.name), locate(%(_txt)s, `tabContact`.name), 99999),
+            `tabContact`.idx desc, `tabContact`.name
+        limit %(start)s, %(page_len)s """.format(
+            columns=columns,
+            mcond=get_match_cond(doctype),
+            key=searchfield,
+            search_condition=search_condition,
+            condition=condition or "",
+        ),
+        {
+            "txt": "%" + txt + "%",
+            "_txt": txt.replace("%", ""),
+            "start": start,
+            "page_len": page_len,
+            "link_name": link_name,
+            "link_doctype": link_doctype,
+        },
+    )
 
 
 def all_contact_text_validations(con_doc, backend=False):
@@ -16,9 +82,12 @@ def all_contact_text_validations(con_doc, backend=False):
     field_dict = [frappe._dict({})]
 
     field_dict = [
-        {"field_name": "first_name", "case":"title"}, {"field_name": "middle_name", "case":"title"},
-        {"field_name": "last_name", "case":"title"}, {"field_name": "designation", "case":"title"},
-        {"field_name": "notes", "case":""}, {"field_name": "department", "case":"title"}
+        {"field_name": "first_name", "case": "title"}, {
+            "field_name": "middle_name", "case": "title"},
+        {"field_name": "last_name", "case": "title"}, {
+            "field_name": "designation", "case": "title"},
+        {"field_name": "notes", "case": ""}, {
+            "field_name": "department", "case": "title"}
     ]
     santize_listed_txt_fields(con_doc, field_dict)
 
@@ -163,7 +232,8 @@ def get_contact_country(con_doc):
     elif con_doc.links:
         country = ""
         for lnk in con_doc.links:
-            def_country = get_country_for_master(lnk.link_doctype, lnk.link_name)
+            def_country = get_country_for_master(
+                lnk.link_doctype, lnk.link_name)
             if country == "" and def_country:
                 country = def_country
     else:
@@ -189,7 +259,7 @@ def validate_contact_master(con_doc, backend=True):
     if not con_doc.links:
         message = f"{frappe.get_desk_link(con_doc.doctype, con_doc.name)} is not Linked to Any \
         Master"
-        if backend==1:
+        if backend == 1:
             print(message)
         else:
             frappe.throw(message)
@@ -203,14 +273,17 @@ def validate_contact_phones(con_doc, backend=True):
     """
     remove_phones = []
     if con_doc.phone_nos:
-        separate_csv_in_table(document=con_doc, tbl_name="phone_nos", field_name="phone")
+        separate_csv_in_table(
+            document=con_doc, tbl_name="phone_nos", field_name="phone")
         validate_or_populate_phone_country(con_doc, backend=backend)
         for row in con_doc.phone_nos:
-            ctr_code = get_country_code(country=row.country, all_caps=1, backend=backend)
+            ctr_code = get_country_code(
+                country=row.country, all_caps=1, backend=backend)
             if ctr_code:
-                val_ph_dict = single_phone_validations(row.phone, ctr_code, backend)
+                val_ph_dict = single_phone_validations(
+                    row.phone, ctr_code, backend)
                 remove_phones = update_phone_row_with_validation(ph_row=row,
-                    valid_ph_dict=val_ph_dict, rmv_ph_list=remove_phones)
+                                                                 valid_ph_dict=val_ph_dict, rmv_ph_list=remove_phones)
             else:
                 if backend == 1:
                     print("pass")
@@ -220,7 +293,7 @@ def validate_contact_phones(con_doc, backend=True):
         for rmv_ph in remove_phones:
             frappe.msgprint(f"Phone No: {rmv_ph} is Invalid and is Being Removed")
             [con_doc.phone_nos.remove(phn) for phn in con_doc.get('phone_nos')
-            if phn.phone == rmv_ph]
+             if phn.phone == rmv_ph]
 
 
 def validate_contact_emails(con_doc, backend=True):
@@ -231,7 +304,8 @@ def validate_contact_emails(con_doc, backend=True):
     """
     remove_emails = []
     if con_doc.email_ids:
-        separate_csv_in_table(document=con_doc, tbl_name="email_ids", field_name="email_id")
+        separate_csv_in_table(
+            document=con_doc, tbl_name="email_ids", field_name="email_id")
     for row in con_doc.email_ids:
         valid_email = single_email_validations(row.email_id, backend=backend)
         if valid_email:
@@ -245,7 +319,8 @@ def validate_contact_emails(con_doc, backend=True):
                 print(message)
             else:
                 frappe.msgprint(message)
-            [con_doc.email_ids.remove(eml) for eml in con_doc.get('email_ids') if eml.email_id == rmv_eml]
+            [con_doc.email_ids.remove(eml) for eml in con_doc.get(
+                'email_ids') if eml.email_id == rmv_eml]
 
 
 def exactly_one_primary_email(con_doc):

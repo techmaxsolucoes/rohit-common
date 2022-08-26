@@ -2,11 +2,79 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+from six import iteritems
 import re
 import frappe
 from frappe.utils import flt
+from frappe.desk.reportview import get_match_cond
 from ..rohit_common.validations.google_maps import get_geocoded_address_dict
 from .rohit_common_utils import replace_java_chars, santize_listed_txt_fields
+
+
+@frappe.whitelist()
+def rigpl_address_query(doctype, txt, searchfield, start, page_len, filters):
+
+    link_doctype = filters.pop("link_doctype")
+    link_name = filters.pop("link_name")
+
+    condition = ""
+    meta = frappe.get_meta("Address")
+    for fieldname, value in iteritems(filters):
+        if meta.get_field(fieldname) or fieldname in frappe.db.DEFAULT_COLUMNS:
+            condition += " and {field}={value}".format(
+                field=fieldname, value=frappe.db.escape(value))
+
+    searchfields = meta.get_search_fields()
+
+    if searchfield and (meta.get_field(searchfield) or searchfield in frappe.db.DEFAULT_COLUMNS):
+        searchfields.append(searchfield)
+
+    columns = ""
+    if searchfields:
+        for fld in searchfields:
+            columns += f", `tabAddress`.{fld}"
+
+    search_condition = ""
+    for field in searchfields:
+        if search_condition == "":
+            search_condition += "`tabAddress`.`{field}` like %(txt)s".format(
+                field=field)
+        else:
+            search_condition += " or `tabAddress`.`{field}` like %(txt)s".format(
+                field=field)
+
+    return frappe.db.sql(
+        """select
+            `tabAddress`.name, `tabAddress`.city, `tabAddress`.country {columns}
+        from
+            `tabAddress`, `tabDynamic Link`
+        where
+            `tabDynamic Link`.parent = `tabAddress`.name and
+            `tabDynamic Link`.parenttype = 'Address' and
+            `tabDynamic Link`.link_doctype = %(link_doctype)s and
+            `tabDynamic Link`.link_name = %(link_name)s and
+            ifnull(`tabAddress`.disabled, 0) = 0 and
+            ({search_condition})
+            {mcond} {condition}
+        order by
+            if(locate(%(_txt)s, `tabAddress`.name), locate(%(_txt)s, `tabAddress`.name), 99999),
+            `tabAddress`.idx desc, `tabAddress`.name
+        limit %(start)s, %(page_len)s """.format(
+            columns=columns,
+            mcond=get_match_cond(doctype),
+            key=searchfield,
+            search_condition=search_condition,
+            condition=condition or "",
+        ),
+        {
+            "txt": "%" + txt + "%",
+            "_txt": txt.replace("%", ""),
+            "start": start,
+            "page_len": page_len,
+            "link_name": link_name,
+            "link_doctype": link_doctype,
+        },
+    )
 
 
 def all_address_text_validations(adr_doc):
@@ -16,14 +84,17 @@ def all_address_text_validations(adr_doc):
     field_dict = [frappe._dict({})]
 
     field_dict = [
-        {"field_name": "address_title", "case":"upper"},
-        {"field_name": "address_line1", "case":"title"},
-        {"field_name": "address_line2", "case":"title"},
-        {"field_name": "city", "case":"title"}, {"field_name": "state", "case":"title"},
-        {"field_name": "county", "case":"title"}, {"field_name": "pincode", "case":"upper"},
-        {"field_name": "sea_port", "case":"upper"}, {"field_name": "airport", "case":"upper"},
-        {"field_name": "phone", "case":""}, {"field_name": "fax", "case":""},
-        {"field_name": "gstin", "case":"upper"}
+        {"field_name": "address_title", "case": "upper"},
+        {"field_name": "address_line1", "case": "title"},
+        {"field_name": "address_line2", "case": "title"},
+        {"field_name": "city", "case": "title"}, {
+            "field_name": "state", "case": "title"},
+        {"field_name": "county", "case": "title"}, {
+            "field_name": "pincode", "case": "upper"},
+        {"field_name": "sea_port", "case": "upper"}, {
+            "field_name": "airport", "case": "upper"},
+        {"field_name": "phone", "case": ""}, {"field_name": "fax", "case": ""},
+        {"field_name": "gstin", "case": "upper"}
     ]
     santize_listed_txt_fields(adr_doc, field_dict)
 
@@ -76,7 +147,8 @@ def pin_regex_status(add_doc, backend=True):
     Checks the Pincode for regex for a Country's Matching Style and returns boolean after matching
     """
     pc_regex_pass = 0
-    pc_regex = frappe.get_value("Country", add_doc.country, "pincode_regular_expression")
+    pc_regex = frappe.get_value(
+        "Country", add_doc.country, "pincode_regular_expression")
     if pc_regex:
         if add_doc.pincode:
             pc_regex_form = replace_java_chars(pc_regex)
@@ -92,7 +164,7 @@ def pin_regex_status(add_doc, backend=True):
                     pc_regex_pass = 1
             if pc_regex_pass != 1:
                 message = (f"Country {add_doc.country}: State: {add_doc.state_rigpl} Pin Code: "
-                    f"{add_doc.pincode} Should be of Format Regular Expression: {pc_regex_py}")
+                           f"{add_doc.pincode} Should be of Format Regular Expression: {pc_regex_py}")
                 if backend != 1:
                     frappe.throw(message)
                 else:
@@ -122,7 +194,7 @@ def state_as_per_country(add_doc, backend=True):
                 return 1
             else:
                 message = (f"{add_doc.name} for Country: {add_doc.country} the State: "
-                    f"{add_doc.state_rigpl} is Not In State Table")
+                           f"{add_doc.state_rigpl} is Not In State Table")
                 if backend == 1:
                     print(message)
                     return 0
@@ -132,7 +204,6 @@ def state_as_per_country(add_doc, backend=True):
         if add_doc.state_rigpl:
             add_doc.state_rigpl = ""
         return 1
-
 
 
 def get_country_for_master(link_type, link_name):
@@ -153,7 +224,6 @@ def get_country_for_master(link_type, link_name):
             else:
                 base_country = adr.country
     return base_country
-
 
 
 def get_address_for_master(link_type, link_name):
