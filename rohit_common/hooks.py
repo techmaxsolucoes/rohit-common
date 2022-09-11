@@ -13,17 +13,19 @@ app_version = "0.0.1"
 hide_in_installer = True
 
 # Fixtures help https://frappeframework.com/docs/v13/user/en/python-api/hooks#fixtures
-fixtures = [
-    {"dt": "Client Script", "filters": [
-        ["dt", "in", "Address, Asset, Contact, Sales Taxes and Charges Template"]]}
-]
+fixtures = []
+
+override_whitelisted_methods = {  # Below mentod would also take into account the search fields
+    # mentioned in the Customize form view
+    "frappe.core.doctype.file.file.get_files_by_search_text": "rohit_common.core.file.get_files_by_search_text"
+}
 
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/rohit_common/css/rohit_common.css"
-# app_include_js = "/assets/rohit_common/js/rohit_common.js"
+# app_include_js = ["/assets/rohit_common/js/myapp.min.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/rohit_common/css/rohit_common.css"
@@ -64,6 +66,15 @@ fixtures = [
 #     "File": "rohit_common.rohit_common.validations.file.has_permission"
 # }
 
+# Javascripts for Standard Documents to Override Forms Script
+# -----------
+doctype_js = {
+    "Address": "public/js/address.js",
+    "Asset": "public/js/asset.js",
+    "Contact": "public/js/contact.js",
+    "Sales Taxes and Charges Template": "public/js/stct.js",
+}
+
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -71,31 +82,31 @@ fixtures = [
 doc_events = {
     "Address": {
         "autoname": "rohit_common.rohit_common.validations.address.autoname",
-        "validate": "rohit_common.rohit_common.validations.address.validate"
+        "validate": "rohit_common.rohit_common.validations.address.validate",
     },
     "Asset": {
         "validate": "rohit_common.rohit_common.validations.asset.validate",
-        "autoname": "rohit_common.rohit_common.validations.asset.autoname"
+        "autoname": "rohit_common.rohit_common.validations.asset.autoname",
     },
     "Asset Category": {
         "validate": "rohit_common.rohit_common.validations.asset_category.validate"
     },
     "Contact": {
         "autoname": "rohit_common.rohit_common.validations.contact.autoname",
-        "validate": "rohit_common.rohit_common.validations.contact.validate"
+        "validate": "rohit_common.rohit_common.validations.contact.validate",
     },
     "Customer": {
         "autoname": "rohit_common.rohit_common.validations.customer.autoname",
-        "validate": "rohit_common.rohit_common.validations.customer.validate"
+        "validate": "rohit_common.rohit_common.validations.customer.validate",
     },
     "DocShare": {
         "validate": "rohit_common.rohit_common.validations.docshare.validate",
-        "on_trash": "rohit_common.rohit_common.validations.docshare.on_trash"
+        "on_trash": "rohit_common.rohit_common.validations.docshare.on_trash",
     },
     "File": {
         "before_insert": "rohit_common.rohit_common.validations.file.before_insert",
         "validate": "rohit_common.rohit_common.validations.file.validate",
-        "on_trash": "rohit_common.rohit_common.validations.file.on_trash"
+        "on_trash": "rohit_common.rohit_common.validations.file.on_trash",
     },
     "Payment Terms Template": {
         "validate": "rohit_common.rohit_common.validations.payment_terms_template.validate"
@@ -103,7 +114,7 @@ doc_events = {
     "Sales Invoice": {
         "validate": "rohit_common.rohit_common.validations.sales_invoice.validate",
         "on_update_after_submit": "rohit_common.rohit_common.validations.sales_invoice.on_update",
-        "on_submit": "rohit_common.rohit_common.validations.sales_invoice.on_submit"
+        "on_submit": "rohit_common.rohit_common.validations.sales_invoice.on_submit",
     },
     "Sales Taxes and Charges Template": {
         "validate": "rohit_common.rohit_common.validations.stc_template.validate"
@@ -113,11 +124,9 @@ doc_events = {
     },
     "Supplier": {
         "autoname": "rohit_common.rohit_common.validations.supplier.autoname",
-        "validate": "rohit_common.rohit_common.validations.supplier.validate"
+        "validate": "rohit_common.rohit_common.validations.supplier.validate",
     },
-    "User": {
-        "validate": "rohit_common.rohit_common.validations.user.validate"
-    },
+    "User": {"validate": "rohit_common.rohit_common.validations.user.validate"},
     #   "*": {
     #       "on_update": "method",
     #       "on_cancel": "method",
@@ -137,8 +146,8 @@ scheduler_events = {
         # Runs every 15 mins below jobs
         "*/15 * * * *": [
             "rohit_common.rohit_common.scheduled_tasks.auto_einvoice_tasks.enq_inv_sub",
-            "rohit_common.rohit_common.scheduled_tasks.auto_einvoice_tasks.enq_einv_create"
-        ]
+            "rohit_common.rohit_common.scheduled_tasks.auto_einvoice_tasks.enq_einv_create",
+        ],
     },
     "all": [
         "rohit_common.rohit_common.scheduled_tasks.auto_refresh_gstin_auth_code.execute"
@@ -148,16 +157,14 @@ scheduler_events = {
     ],
     "hourly": [
         "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.check_correct_folders",
-        "rohit_common.utils.background_doc_processing.enqueue_bg"
+        "rohit_common.utils.background_doc_processing.enqueue_bg",
     ],
     "weekly_long": [
         "rohit_common.rohit_common.scheduled_tasks.auto_einvoice_tasks.get_unposted_invoices",
         "rohit_common.rohit_common.scheduled_tasks.auto_delete_version.enqueue_deletion",
-        "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.execute"
+        "rohit_common.rohit_common.scheduled_tasks.delete_unneeded_files.execute",
     ],
-    "monthly": [
-        "rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute"
-    ]
+    "monthly": ["rohit_common.rohit_common.scheduled_tasks.email_queue_delete.execute"],
 }
 
 # Testing
