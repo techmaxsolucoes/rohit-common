@@ -62,9 +62,9 @@ override_whitelisted_methods = {  # Below mentod would also take into account th
 #   "Event": "frappe.core.doctype.event.event.get_permission_query_conditions",
 # }
 #
-# has_permission = {
-#     "File": "rohit_common.rohit_common.validations.file.has_permission"
-# }
+has_permission = {
+     "File": "rohit_common.core.file.custom_file_permissions"
+}
 
 # Javascripts for Standard Documents to Override Forms Script
 # -----------
@@ -104,9 +104,9 @@ doc_events = {
         "on_trash": "rohit_common.rohit_common.validations.docshare.on_trash",
     },
     "File": {
-        "before_insert": "rohit_common.rohit_common.validations.file.before_insert",
-        "validate": "rohit_common.rohit_common.validations.file.validate",
-        "on_trash": "rohit_common.rohit_common.validations.file.on_trash",
+        "before_insert": "rohit_common.core.file.before_insert",
+        "validate": "rohit_common.core.file.validate",
+        "on_trash": "rohit_common.core.file.on_trash",
     },
     "Payment Terms Template": {
         "validate": "rohit_common.rohit_common.validations.payment_terms_template.validate"
