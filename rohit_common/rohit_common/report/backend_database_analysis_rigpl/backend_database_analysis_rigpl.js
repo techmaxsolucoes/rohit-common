@@ -16,5 +16,11 @@ frappe.query_reports["Backend Database Analysis RIGPL"] = {
 			"fieldtype": "Check",
 			"default": 0
 		},
+		{
+			"fieldname":"unused_tables",
+			"label": "Unused Tables",
+			"fieldtype": "Check",
+			"default": 0
+		},
 	]
 };

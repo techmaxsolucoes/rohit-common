@@ -78,30 +78,47 @@ def get_docshare_from_dt(dt, user):
     return docshares
 
 
-def create_docshare(user, dt, dn, read=0, write=0, share=0, ev_one=0, change_exist=0):
-    exists = frappe.db.exists("DocShare", {"share_doctype": dt, "user": user, "share_name": dn})
-    if not exists:
-        dc = frappe.new_doc("DocShare")
-        dc.user = user
-        dc.share_doctype = dt
-        dc.share_name = dn
-        dc.read = read
-        dc.write = write
-        dc.share = share
-        dc.everyone = ev_one
-        dc.notify_by_email = 0
-        # print(dc.name)
-        dc.insert()
-        dc.save()
-    else:
-        if change_exist == 1:
+def create_docshare(user, dt, dn, read=0, write=0, share=0, ev_one=0, subm=0,
+    change_exist=0):
+    """
+    Dont Create DocShares for Admin, Guest or System Managers
+    """
+    shared_dts = ["User", "Event", "Note"]
+    share_needed = 1
+    existing_share = frappe.db.exists("DocShare", {"share_doctype": dt, "user": user, "share_name": dn})
+    is_sys = check_system_manager(user)
+    if (is_sys or user == "Administrator") and (dt not in shared_dts and dn != user):
+        share_needed = 0
+        frappe.throw("NO SHARE NEEDED")
+    if share_needed == 1:
+        if not existing_share:
+            dc = frappe.new_doc("DocShare")
+            dc.user = user
+            dc.share_doctype = dt
+            dc.share_name = dn
+            dc.read = read
+            dc.write = write
+            dc.share = share
+            dc.everyone = ev_one
+            dc.submit = subm
+            dc.notify_by_email = 0
+            # print(dc.name)
+            dc.insert()
+            dc.save()
+        else:
             exist_dc = frappe.get_doc("DocShare", {"share_doctype": dt, "user": user, "share_name": dn})
             exist_dc.read = read
             exist_dc.write = write
             exist_dc.share = share
             exist_dc.everyone = ev_one
+            exist_dc.submit = subm
             exist_dc.notify_by_email = 0
             exist_dc.save()
+    else:
+        if existing_share:
+            exist_dc = frappe.get_doc("DocShare", {"share_doctype": dt, "user": user, "share_name": dn})
+            exist_dc.flags.ignore_permissions = 1
+            exist_dc.delete_doc(delete_permanently=1)
 
 
 def delete_docshare(docname):

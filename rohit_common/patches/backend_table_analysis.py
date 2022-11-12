@@ -30,14 +30,14 @@ def get_all_std_fields(tb_name, field_types=2):
     if field_types == 1:
         val = "NOT"
 
-    doc_fields = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabDocField` 
+    doc_fields = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabDocField`
     WHERE parent = '%s' AND parenttype = 'DocType' %s
     ORDER BY idx""" % (tb_name, cond), as_dict=1)
     return doc_fields
 
 
 def get_all_fields_in_tbl(tb_name):
-    all_fds_dict = frappe.db.sql("""SELECT column_name, data_type, character_maximum_length 
+    all_fds_dict = frappe.db.sql("""SELECT column_name, data_type, character_maximum_length
     FROM information_schema.columns WHERE table_name = 'tab%s'""" % tb_name, as_dict=1)
     return all_fds_dict
 
@@ -60,11 +60,11 @@ def drop_redundant_fields():
     not_found_fields = 0
     all_fields_db = get_all_fields_in_tbl(tb_name=tb)
 
-    doc_fields = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabDocField` 
+    doc_fields = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabDocField`
     WHERE parent = '%s' AND parenttype = 'DocType' AND fieldtype NOT IN %s
     ORDER BY idx""" % (tb, no_value_fields), as_dict=1)
 
-    cu_fd = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabCustom Field` 
+    cu_fd = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabCustom Field`
     WHERE dt = '%s'
     ORDER BY idx""" % tb, as_dict=1)
 
@@ -95,13 +95,14 @@ def drop_redundant_fields():
 
 
 def reduce_varchar_size():
+    st_time = time.time()
     tb = input_table_name()
     fields_to_check = []
-    doc_fields = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabDocField` 
+    doc_fields = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabDocField`
     WHERE parent = '%s' AND parenttype = 'DocType' AND fieldtype NOT IN %s
     ORDER BY idx""" % (tb, no_value_fields), as_dict=1)
 
-    cu_fd = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabCustom Field` 
+    cu_fd = frappe.db.sql("""SELECT name, fieldname, fieldtype, idx FROM `tabCustom Field`
     WHERE dt = '%s' AND fieldtype NOT IN %s
     ORDER BY idx""" % (tb, no_value_fields), as_dict=1)
 
@@ -128,15 +129,14 @@ def reduce_varchar_size():
 
     fields_to_check = sorted(fields_to_check, key=lambda i: (i["idx"], i["fieldname"]))
     for fd in fields_to_check:
-        fd_size = frappe.db.sql("""SELECT table_name AS tbl, column_name AS col, column_type AS col_type, 
-        data_type AS dt_type, character_maximum_length AS char_len 
-        FROM information_schema.columns WHERE column_name = '%s' 
+        fd_size = frappe.db.sql("""SELECT table_name AS tbl, column_name AS col, column_type AS col_type,
+        data_type AS dt_type, character_maximum_length AS char_len
+        FROM information_schema.columns WHERE column_name = '%s'
         AND table_name = 'tab%s'""" % (fd.fieldname, tb), as_dict=1)
-        if fd_size:
-            max_size = frappe.db.sql("""SELECT MAX(LENGTH(%s)) AS max_size 
+        if fd_size and fd_size[0].dt_type == 'varchar':
+            max_size = frappe.db.sql("""SELECT MAX(LENGTH(%s)) AS max_size
             FROM `tab%s`""" % (fd.fieldname, tb), as_dict=1)
             fd_size[0]["max_size"] = max_size[0].max_size
-        if fd_size[0].dt_type == 'varchar':
             if flt(fd_size[0].max_size) > 0:
                 new_size = int(math.ceil(fd_size[0].max_size * 2 / 10)) * 10
                 if new_size >= 0.9 * fd_size[0].char_len:
@@ -147,10 +147,12 @@ def reduce_varchar_size():
                 # Default fields would be changed automatically to double the max length
                 fd_time = time.time()
                 # Change the size to new size
-                alter_varchar_table(tb_name=tb, col_name=fd_size[0].col, var_len=new_size)
-                print(f"Changed {fd_size[0].col} from Size = {fd_size[0].char_len} to New Size= {new_size} \n"
-                      f"Time Taken for Field Conversion = {int(time.time() - fd_time)} seconds and Total Elapsed "
-                      f"Time = {int(time.time() - st_time)} seconds")
+                change_yes = input(f"Enter yes to Alter {tb} and Change field {fd_size[0].col} to New Size {new_size}")
+                if change_yes == "yes":
+                    alter_varchar_table(tb_name=tb, col_name=fd_size[0].col, var_len=new_size)
+                    print(f"Changed {fd_size[0].col} from Size = {fd_size[0].char_len} to New Size= {new_size} \n"
+                          f"Time Taken for Field Conversion = {int(time.time() - fd_time)} seconds and Total Elapsed "
+                          f"Time = {int(time.time() - st_time)} seconds")
             else:
                 # Suggestion for Customize Form View or Change here only based on User input
                 # Input would be of 2 types 1 for Yes and then also a manual value can be added for length
@@ -220,7 +222,7 @@ def get_input_for_change(col_name, exist_len, max_len, sug_len, limit):
 
 def get_size_of_all_tables():
     config = frappe.get_site_config()
-    query = """SELECT table_schema AS db_name, table_name AS tbl_name, 
+    query = """SELECT table_schema AS db_name, table_name AS tbl_name,
     ROUND(((data_length + index_length) / 1024 / 1024), 2) AS size_mb, ROUND(((data_length) / 1024 / 1024), 2) AS dl_mb,
     ROUND(((index_length) / 1024 / 1024), 2) AS ind_mb, TABLE_ROWS as tbl_rows
     FROM information_schema.TABLES
@@ -232,7 +234,7 @@ def get_size_of_all_tables():
 
 def get_columns_of_all_tables():
     config = frappe.get_site_config()
-    query = """SELECT table_schema AS db_name, table_name AS tbl_name, COUNT(*) AS no_of_cols 
+    query = """SELECT table_schema AS db_name, table_name AS tbl_name, COUNT(*) AS no_of_cols
     FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = '%s' GROUP BY tbl_name ORDER BY no_of_cols DESC;""" % config.db_name
     data = frappe.db.sql(query, as_dict=1)
     return data

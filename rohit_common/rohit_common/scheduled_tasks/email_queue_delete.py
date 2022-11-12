@@ -18,7 +18,7 @@ def execute():
 	no_creation = 0
 	old_emails = 0
 	new_emails = 0
-	no_ref_dt = frappe.db.sql("""SELECT name, creation, modified FROM `tabEmail Queue` 
+	no_ref_dt = frappe.db.sql("""SELECT name, creation, modified FROM `tabEmail Queue`
 		WHERE reference_doctype IS NULL ORDER BY creation, modified DESC """, as_dict=1)
 	if no_ref_dt:
 		for email in no_ref_dt:
@@ -38,7 +38,7 @@ def execute():
 		print("No of Emails without Doctype and Less " + str(set_days) + " Days Old Not Deleted = " + str(new_emails))
 		print("Total No of Emails without Doctype were = " + str(len(no_ref_dt)))
 
-	ref_dt = frappe.db.sql("""SELECT name, creation, modified, reference_doctype FROM `tabEmail Queue` 
+	ref_dt = frappe.db.sql("""SELECT name, creation, modified, reference_doctype FROM `tabEmail Queue`
 		WHERE reference_doctype IS NOT NULL ORDER BY creation DESC, modified DESC """, as_dict=1)
 	dt_short = ['Auto Email Report', 'Email Digest']
 	no_creation = 0

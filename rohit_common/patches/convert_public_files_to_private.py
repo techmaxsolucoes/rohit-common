@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import time
 import frappe
-from ..rohit_common.validations.file import check_file_availability, delete_file_dt, check_and_move_file
+from rohit_common.core.file import check_file_availability, delete_file_dt, check_and_move_file
 from ..utils.rohit_common_utils import rebuild_tree
 
 
@@ -14,7 +14,7 @@ def execute():
     st_time = time.time()
     tot_files = frappe.get_all("File")
     print(f"Total Files in DB = {len(tot_files)}")
-    public_file_list = frappe.db.sql("""SELECT name, attached_to_doctype FROM `tabFile` WHERE is_private = 0 
+    public_file_list = frappe.db.sql("""SELECT name, attached_to_doctype FROM `tabFile` WHERE is_private = 0
     AND is_folder = 0""", as_dict=1)
     print(f"Total Public Files in Database {len(public_file_list)}")
     time.sleep(1)
@@ -63,7 +63,7 @@ def execute():
     frappe.db.commit()
 
     # Second Part is to check the files Not Attached to Any Doc Type and if not available on server they are deleted.
-    no_dt_files = frappe.db.sql("""SELECT name FROM `tabFile` WHERE attached_to_doctype IS NULL 
+    no_dt_files = frappe.db.sql("""SELECT name FROM `tabFile` WHERE attached_to_doctype IS NULL
     AND is_folder = 0""", as_dict=1)
     changes_done = 0
     for file in no_dt_files:
@@ -89,10 +89,10 @@ def execute():
     att_fold = att_fold[0][0]
     home_fold = home_fold[0][0]
 
-    no_folder_files = frappe.db.sql("""SELECT name, folder FROM `tabFile` WHERE folder IS NULL 
+    no_folder_files = frappe.db.sql("""SELECT name, folder FROM `tabFile` WHERE folder IS NULL
     AND is_folder=0""", as_dict=1)
 
-    files_in_home = frappe.db.sql("""SELECT name, folder FROM `tabFile` WHERE folder = '%s' 
+    files_in_home = frappe.db.sql("""SELECT name, folder FROM `tabFile` WHERE folder = '%s'
     AND is_folder=0""" % home_fold, as_dict=1)
 
     print(f"Total Files Without Folder = {len(no_folder_files)}")

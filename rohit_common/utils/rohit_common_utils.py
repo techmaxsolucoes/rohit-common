@@ -25,9 +25,10 @@ def check_or_rename_doc(document, backend):
                             {document.doctype} ID: {new_name}")
             if backend == 1:
                 print(f"Renaming {document.doctype}: {entered_name} to New {document.doctype}: "
-                    f"{new_name}")
+                      f"{new_name}")
                 try:
-                    frappe.rename_doc(document.doctype, entered_name, new_name, merge=False)
+                    frappe.rename_doc(document.doctype,
+                                      entered_name, new_name, merge=False)
                     return 1
                 except Exception as e:
                     print(f"Unable to Rename {document.doctype}: {entered_name} due to Error {e}")
@@ -76,7 +77,6 @@ def santize_listed_txt_fields(document, field_dict):
                 setattr(document, field_name, None)
         else:
             setattr(document, field_name, None)
-
 
 
 def separate_csv_in_table(document, tbl_name, field_name):
@@ -164,7 +164,8 @@ def rebuild_tree(doctype, parent_field, group_field):
         if r.get(group_field) == 1:
             rebuild_group(doctype, parent_field, r.name, group_field, lft)
         else:
-            frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (doctype, lft, lft+1, r.name))
+            frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (
+                doctype, lft, lft+1, r.name))
             lft += 2
 
 
@@ -174,14 +175,17 @@ def rebuild_group(doctype, parent_field, parent, group_field, left):
     AND %s = 0""" % (group_field, doctype, parent_field, parent, group_field)
     non_grp_results = frappe.db.sql(non_gp_query, as_dict=1)
     for r in non_grp_results:
-        frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (doctype, right, right+1, r.name))
+        frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (
+            doctype, right, right+1, r.name))
         right += 2
     grp_result = frappe.db.sql("""SELECT name, %s FROM `tab%s` WHERE %s = '%s'
     AND %s = 1""" % (group_field, doctype, parent_field, parent, group_field), as_dict=1)
     for r in grp_result:
         print(f"Updating Groups for {r.name}")
-        right = rebuild_group(doctype, parent_field, r.name, group_field, right)
-    frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (doctype, left, right, parent))
+        right = rebuild_group(doctype, parent_field,
+                              r.name, group_field, right)
+    frappe.db.sql("""UPDATE `tab%s` SET lft=%s, rgt=%s WHERE name='%s'""" % (
+        doctype, left, right, parent))
     return right
 
 
@@ -212,10 +216,11 @@ def get_email_id(email_id):
 
 
 def check_sales_taxes_integrity(document):
-    template = frappe.get_doc("Sales Taxes and Charges Template", document.taxes_and_charges)
+    template = frappe.get_doc(
+        "Sales Taxes and Charges Template", document.taxes_and_charges)
     if len(template.taxes) != len(document.taxes):
         frappe.throw("Tax Template {} Data does not match with Document# {}'s Tax {}".
-                     format(template.name,document.name, document.taxes_and_charges))
+                     format(template.name, document.name, document.taxes_and_charges))
     if document.taxes:
         for tax in document.taxes:
             for temp in template.taxes:
@@ -227,7 +232,9 @@ def check_sales_taxes_integrity(document):
                                       "Row # {2} or reload Taxes").format(document.taxes_and_charges, document.name,
                                                                           tax.idx))
     else:
-        frappe.throw("Empty Tax Table is not Allowed for Sales Invoice {0}".format(document.name))
+        frappe.throw(
+            "Empty Tax Table is not Allowed for Sales Invoice {0}".format(document.name))
+
 
 def sanitize_dynamic_link(parenttype):
     """
@@ -242,13 +249,13 @@ def sanitize_dynamic_link(parenttype):
         frappe.db.delete("Dynamic Link", dlnk.name)
 
 
-
 def check_dynamic_link(parenttype, parent, link_doctype, link_name):
     link_type = frappe.db.sql("""SELECT name FROM `tabDynamic Link`
         WHERE docstatus = 0 AND parenttype = '%s' AND parent = '%s'
         AND link_doctype = '%s' AND link_name = '%s'""" % (parenttype, parent, link_doctype, link_name), as_list=1)
     if not link_type:
-        frappe.throw("{} {} does not belong to {} {}".format(parenttype, parent, link_doctype, link_name))
+        frappe.throw("{} {} does not belong to {} {}".format(
+            parenttype, parent, link_doctype, link_name))
 
 
 def replace_java_chars(string):
@@ -280,7 +287,8 @@ def fn_check_digit(id_without_check):
     for n, char in enumerate(reversed(id_without_checkdigit)):
 
         if not valid_chars.count(char):
-            frappe.throw('Invalid Character has been used for Item Code check Attributes')
+            frappe.throw(
+                'Invalid Character has been used for Item Code check Attributes')
 
         # our "digit" is calculated using ASCII value - 48
         digit = ord(char) - 48
@@ -314,9 +322,9 @@ def fn_check_digit(id_without_check):
     return int((10 - (sum % 10)) % 10)
 
 
-def fn_next_string(doc,s):
-    #This function would increase the serial number by One following the
-    #alpha-numeric rules as well
+def fn_next_string(doc, s):
+    # This function would increase the serial number by One following the
+    # alpha-numeric rules as well
     if len(s) == 0:
         return '1'
     head = s[0:-1]

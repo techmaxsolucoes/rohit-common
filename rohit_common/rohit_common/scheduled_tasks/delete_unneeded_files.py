@@ -11,7 +11,7 @@ import frappe
 from frappe.utils import flt
 from frappe.utils.fixtures import sync_fixtures
 from ...utils.rohit_common_utils import rebuild_tree
-from ..validations.file import check_file_availability, delete_file_dt, check_and_move_file, correct_file_name_url
+from rohit_common.core.file import check_file_availability, delete_file_dt, check_and_move_file, correct_file_name_url
 
 sync_fixtures()
 
