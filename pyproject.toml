@@ -1,0 +1,13 @@
+[project]
+name = "rohit_common"
+authors = [
+    { name = "Rohit Industries Group Pvt Ltd", email = "aditya@rigpl.com"}
+]
+description = "ERPNext Customizations for Rohit Industries"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    # Core dependencies
+    "phonenumbers==8.12.40",
+    "india-compliance @ git+https://github.com/resilient-tech/india-compliance.git#version-14",
+]
